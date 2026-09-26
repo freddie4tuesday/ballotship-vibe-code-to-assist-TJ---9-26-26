@@ -34,6 +34,18 @@
         pause stopped polling and one click caught up on a message sent while paused, no page
         errors. The live relay was then checked directly (send, poll, own-message filtering,
         CORS), and the neighboring electionadminsuite.com sites still load.
+  build 4  Plain-language additions, reviewed and approved as a table first. Prompted by the
+        concern that someone who has never played Battleship, or never run a tabletop
+        exercise, would struggle: "inject" appeared 97 times and was never defined, and the
+        board terms (footprint, hit, offline) assumed the board game. Added, without removing
+        or rewording anything: a purpose sentence under the title tagline; a "New to
+        Ballotship?" box at the top of setup that explains the board by way of the classic
+        game and defines "inject" before its first use; the same definition at the top of
+        How this works; and a 13-term glossary at the end of the rules. Named "New to
+        Ballotship", not Battleship, since Battleship is a trademark and is only mentioned
+        descriptively. The precedent entry says it is a setup option, matching optPrec.
+        Ready for Tuesday branding untouched. Verified with the full test suite and a visual
+        check of each screen.
 -->
 <html lang="en">
 <head>
@@ -502,6 +514,15 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--orange);border-c
 .title-foot{font-family:var(--code);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#6F8A7C;margin-top:18px}
 @media (max-width:640px){.title-wrap{padding:20px 16px 30px}.title-art{height:min(34vh,320px);margin-bottom:16px}}
 @media (max-height:620px){.title-art{height:32vh}.title-line{display:none}}
+/* ---- build 4: plain-language intro and glossary ---- */
+.newbox{border:1px solid var(--line);border-left:5px solid var(--orange);background:#FBF7F4;padding:14px 16px;margin:4px 0 16px;max-width:66ch}
+.newbox h3{font-family:var(--disp);font-size:19px;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
+.newbox p{font-size:15px;margin:0 0 8px}
+.glossary{margin:6px 0 0;padding:0}
+.glossary div{margin:0 0 7px;font-size:14.5px}
+.glossary dt{display:inline;font-weight:600}
+.glossary dd{display:inline;margin:0}
+
 /* ---- build footer (build number + change summary) ---- */
 .build-footer{position:fixed;left:0;right:0;bottom:0;height:28px;background:var(--evergreen-deep);color:#A9C2B3;font-family:var(--code);font-size:11.5px;padding:0 16px;z-index:55;display:flex;gap:10px;align-items:center;white-space:nowrap;overflow-x:auto}
 .build-footer .tag{color:#fff;background:var(--orange);border-radius:3px;padding:1px 6px;font-weight:600;flex-shrink:0}
@@ -542,6 +563,7 @@ body{padding-bottom:28px}
     <div class="title-name">Ballot<span>ship</span></div>
     <div class="title-sub">An election readiness exercise</div>
     <p class="title-line">Two jurisdictions. One inject at a time. Half of it is a guessing game on a hidden board, and half of it is the part that matters.</p>
+    <p class="title-line">The board game keeps it moving. The real exercise is what your team writes each round: who acts, who you tell, and the exact words that go out to voters.</p>
     <button class="btn big orange title-btn" id="btnTitleGo">Set up the exercise</button>
     <div class="title-foot" id="titleFoot">Ready for Tuesday</div>
   </div>
@@ -559,6 +581,12 @@ body{padding-bottom:28px}
   </div>
   <div class="panel">
     <div class="panel-h"><h2>Set up the exercise</h2><span class="n">FACILITATOR</span></div>
+    <div class="newbox">
+      <h3>New to Ballotship?</h3>
+      <p>The board works like the classic guessing game Battleship. Each team hides seven election sites on a 6&times;6 grid: polling places, vote centers, a sorting facility, the operations center. The other team can't see where they are. Each round the attacking team aims at a square, and the inject's <b>footprint</b> (the squares it covers) lands there. Any of your sites under it are <b>hit</b>, and a site with every square hit goes <b>offline</b> for the rest of the game. You learn hit or miss for each square, so over the rounds you can work out where the other side's sites are.</p>
+      <p>An <b>inject</b> is a scenario card: one realistic problem dropped into the exercise, like a flooded polling place or a fake text telling voters the election moved.</p>
+      <p>The board is only half of it. The other half is what your team writes in response, and that's what you review together afterward.</p>
+    </div>
     <p class="lede">Two jurisdictions, seven sites each. Every round one team plays the adversary, draws an inject and picks a target. The other team writes how it responds. Then the inject lands, and any site under it goes offline. Whoever has knocked out more of the other jurisdiction when the rounds run out wins.</p>
     <p class="lede">There are no dice. A hit is a hit. The quality of a response is judged in the debrief, not by the game.</p>
     <p class="lede">The injects run in a fixed order, the one set in the scenario workbook. Every inject carries an AI assignment: a team has to build part of its attack with an AI tool before it can commit.</p>
@@ -700,6 +728,22 @@ body{padding-bottom:28px}
         <p>It comes back on the same browser on the same machine. A different laptop, a different browser or a private window has no memory of it. Do not clear browsing data over the break.</p>
         <p>Attached files are the one thing not kept. The name and any link stay in the thread, but the file itself is gone, so paste links rather than attaching if a break is coming.</p>
         <p>Export the after-action log at the end anyway. That is the copy you keep.</p>
+        <h3 style="font-size:19px;text-transform:uppercase;margin:15px 0 7px">Words used in this exercise</h3>
+        <dl class="glossary">
+          <div><dt>Inject:</dt> <dd>a scenario card: one realistic problem dropped into the exercise.</dd></div>
+          <div><dt>Jurisdiction:</dt> <dd>the county or office each team plays.</dd></div>
+          <div><dt>Site:</dt> <dd>a place your office depends on (polling place, vote center, and so on), hidden on your grid.</dd></div>
+          <div><dt>Cell:</dt> <dd>one square on the grid.</dd></div>
+          <div><dt>Footprint:</dt> <dd>the squares an inject covers when it lands.</dd></div>
+          <div><dt>Hit / miss:</dt> <dd>whether a square in the footprint had one of your sites on it.</dd></div>
+          <div><dt>Offline:</dt> <dd>a site with every square hit, out for the rest of the game.</dd></div>
+          <div><dt>Crisis inject:</dt> <dd>hits the whole jurisdiction at once. There's no target, and you choose which two squares go down.</dd></div>
+          <div><dt>Adversary:</dt> <dd>the team playing the attacker this round.</dd></div>
+          <div><dt>Continuity statement:</dt> <dd>the actual words you'd publish to tell voters what's still open and what changed.</dd></div>
+          <div><dt>Relay code:</dt> <dd>the short code that passes a move between screens.</dd></div>
+          <div><dt>Precedent:</dt> <dd>a real event similar to the inject, shown after you respond (a setup option, on by default).</dd></div>
+          <div><dt>Debrief / retro:</dt> <dd>the review together at the end, where the written responses are discussed.</dd></div>
+        </dl>
       </div>
     </div>
   </div>
@@ -1164,6 +1208,7 @@ body{padding-bottom:28px}
     <div class="sheet-b">
 
       <h3>What this is</h3>
+      <p>An <b>inject</b> is a scenario card: one realistic problem dropped into the exercise, like a flooded polling place or a fake text telling voters the election moved.</p>
       <p>A tabletop exercise is designed to find the gaps in your planning. That is the whole product. Finding one is the exercise working, not you failing.</p>
       <p>This is a safe space. Nothing written here is an evaluation of anyone, and nothing leaves the room except the action items you decide to take with you.</p>
       <p>The goal is to walk out with renewed confidence and a short list of things to go fix.</p>
@@ -4211,8 +4256,8 @@ startClockTick();
 })();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 3</span>
-  <span>built the automatic relay (ballotship-relay.electionadminsuite.com), filled in its address, and paused polling after 30 idle minutes to keep costs down</span>
+  <span class="tag">build 4</span>
+  <span>plain-language additions: purpose line on the title screen, a "New to Ballotship?" explainer, a definition of "inject", and a glossary in the rules</span>
 </div>
 
 </body>

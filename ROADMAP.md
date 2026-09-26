@@ -13,6 +13,10 @@ _(nothing yet)_
 
 ## Backlog
 
+- **Setup screen scrolls sideways on phones.** At phone width (390 px) the "Which team is at
+  this screen" buttons (Team 1 / Team 2 / Moderator) are wider than the screen, so the setup
+  page scrolls sideways. Present since the original file (checked against build 3), found
+  during the build 4 visual check. Small layout fix: let those buttons wrap or stack.
 - **Get TJ's test suite and merge it with ours.** The page's code says a test suite of TJ's
   exists that "run[s] a whole game in under a second", but it wasn't in the uploaded file. Ask
   TJ for it. We now have our own suite in `tests/`. If TJ's turns up, merge the two and keep
@@ -49,3 +53,4 @@ _(nothing yet)_
 - **`main` made the default branch; old session branch deleted** — after build 2 (GitHub setting, no app change).
 - **Relay Worker built and live at ballotship-relay.electionadminsuite.com; idle-pause cost guardrail** — build 3.
 - **Our own automated test suite (`tests/`, 4 files, 50 checks, including a full game through the relay)** — after build 3 (tests only, no app change).
+- **Plain-language additions: purpose line, "New to Ballotship?" explainer, "inject" definition, glossary** — build 4.
