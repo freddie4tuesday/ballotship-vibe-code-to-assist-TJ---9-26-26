@@ -1,0 +1,12 @@
+// The demo video page, as its own Worker (no custom route, so the live game is untouched).
+// Copy the video in first: see README.md, "Publishing the video".
+{
+  "$schema": "../tests/node_modules/wrangler/config-schema.json",
+  "name": "ballotship-demo",
+  "account_id": "907c63834a38c160f1294cfc347a059a",
+  "compatibility_date": "2026-09-25",
+  "main": "site-worker/index.js",
+  // The video goes through site-worker first for byte-range (seeking) support.
+  "assets": { "directory": "site", "binding": "ASSETS", "run_worker_first": ["/*.mp4"] },
+  "workers_dev": true
+}

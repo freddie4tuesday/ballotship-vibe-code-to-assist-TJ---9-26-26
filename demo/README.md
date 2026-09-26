@@ -36,6 +36,23 @@ Output lands in `demo/out/`, which is not saved to git:
 `node demo/record-demo.js --dry` skips the video and saves one screenshot per caption in
 `demo/out/dry/`. Use it to check framing after a change; it takes about a minute.
 
+## Publishing the video
+
+It's hosted at **https://ballotship-demo.electionadminsuite.workers.dev**. That's a separate
+Worker (`demo/wrangler.jsonc`) with no custom route, so the live game isn't touched. The page
+is `demo/site/index.html`. The video and captions are copied in at publish time and aren't
+saved in git. `demo/site-worker/index.js` serves the video with byte-range support, which
+iPhone and Safari need to play it.
+
+```
+cp demo/out/ballotship-demo-share.mp4 demo/site/ballotship-demo.mp4   # must stay under 25 MB
+(echo WEBVTT; echo; sed -E 's/([0-9]{2}:[0-9]{2}:[0-9]{2}),([0-9]{3})/\1.\2/g' demo/out/ballotship-demo.srt) > demo/site/ballotship-demo.vtt
+cd demo && npx wrangler deploy --message "demo video"
+```
+
+The shareable copy is a smaller encode of `ballotship-demo.mp4` (CRF 28). Cloudflare's limit
+is 25 MB per file.
+
 ## How it works, and why
 
 - **`director.html`** is the stage: both teams' screens side by side (each scaled to 75%),

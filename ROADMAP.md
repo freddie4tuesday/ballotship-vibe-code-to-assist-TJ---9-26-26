@@ -18,10 +18,10 @@ _(nothing yet)_
   *taking-turns* screens instead of another simultaneous round. Found while recording the demo.
   It may be intentional, but it looks like a bug. Ask TJ before changing it, and add a test
   either way.
-- **Decide where the demo video lives.** The video is made by `demo/record-demo.js` and isn't
-  saved to git (37 MB). Options: YouTube or Ready for Tuesday's site, or served from this
-  site. Linking it from the title screen or the "New to Ballotship?" box would be an app
-  change, so it needs approval.
+- **Decide where the demo video lives long-term.** For now it's at
+  https://ballotship-demo.electionadminsuite.workers.dev (its own Worker; see `demo/README.md`).
+  Longer term: YouTube or Ready for Tuesday's site? Linking it from the title screen or the
+  "New to Ballotship?" box would be an app change, so it needs approval.
 - **Setup screen scrolls sideways on phones.** At phone width (390 px) the "Which team is at
   this screen" buttons (Team 1 / Team 2 / Moderator) are wider than the screen, so the setup
   page scrolls sideways. Present since the original file (checked against build 3), found
