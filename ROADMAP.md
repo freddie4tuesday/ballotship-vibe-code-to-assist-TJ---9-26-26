@@ -17,6 +17,11 @@ _(nothing yet)_
   this screen" buttons (Team 1 / Team 2 / Moderator) are wider than the screen, so the setup
   page scrolls sideways. Present since the original file (checked against build 3), found
   during the build 4 visual check. Small layout fix: let those buttons wrap or stack.
+  **Open question first: is Ballotship ever meant to be played on a phone?** It's designed
+  around laptops and shared screens in a room (team screens, a moderator screen, a
+  "one screen, passed" laptop mode), so a phone may never be used, and this may not be worth
+  fixing. Confirm with TJ / Ready for Tuesday. If phones are out of scope, say so in the summary
+  and move this to Ideas; if a facilitator might set up or follow along on a phone, fix it.
 - **Get TJ's test suite and merge it with ours.** The page's code says a test suite of TJ's
   exists that "run[s] a whole game in under a second", but it wasn't in the uploaded file. Ask
   TJ for it. We now have our own suite in `tests/`. If TJ's turns up, merge the two and keep
