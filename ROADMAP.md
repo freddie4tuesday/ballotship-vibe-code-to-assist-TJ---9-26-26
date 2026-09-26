@@ -13,17 +13,7 @@ _(nothing yet)_
 
 ## Backlog
 
-- **Relay Worker (build our own).** The setup screen's optional relay says to use "the
-  Cloudflare Worker from `worker/`", but that folder wasn't part of the uploaded file. Planned
-  design: a small Worker + Durable Object in `worker/`, at `ballotship-relay.electionadminsuite.com`
-  (needs its own specific route, like ballotship), matching the page's existing `/send` and
-  `/poll` calls, so no rewrite of the game. Cost guardrails: stop polling when a tab is hidden or
-  idle for 30 minutes; a per-room request limit. Estimated cost: 3,000–5,000 requests per
-  2-hour, 3-screen session (worst case ~14,400); $0 on Cloudflare's free plan (100,000/day), about
-  $0.002 per session past the paid plan's included amount. Avoid an always-open WebSocket without
-  hibernation, which bills every connected second and is the likely cause of an earlier costly
-  relay. Confirm with TJ what that setup was before building. Room auto-delete is deliberately
-  NOT included; see Ideas.
+_(nothing yet)_
 
 ## Ideas / maybe
 
@@ -51,3 +41,4 @@ _(nothing yet)_
 - **GitHub push access restored; work saved on `main`** — build 2.
 - **End-to-end pipeline test** — build 2.
 - **`main` made the default branch; old session branch deleted** — after build 2 (GitHub setting, no app change).
+- **Relay Worker built and live at ballotship-relay.electionadminsuite.com; idle-pause cost guardrail** — build 3.

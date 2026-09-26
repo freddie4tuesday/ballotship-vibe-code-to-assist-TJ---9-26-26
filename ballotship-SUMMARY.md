@@ -1,9 +1,10 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 2
+**Current version:** build 3
 **Live at:** https://ballotship.electionadminsuite.com
-**Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), and the
-deploy config (`wrangler.jsonc`, `.assetsignore`)
+**Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
+**Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
+deploy config (`wrangler.jsonc`, `.assetsignore`), and `worker/` (the relay)
 
 ---
 
@@ -61,6 +62,30 @@ Every change gets a **build number**, recorded in three places that always agree
   build number in the log and footer, and deploy. The history then shows both the change and
   its reversal.
 
+## The relay (`worker/`)
+
+An optional mailbox that passes codes, chat and small attachments between screens in
+different buildings, so nobody has to read codes aloud. It decides nothing; the game runs in
+the browser, and if the relay is unreachable the page says so and teams read codes out instead.
+
+- **How it works:** one Durable Object per room name, each with its own SQLite table.
+  `POST /room/<room>/send` stores a message; `GET /room/<room>/poll?since=N&as=t1|t2|mod`
+  returns newer messages, leaving out the asker's own (the moderator gets everything).
+- **Cost:** plain requests only, so an idle room costs nothing. About 3,000–5,000 requests per
+  2-hour, 3-screen session (worst case ~14,400). That's $0 on Cloudflare's free plan
+  (100,000/day), or about $0.002 a session beyond the paid plan's included amount.
+- **Guardrails:**
+  - The page polls fast only while waiting or chatting, slows down when the tab is hidden,
+    and stops after 30 idle minutes. The next click catches up, so nothing is lost.
+  - The Worker refuses more than 400 requests a minute for one room, caps a room at 5,000
+    messages, and caps a message at 1.5 MB.
+- **Not included on purpose:** rooms are never auto-deleted. See ROADMAP.md, Ideas, for why it
+  should be considered.
+- **Deploy:** from `worker/`, run `npx wrangler deploy --message "build N"`.
+- **Don't** switch it to always-open WebSocket connections without Cloudflare's hibernation
+  feature. Those bill for every connected second and are the likely cause of an earlier costly
+  relay.
+
 ## Deploying
 
 From the repo root, with a Cloudflare API token in `CLOUDFLARE_API_TOKEN`:
@@ -70,13 +95,15 @@ npx wrangler deploy --message "build N"
 ```
 
 `wrangler.jsonc` holds the account, the custom domain, and the routes. `.assetsignore` keeps the
-markdown files and config off the live site, so only `index.html` is served.
+markdown files, config and `worker/` off the live site, so only `index.html` is served. The
+relay deploys separately, from `worker/` (see above).
 
 **Routing gotcha:** `electionadminsuite.com` has a wildcard route,
 `*.electionadminsuite.com/*`, that sends every subdomain to `poll-worker-system`. Ballotship
 needs its own specific route, `ballotship.electionadminsuite.com/*`, or the poll-worker app
 answers with "Unknown jurisdiction". Ballot Proofing Workbench uses the same fix. The route is
-declared in `wrangler.jsonc`, so a normal deploy keeps it in place.
+declared in `wrangler.jsonc`, so a normal deploy keeps it in place. The relay,
+`ballotship-relay.electionadminsuite.com`, has its own specific route for the same reason.
 
 ---
 
@@ -105,7 +132,7 @@ Carried over from Ballot Proofing Workbench:
 
 ## Suggested opening prompt for a Claude chat
 
-> Attached is a single-file browser app (Ballotship, build 2), its summary, and its roadmap.
+> Attached is a single-file browser app (Ballotship, build 3), its summary, and its roadmap.
 > The build log is in the HTML comment at the top of the file — please read it before
 > proposing changes. Each change should get the next build number in the log and the footer.
 > I'd like to work on [X].

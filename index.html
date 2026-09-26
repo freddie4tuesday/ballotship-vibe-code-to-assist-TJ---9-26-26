@@ -16,6 +16,24 @@
         flows end to end. Checked locally in Chromium (no page errors, footer shows build 2),
         deployed with message "build 2", confirmed the live page matches this file byte for
         byte, and saved to GitHub on the new main branch. No app changes.
+  build 3  Built the relay, requested directly. The setup screen pointed to "the Cloudflare
+        Worker from worker/", but that folder never came with the file, so the automatic relay
+        had nowhere to connect. New worker/ folder: a small Worker + Durable Object (one SQLite
+        mailbox per room) at https://ballotship-relay.electionadminsuite.com, answering the
+        page's existing /send and /poll calls unchanged. Poll leaves out the asking screen's own
+        messages and gives the moderator everything; a per-room limit (400 requests a minute)
+        stops a runaway tab. Plain HTTP only, no held-open connections, so an idle room costs
+        nothing. Rooms are deliberately not auto-deleted (see ROADMAP.md). Page changes: the
+        relay address is filled in already; polling drops to the idle rate while the tab is
+        hidden; and after 30 minutes with no click or key press on a screen, polling stops
+        until the next touch, which then collects everything sent in between. That closes the
+        one way this relay could quietly run up requests: a tab left open mid-game polling
+        every 15 seconds forever. Verified with three browser screens (team 1, team 2,
+        moderator) against a local copy of the relay: both attacks crossed and reached the
+        other team's defense screen, chat reached the other team and the moderator, the idle
+        pause stopped polling and one click caught up on a message sent while paused, no page
+        errors. The live relay was then checked directly (send, poll, own-message filtering,
+        CORS), and the neighboring electionadminsuite.com sites still load.
 -->
 <html lang="en">
 <head>
@@ -587,8 +605,8 @@ body{padding-bottom:28px}
       <div class="two" id="onlineFields" hidden>
         <div class="field">
           <label class="fl" for="relayUrl">Relay address</label>
-          <input type="text" id="relayUrl" placeholder="https://ballotship-relay.yourname.workers.dev" autocomplete="off" spellcheck="false">
-          <div class="hint">The Cloudflare Worker from <span class="mono">worker/</span>. Same address on both devices.</div>
+          <input type="text" id="relayUrl" value="https://ballotship-relay.electionadminsuite.com" placeholder="https://ballotship-relay.electionadminsuite.com" autocomplete="off" spellcheck="false">
+          <div class="hint">The Cloudflare Worker from <span class="mono">worker/</span>, filled in already. Same address on both devices.</div>
         </div>
         <div class="field">
           <label class="fl" for="relayRoom">Room name</label>
@@ -2245,6 +2263,7 @@ function pollMs() {
   var v = window.BALLOTSHIP_POLL_MS;
   if (typeof v === "number" && v > 0) return v;
   if (!G) return POLL_IDLE;
+  if (document.hidden) return POLL_IDLE;                           /* build 3: nobody is looking */
   if (G.expect) return POLL_FAST;                                  /* turn-taking: waiting on a code */
   if (G.simPhase === "waitAttack" || G.simPhase === "waitResult") return POLL_FAST;
   if (G.me === "mod") return POLL_MOD;                             /* watching, so a few seconds late is fine */
@@ -2296,8 +2315,24 @@ function startRelay() {
   if (!relayOn() || !G || G.over) return;
   relayLoop();
 }
+/* build 3 — a tab left open mid-game used to poll every 15 seconds forever,
+   which is the one way this relay could quietly run up requests. After 30
+   minutes with no key press or click on this screen, polling stops. Nothing is
+   lost: the relay keeps every message, and the first touch picks them all up. */
+var IDLE_PAUSE_MS = 30 * 60 * 1000, lastActivity = Date.now(), pollPaused = false;
+function noteActivity() {
+  lastActivity = Date.now();
+  if (pollPaused) { pollPaused = false; relayStatus(null, false); pollNow(); }
+}
+["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, noteActivity, true); });
+document.addEventListener("visibilitychange", function () { if (!document.hidden) noteActivity(); });
 function relayLoop() {
   if (!relayOn() || !G || G.over) return;
+  if (Date.now() - lastActivity > IDLE_PAUSE_MS) {
+    pollPaused = true;
+    relayStatus("Relay paused after 30 minutes with no activity on this screen. Click anywhere to catch up.", false);
+    return;
+  }
   var url = relayBase() + "/poll?since=" + (G.relay.cursor || 0) + "&as=" + G.me;
   window.fetch(url).then(function (r) {
     return r.json().then(function (b) {
@@ -4176,8 +4211,8 @@ startClockTick();
 })();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 2</span>
-  <span>pipeline test: build number incremented to confirm changes deploy and save end to end; no app changes</span>
+  <span class="tag">build 3</span>
+  <span>built the automatic relay (ballotship-relay.electionadminsuite.com), filled in its address, and paused polling after 30 idle minutes to keep costs down</span>
 </div>
 
 </body>
