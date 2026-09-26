@@ -1,0 +1,12 @@
+{
+  "name": "ballotship-tests",
+  "private": true,
+  "description": "Browser tests for Ballotship. Run: npm install, then npm test.",
+  "scripts": {
+    "test": "node run-all.js"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1",
+    "wrangler": "^4"
+  }
+}

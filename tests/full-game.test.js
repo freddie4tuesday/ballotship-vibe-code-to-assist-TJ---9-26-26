@@ -1,0 +1,101 @@
+/*
+  Full game through the relay: team 1, team 2 and a moderator play a 4-round
+  simultaneous game start to finish. Each round both teams aim, write an
+  attack, commit, receive the other's attack, write a response (choosing
+  cells on a jurisdiction-wide crisis inject), commit, and go to the next
+  round. Checks the game ends on every screen, all screens agree on the
+  winner, the boards agree across screens, and nothing throws.
+*/
+const { reporter, withRelay, launch, setupScreens, screenOn } = require("./helpers");
+
+async function fillForm(p, formSel) {
+  const fields = await p.$$(formSel + " textarea, " + formSel + " input[type=text]");
+  for (const f of fields) if (await f.isVisible()) await f.fill("Automated test entry, written by the full-game test.");
+}
+
+async function pickAim(p) {
+  if (!(await p.isVisible("#aimSheet"))) return false;
+  const cells = await p.$$("#aimGrid button.cell.pick");
+  await cells[Math.floor(Math.random() * cells.length)].click();
+  await p.click("#btnAimOk");
+  return true;
+}
+
+/* One step for one team's screen. Returns a short label of what it did. */
+async function step(p) {
+  if (await pickAim(p)) return "aimed";
+  const s = await screenOn(p);
+  if (s === "screen-sim-attack") {
+    if (!(await p.isVisible("#saCrisis")) && (await p.$eval("#saAim", e => /pick|choose|aim/i.test(e.textContent)).catch(() => false))) {
+      const b = await p.$("#saAim button"); if (b) { await b.click(); if (await pickAim(p)) return "aimed"; }
+    }
+    await fillForm(p, "#saForm");
+    await p.click("#btnSaCommit");
+    return "attack";
+  }
+  if (s === "screen-sim-defense") {
+    await p.evaluate(() => { const s = document.querySelector(".sheet:not([hidden]):not(#aimSheet)"); if (s) s.hidden = true; });
+    await fillForm(p, "#sdForm");
+    const need = await p.evaluate(() => (G.R && G.R.card && G.R.card.crisis) ? G.R.resp.need - G.R.resp.pick.length : 0);
+    if (need > 0) {
+      const cells = await p.$$("#sdGrid button:not([disabled])");
+      for (let i = 0, got = 0; i < cells.length && got < need; i++) {
+        await cells[i].click();
+        got = await p.evaluate(() => G.R.resp.pick.length) - (await p.evaluate(() => G.R.resp.need)) + need;
+      }
+    }
+    await p.click("#btnSdCommit");
+    return "response";
+  }
+  if (s === "screen-sim-resolve") { await p.click("#btnSrNext"); return "next"; }
+  return s;
+}
+
+(async () => {
+  const r = reporter("Full game (4 rounds, three screens, through the relay)");
+  let browser;
+  try {
+    await withRelay(async relay => {
+      browser = await launch();
+      const { pages, errors } = await setupScreens(browser, relay, ["t1", "t2", "mod"], { rounds: 4, pollMs: 150 });
+      const end = Date.now() + 180000;
+      const seen = { t1: new Set(), t2: new Set() };
+      while (Date.now() < end) {
+        const over = (await screenOn(pages.t1)) === "screen-over" && (await screenOn(pages.t2)) === "screen-over";
+        if (over) break;
+        for (const side of ["t1", "t2"]) {
+          const did = await step(pages[side]).catch(e => "error: " + e.message.split("\n")[0]);
+          seen[side].add(did);
+        }
+        await pages.t1.waitForTimeout(250);
+      }
+      for (const side of ["t1", "t2"]) {
+        r.check(side + " reaches the end of the game", (await screenOn(pages[side])) === "screen-over",
+          "stuck on " + (await screenOn(pages[side])) + "; saw " + [...seen[side]].join(", "));
+      }
+      const res = {};
+      for (const side of ["t1", "t2", "mod"]) {
+        res[side] = await pages[side].evaluate(() => ({
+          over: G.over, winner: G.winner, why: G.why, round: G.round, max: G.maxRounds,
+          down: { t1: G.teams.t1.cellsDown, t2: G.teams.t2.cellsDown },
+        }));
+      }
+      r.check("played every round", res.t1.round >= 4, "ended at round " + res.t1.round);
+      r.check("both teams agree on the winner", res.t1.winner === res.t2.winner && res.t1.why === res.t2.why,
+        JSON.stringify([res.t1.winner, res.t1.why, res.t2.winner, res.t2.why]));
+      r.check("both teams agree on the damage to each board",
+        JSON.stringify(res.t1.down) === JSON.stringify(res.t2.down), JSON.stringify([res.t1.down, res.t2.down]));
+      r.check("the moderator saw both teams' traffic", await pages.mod.evaluate(() =>
+        G.thread.some(m => m.kind === "attack") && G.thread.some(m => m.kind === "response")));
+      r.check("polling stops once the game is over", await pages.t1.evaluate(() => G.over && !pollTimer));
+      r.check("no JavaScript errors on any screen", errors.length === 0, errors.join("; "));
+      console.log("        result: winner " + (res.t1.winner || "tie") + " by " + res.t1.why +
+        ", cells down " + JSON.stringify(res.t1.down));
+    });
+  } catch (e) {
+    r.fail("test crashed", e.message);
+  } finally {
+    if (browser) await browser.close();
+  }
+  process.exit(r.failures ? 1 : 0);
+})();

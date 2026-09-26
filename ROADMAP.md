@@ -13,13 +13,13 @@ _(nothing yet)_
 
 ## Backlog
 
-- **Get TJ's test suite and add it to this repo.** The page's code says a test suite exists that
-  "run[s] a whole game in under a second" (via the `window.BALLOTSHIP_POLL_MS` setting), but it
-  wasn't part of the uploaded file. Ask TJ for it. Why it matters: every build is currently
-  checked by hand (a browser pass, plus a three-screen relay test for build 3); an automated
-  full-game test would catch a broken rule, screen or relay handoff before it goes live, and
-  gives Ready for Tuesday a safety net after handback. If TJ no longer has it, build a new one
-  starting from the three-screen relay test used in build 3.
+- **Get TJ's test suite and merge it with ours.** The page's code says a test suite of TJ's
+  exists that "run[s] a whole game in under a second", but it wasn't in the uploaded file. Ask
+  TJ for it. We now have our own suite in `tests/`. If TJ's turns up, merge the two and keep
+  the best of both, following the steps in `tests/README.md`.
+- **Widen test coverage.** Not tested yet: turn-taking and one-screen modes, codes typed by
+  hand, resuming after closing the tab, the AI-artifact requirement, the precedent reveal,
+  timed auto-commit, and sudden death. Add these over time, or take them from TJ's suite.
 
 ## Ideas / maybe
 
@@ -48,3 +48,4 @@ _(nothing yet)_
 - **End-to-end pipeline test** — build 2.
 - **`main` made the default branch; old session branch deleted** — after build 2 (GitHub setting, no app change).
 - **Relay Worker built and live at ballotship-relay.electionadminsuite.com; idle-pause cost guardrail** — build 3.
+- **Our own automated test suite (`tests/`, 4 files, 50 checks, including a full game through the relay)** — after build 3 (tests only, no app change).

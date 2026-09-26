@@ -4,7 +4,7 @@
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
-deploy config (`wrangler.jsonc`, `.assetsignore`), and `worker/` (the relay)
+deploy config (`wrangler.jsonc`, `.assetsignore`), `worker/` (the relay), and `tests/`
 
 ---
 
@@ -85,6 +85,14 @@ the browser, and if the relay is unreachable the page says so and teams read cod
 - **Don't** switch it to always-open WebSocket connections without Cloudflare's hibernation
   feature. Those bill for every connected second and are the likely cause of an earlier costly
   relay.
+
+## Tests (`tests/`)
+
+Run `npm test` from `tests/` before every deploy. The first time, run `npm install` and
+`npx playwright install chromium` first. It plays a whole 4-round game across three browser
+screens through a local copy of the relay, checks the relay's rules, and checks that the build
+number agrees across the log, footer and summary. See `tests/README.md` for what's covered and
+what isn't yet, and how to merge in TJ's test suite if it turns up.
 
 ## Deploying
 
