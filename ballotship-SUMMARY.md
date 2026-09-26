@@ -128,6 +128,8 @@ declared in `wrangler.jsonc`, so a normal deploy keeps it in place. The relay,
 
 ### Development conventions worth preserving
 
+The full set, written to reuse across projects, is in `DOCUMENTATION-BEST-PRACTICES.md`.
+
 Carried over from Ballot Proofing Workbench:
 
 - One build number per change, logged at the top of the file and shown in the footer.
