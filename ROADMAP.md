@@ -9,8 +9,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Make `main` the default branch on GitHub.** Settings → Default branch → switch to `main`,
-  then delete the old `claude/eloquent-goldberg-yocftd` branch (same content as build 1).
+_(nothing yet)_
 
 ## Backlog
 
@@ -35,3 +34,4 @@ _(nothing yet)_
 - **Build number footer and change log** — build 1.
 - **GitHub push access restored; work saved on `main`** — build 2.
 - **End-to-end pipeline test** — build 2.
+- **`main` made the default branch; old session branch deleted** — after build 2 (GitHub setting, no app change).
