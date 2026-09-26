@@ -16,13 +16,13 @@ _(nothing yet)_
 - **Relay Worker source.** The setup screen's optional relay says to use "the Cloudflare Worker
   from `worker/`", but that folder wasn't part of the uploaded file. Add its source to this repo
   and deploy it, or hide the relay option until it exists.
-- **Host the board art ourselves.** The board image is hotlinked from a readyfortuesday.com
-  WordPress upload. If that file moves, the board goes plain. Copy it into this repo and serve
-  it alongside `index.html`.
 
 ## Ideas / maybe
 
-_(nothing yet)_
+- **Host the board art ourselves (someday, not soon).** The board image is loaded from a
+  readyfortuesday.com upload; if that file moves, the board goes plain (the game still works).
+  Low priority: this project is going back to Ready for Tuesday, and linking to their copy keeps
+  the image under their control. Revisit only if the link breaks or before a high-stakes session.
 
 ---
 
