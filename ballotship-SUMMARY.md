@@ -7,6 +7,11 @@ deploy config (`wrangler.jsonc`, `.assetsignore`)
 
 ---
 
+> **Branding: keep Ready for Tuesday.** This project is built on Ready for Tuesday's behalf.
+> Do not remove or replace its branding (the "Ready for Tuesday" title-screen line, the board art
+> from readyfortuesday.com, colors, or fonts). This differs from Ballot Proofing Workbench, which
+> dropped that branding in its build 35. Don't carry that change over.
+
 ## What it is
 
 A single-file browser exercise for election offices, played like Battleship. Two teams each
@@ -92,6 +97,7 @@ Carried over from Ballot Proofing Workbench:
 - Each log entry says what prompted the change and how it was verified, not just what changed.
 - Prove a bug is real before fixing it.
 - Ask rather than guess when the missing information isn't in the source material.
+- Keep the Ready for Tuesday branding (see the note at the top).
 
 ---
 

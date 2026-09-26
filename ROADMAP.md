@@ -19,8 +19,6 @@ _(nothing yet)_
 - **Host the board art ourselves.** The board image is hotlinked from a readyfortuesday.com
   WordPress upload. If that file moves, the board goes plain. Copy it into this repo and serve
   it alongside `index.html`.
-- **Decide on branding.** The title screen still says "Ready for Tuesday". Ballot Proofing
-  Workbench removed that branding in build 35; decide whether Ballotship should match.
 
 ## Ideas / maybe
 
