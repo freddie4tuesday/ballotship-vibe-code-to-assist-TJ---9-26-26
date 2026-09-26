@@ -1,0 +1,51 @@
+<!doctype html>
+<!-- Stage for the demo recording: both teams' screens side by side, a caption bar,
+     and full-screen title cards. Driven by record-demo.js; not part of the app. -->
+<html><head><meta charset="utf-8"><title>Ballotship demo stage</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;width:1920px;height:1080px;overflow:clip;background:#0F3329;font-family:'IBM Plex Sans',system-ui,sans-serif}
+  .labels{display:flex;height:44px}
+  .labels div{flex:1;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-weight:700;font-size:26px;letter-spacing:.08em;text-transform:uppercase;color:#fff}
+  .labels .t1{background:#1B4D3E}.labels .t2{background:#22493E;border-left:2px solid #E4572E}
+  .frames{display:flex;height:856px;background:#E6EAE4;overflow:clip}
+  .slot{width:960px;height:856px;overflow:clip;position:relative}
+  /* clip, not hidden: highlighting a field inside a team's screen must not scroll the stage itself */
+  .slot+.slot{border-left:2px solid #E4572E}
+  .slot iframe{width:1280px;height:1142px;border:0;transform:scale(.75);transform-origin:0 0;background:#fff}
+  .cap{height:180px;box-sizing:border-box;display:flex;align-items:center;padding:0 60px;background:#0E1F1A;border-top:5px solid #E4572E;position:relative}
+  /* Timing mark: its shade encodes the caption number, so the voice can be placed
+     exactly when each caption appears in the finished video. Painted over afterwards. */
+  #sync{position:fixed;right:0;bottom:0;width:16px;height:16px;background:#000;z-index:100}   /* above the title card too */
+  .cap p{margin:0;color:#fff;font-size:34px;line-height:1.35;font-weight:500;transition:opacity .25s}
+  .cap b{color:#FFB199;font-weight:600}
+  .card{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0F3329;color:#fff;text-align:center;opacity:0;pointer-events:none;transition:opacity .5s;padding:0 200px}
+  .card.on{opacity:1}
+  .card h1{margin:0;font-family:'Barlow Condensed','Arial Narrow',sans-serif;font-size:150px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+  .card h1 span{color:#E4572E}
+  .card p{font-size:40px;line-height:1.4;margin:30px 0 0;color:#DCE8DF}
+  .card .foot{font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:#8FA99A;margin-top:40px}
+</style></head><body>
+<div class="labels"><div class="t1">Ashwood County &middot; Team 1</div><div class="t2">Calder County &middot; Team 2</div></div>
+<div class="frames">
+  <div class="slot"><iframe id="f1"></iframe></div>
+  <div class="slot"><iframe id="f2"></iframe></div>
+</div>
+<div class="cap"><p id="cap"></p><div id="sync"></div></div>
+<div class="card" id="card"><h1>Ballot<span>ship</span></h1><p id="cardText"></p><div class="foot">Ready for Tuesday</div></div>
+<script>
+  var q = new URLSearchParams(location.search);
+  document.getElementById("f1").src = q.get("f1");
+  document.getElementById("f2").src = q.get("f2");
+  window.setCaption = function (html, n) {
+    var el = document.getElementById("cap");
+    el.style.opacity = 0;
+    setTimeout(function () {
+      el.innerHTML = html; el.style.opacity = 1;
+      var v = 10 + 9 * (n || 0); document.getElementById("sync").style.background = "rgb(" + v + "," + v + "," + v + ")";
+    }, 250);
+  };
+  window.showCard = function (html) { document.getElementById("cardText").innerHTML = html; document.getElementById("card").classList.add("on"); };
+  window.hideCard = function () { document.getElementById("card").classList.remove("on"); };
+</script>
+</body></html>

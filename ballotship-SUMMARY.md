@@ -4,7 +4,7 @@
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
-deploy config (`wrangler.jsonc`, `.assetsignore`), `worker/` (the relay), and `tests/`
+deploy config (`wrangler.jsonc`, `.assetsignore`), `worker/` (the relay), `tests/`, and `demo/`
 
 ---
 
@@ -85,6 +85,12 @@ the browser, and if the relay is unreachable the page says so and teams read cod
 - **Don't** switch it to always-open WebSocket connections without Cloudflare's hibernation
   feature. Those bill for every connected second and are the likely cause of an earlier costly
   relay.
+
+## Demo video (`demo/`)
+
+A 4-minute narrated walkthrough of one game, made by `demo/record-demo.js`. The video isn't in
+git; re-record it after any change to how the game looks. See `demo/README.md` for how,
+and ROADMAP.md for where it should live.
 
 ## Tests (`tests/`)
 

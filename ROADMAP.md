@@ -13,6 +13,15 @@ _(nothing yet)_
 
 ## Backlog
 
+- **Question for TJ: sudden death in simultaneous mode.** When a simultaneous game ends in a
+  tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
+  *taking-turns* screens instead of another simultaneous round. Found while recording the demo.
+  It may be intentional, but it looks like a bug. Ask TJ before changing it, and add a test
+  either way.
+- **Decide where the demo video lives.** The video is made by `demo/record-demo.js` and isn't
+  saved to git (37 MB). Options: YouTube or Ready for Tuesday's site, or served from this
+  site. Linking it from the title screen or the "New to Ballotship?" box would be an app
+  change, so it needs approval.
 - **Setup screen scrolls sideways on phones.** At phone width (390 px) the "Which team is at
   this screen" buttons (Team 1 / Team 2 / Moderator) are wider than the screen, so the setup
   page scrolls sideways. Present since the original file (checked against build 3), found
@@ -32,6 +41,9 @@ _(nothing yet)_
 
 ## Ideas / maybe
 
+- **"Watch a demo" button in the game (Option B).** A self-playing walkthrough built into
+  Ballotship, so it never goes out of date. Bigger than the video. Decide after seeing which
+  parts of the video people still find confusing.
 - **Auto-delete relay rooms after a set time (e.g. 24 hours) — consider, not decided.** Left
   out of the relay on purpose for now. Why it's worth considering: the exercise asks teams to
   make convincing fake material (spoofed alerts, fake headlines, voice memos), and the game's own
@@ -59,3 +71,4 @@ _(nothing yet)_
 - **Relay Worker built and live at ballotship-relay.electionadminsuite.com; idle-pause cost guardrail** — build 3.
 - **Our own automated test suite (`tests/`, 4 files, 50 checks, including a full game through the relay)** — after build 3 (tests only, no app change).
 - **Plain-language additions: purpose line, "New to Ballotship?" explainer, "inject" definition, glossary** — build 4.
+- **Narrated demo video (4:15, voiceover, subtitles) and the tools to re-record it (`demo/`)** — after build 4 (no app change).
