@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 1
+**Current version:** build 2
 **Live at:** https://ballotship.electionadminsuite.com
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), and the
 deploy config (`wrangler.jsonc`, `.assetsignore`)
@@ -97,7 +97,7 @@ Carried over from Ballot Proofing Workbench:
 
 ## Suggested opening prompt for a Claude chat
 
-> Attached is a single-file browser app (Ballotship, build 1), its summary, and its roadmap.
+> Attached is a single-file browser app (Ballotship, build 2), its summary, and its roadmap.
 > The build log is in the HTML comment at the top of the file — please read it before
 > proposing changes. Each change should get the next build number in the log and the footer.
 > I'd like to work on [X].

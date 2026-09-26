@@ -12,6 +12,10 @@
         (*.electionadminsuite.com/* -> poll-worker-system), so this subdomain needs its own
         specific route (ballotship.electionadminsuite.com/* -> ballotship) or the poll-worker
         app answers with "Unknown jurisdiction". Both live in wrangler.jsonc.
+  build 2  Pipeline test, requested directly: incremented the build number to confirm a change
+        flows end to end. Checked locally in Chromium (no page errors, footer shows build 2),
+        deployed with message "build 2", confirmed the live page matches this file byte for
+        byte, and saved to GitHub on the new main branch. No app changes.
 -->
 <html lang="en">
 <head>
@@ -4172,8 +4176,8 @@ startClockTick();
 })();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 1</span>
-  <span>first live publish at ballotship.electionadminsuite.com; recovered the page source from a TextEdit export; added this build footer</span>
+  <span class="tag">build 2</span>
+  <span>pipeline test: build number incremented to confirm changes deploy and save end to end; no app changes</span>
 </div>
 
 </body>
