@@ -3,6 +3,72 @@
 How to document a project so that anyone — you in six months, a colleague, a client you hand it
 back to, or a new Claude chat — can understand it, change it safely, and undo a change.
 
+> **How to use this file:** open a chat in any project, attach or paste this file, and say
+> *"Read this and improve our documentation."* Claude follows the instructions below.
+
+---
+
+## Instructions for Claude
+
+When someone gives you this file and asks you to apply it, improve the project's documentation,
+or similar, work through these steps in order. The rest of this file is the standard you are
+applying.
+
+### Step 1. Survey first, change nothing yet
+
+- Read the project: the main files, any existing `CLAUDE.md`, README, summary, changelog, roadmap,
+  tests, and deploy config. Check the git log for how versions have been tracked so far.
+- Check each of the six pieces in **The checklist** below: missing, partial, or already fine?
+- Note anything the code or docs mention that isn't actually in the project (a folder, a test
+  suite, a document).
+- Note the project's existing conventions and branding. Build on them rather than replacing
+  them.
+
+### Step 2. Report and confirm the plan
+
+Show the person a short table: each checklist item, what exists now, and what you propose to
+add. List separately anything that would **change the app itself**, such as adding a footer,
+changing text on screen, or changing code behavior. Then wait for them to confirm.
+Documentation-only files (summary, roadmap, `CLAUDE.md`, code comments that change no behavior)
+can go ahead once the plan is approved.
+
+### Step 3. Add the documentation (no app changes)
+
+1. **`CLAUDE.md`:** add the **Standing rules for this project** block from the end of this file.
+   If a `CLAUDE.md` already exists, add the block as a new section and keep everything already
+   there. Replace `<project>` with the real name.
+2. **Copy this file** into the project as `DOCUMENTATION-BEST-PRACTICES.md`, so the `CLAUDE.md`
+   reference resolves.
+3. **Summary file:** create `<project>-SUMMARY.md` from section 1, or bring an existing one up to
+   it. Fill it with facts from the code, not placeholders. Anything you don't know goes under
+   "Open questions".
+4. **Roadmap:** create `ROADMAP.md` from section 2. Seed it with the gaps from Step 1: missing
+   pieces, things referenced but not included, missing tests, and the app changes from Step 2
+   that haven't been approved yet.
+5. **"Why" comments:** add them only where you can state the reason with confidence from the
+   code, the git history, or the person. Never invent history. If you can't tell why something
+   was done, add it to the roadmap as a question instead.
+6. **Tests:** if there are none, propose a first end-to-end test and a build-number consistency
+   test (section 6). Add them once approved.
+
+### Step 4. App changes, only with approval
+
+A build footer, a build log header, new on-screen text, glossary or definitions are all app
+changes. Do them only after the person approves, as the next build number, following
+section 3.
+
+### Rules while doing this
+
+- **Never remove or change branding** (names, logos, colors, fonts, credits) unless the person
+  explicitly asks.
+- **Never deploy or publish** without the person's go-ahead. Commit and push only in the way
+  the project already works, or as the person asks.
+- **Don't overwrite or delete existing documentation.** Merge into it and keep its history.
+- **Commit docs-only work separately** from app changes, and say "docs only; no new build
+  number" in the commit message.
+- **Finish with a short report:** what you added, what's waiting on approval, and what went on
+  the roadmap.
+
 Learned on Ballotship by combining two approaches:
 
 - **TJ's (in the code):** comments that explain *why* the code is the way it is, including what
@@ -183,22 +249,24 @@ Most users will never open a separate document. The app has to explain itself.
 
 ## Adding this to an existing project
 
-1. Copy this file into the project.
-2. Create `<project>-SUMMARY.md` and `ROADMAP.md` from the outlines above.
-3. Add the footer and a build log. If the project already has versions, start the log at the
-   current one and note that earlier history wasn't recorded.
-4. Read through the main code and add "why" comments where a decision isn't obvious,
-   especially anything that was fixed after a real failure.
-5. Add at least one end-to-end test and the build-number consistency test.
-6. Paste the block below into the project's `CLAUDE.md`, so Claude follows these practices
-   there automatically.
+Open a chat in the project, attach this file, and say *"Read this and improve our
+documentation."* Claude follows **Instructions for Claude** at the top: it surveys the project,
+proposes a plan, adds the documentation, and asks before touching the app.
+
+To do it by hand instead, follow the same steps yourself.
 
 ---
 
-## Paste into a project's CLAUDE.md
+## Standing rules for this project (block for CLAUDE.md)
+
+Claude adds this to the project's `CLAUDE.md` in Step 3. `CLAUDE.md` is read automatically at
+the start of every Claude session in that project, so these rules keep applying without
+anyone repeating them.
 
 ```markdown
-## Documentation rules (see DOCUMENTATION-BEST-PRACTICES.md)
+## Documentation rules
+
+Full standard: DOCUMENTATION-BEST-PRACTICES.md in this project.
 
 - Every app change gets the next build number, updated in four places that must agree: the
   build log comment at the top of the main file, the footer, the commit title ("Build N: ..."),
