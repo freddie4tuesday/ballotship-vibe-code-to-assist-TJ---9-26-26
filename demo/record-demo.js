@@ -484,9 +484,12 @@ const CRISIS_STATEMENT = "Severe weather has closed two voting sites. All other 
         const chains = spoken.map((v, i) => "[" + (i + 1) + ":a]adelay=" + Math.max(0, v.at) + "|" + Math.max(0, v.at) + "[a" + i + "]");
         const mix = spoken.map((v, i) => "[a" + i + "]").join("") + "amix=inputs=" + spoken.length + ":normalize=0[aout]";
         const mp4 = path.join(OUT, "ballotship-demo.mp4");
-        args.push("-filter_complex", chains.join(";") + ";" + mix, "-map", "0:v", "-map", "[aout]", "-vf", "drawbox=x=1900:y=1060:w=20:h=20:color=0x0E1F1A:t=fill",
+        args.push("-filter_complex", chains.join(";") + ";" + mix + ";[aout]loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[afinal]", "-map", "0:v", "-map", "[afinal]", "-vf", "drawbox=x=1900:y=1060:w=20:h=20:color=0x0E1F1A:t=fill",
           "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "23", "-preset", "medium",
-          "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", mp4);
+          // Standard 48 kHz stereo at online-video loudness: the voice comes out of Piper as
+          // 22 kHz mono, which some phone and in-app players won't play.
+          "-ac", "2", "-ar", "48000",
+          "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", mp4);
         execFileSync(ff, args);
         // Subtitles, timed to the voice.
         const ts = ms => { const h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60, s2 = Math.floor(ms / 1000) % 60, x = ms % 1000;
