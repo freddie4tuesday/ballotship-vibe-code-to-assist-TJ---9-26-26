@@ -15,8 +15,8 @@ async function fillForm(p, formSel) {
 
 /* Shots are scripted, not random: team 1 always aims where the other county has a site
    (a hit) and team 2 always aims at empty water (a miss). Random shots tie now and then,
-   and a tied simultaneous game goes into sudden death on the taking-turns screens (a
-   question for TJ, on the roadmap), which this test isn't about and can't drive. */
+   and a tied game used to go into a sudden-death round the test couldn't drive (removed in build 18:
+   a tie is now a draw). Scripting them keeps the result the same every run. */
 let PAGES = null;
 async function aimLabel(p) {
   const me = await p.evaluate(() => G.me), other = me === "t1" ? "t2" : "t1";
@@ -118,7 +118,7 @@ async function step(p) {
       const snap = p => p.evaluate(() => ({ screen: (document.querySelector(".screen.on") || {}).id, winner: G.winner || null, why: G.why || null,
         down: [G.teams.t1.cellsDown, G.teams.t2.cellsDown], off: [0, 1].map(i => Object.keys(G.teams["t" + (i + 1)].offline).filter(k => G.teams["t" + (i + 1)].offline[k]).sort().join("+")) }));
       const ms = await snap(pages.mod), ts = await snap(pages.t1);
-      r.check("the moderator ends the exercise on the final screen, not in sudden death", ms.screen === "screen-over", ms.screen);
+      r.check("the moderator ends the exercise on the final screen", ms.screen === "screen-over", ms.screen);
       r.check("the moderator's final score matches the teams' (winner, damage, sites offline)", JSON.stringify([ms.winner, ms.why, ms.down, ms.off]) === JSON.stringify([ts.winner, ts.why, ts.down, ts.off]), JSON.stringify([ms, ts]));
       r.check("...and the moderator's top bar shows the damage too", await pages.mod.$$eval("#score .ci", els => els.map(e => parseInt(e.textContent, 10))).then(v => JSON.stringify(v) === JSON.stringify(ts.off.map(x => x ? x.split("+").length : 0))));
       r.check("polling stops once the game is over", await pages.t1.evaluate(() => G.over && !pollTimer));

@@ -3,6 +3,7 @@
   message order, own-message filtering, moderator sees all, input checks,
   browser permission (CORS), size cap, and the per-room request limit. And (build 17) that a room is deleted a set time
   after its LAST message: tested with a 3-second lifetime on a relay of its own, where the live one uses a week.
+  And (build 18) the limit on wrong join codes: 10 lookups that find no exercise per visitor per hour, tested with a 4-second hour.
 */
 const { reporter, withRelay } = require("./helpers");
 
@@ -68,6 +69,26 @@ const { reporter, withRelay } = require("./helpers");
       await sleep(3600);
       r.check("...and is deleted again in the same way", (await count()) === 0);
     }, { fresh: true, vars: { ROOM_TTL_SECONDS: "3" } });
+    // ---- wrong join codes: 10 an hour per visitor ----
+    await withRelay(async relay => {
+      const sleep = ms => new Promise(x => setTimeout(x, ms));
+      const look = (room, ip, since) => fetch(relay + "/room/" + room + "/lookup?since=" + (since || 0), { headers: ip ? { "cf-connecting-ip": ip } : {} }).then(async x => ({ status: x.status, body: await x.json() }));
+      const tag = Date.now();
+      // an exercise that exists: its settings message is posted by the moderator, as a host does
+      await fetch(relay + "/room/real-" + tag + "/send", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: "mod", code: "R0-SETUP", note: "{}" }) });
+      const seen = [];
+      for (let i = 0; i < 10; i++) seen.push((await look("nosuch" + i + "-" + tag, "203.0.113.5")).status);
+      r.check("ten wrong codes from one visitor are all answered (nothing there)", seen.every(x => x === 200), seen.join(","));
+      const eleventh = await look("nosuch11-" + tag, "203.0.113.5");
+      r.check("the eleventh is refused with 429, and says the visitor is blocked", eleventh.status === 429 && eleventh.body.blocked === true, JSON.stringify(eleventh));
+      r.check("...and a real code is refused too for that visitor (or a blocked visitor could keep guessing and tell right from wrong)", (await look("real-" + tag, "203.0.113.5")).status === 429);
+      r.check("another visitor is not affected", (await look("real-" + tag, "203.0.113.9")).status === 200);
+      for (let i = 0; i < 25; i++) if ((await look("real-" + tag, "203.0.113.7")).status !== 200) { r.fail("finding a real exercise must never count against a visitor"); break; }
+      r.check("finding real exercises never counts (25 lookups, still allowed)", (await look("real-" + tag, "203.0.113.7")).status === 200);
+      await sleep(5200);
+      r.check("after the hour (4 seconds here) the visitor can look again", (await look("real-" + tag, "203.0.113.5")).status === 200);
+      r.check("a bad room name is a plain 400, not a wrong code", (await look("Bad_Name", "203.0.113.11")).status === 400);
+    }, { fresh: true, vars: { WRONG_CODE_LIMIT: "10", WRONG_CODE_WINDOW_SECONDS: "4" } });
   } catch (e) {
     r.fail("test crashed", e.message);
   }

@@ -121,7 +121,7 @@ async function run(browser, mode, relay, r, ender) {
           p.on("dialog", d => { dialogs.push(d.message()); d.dismiss(); });
           await p.reload();
           await p.click("#btnTitleGo");
-          await p.click("#btnStart");
+          await p.fill("#jurisdiction", "Test County"); await p.click("#btnStart");
           r.check("starting a new exercise asks before replacing the saved one", dialogs.some(x => /replaces the saved one/.test(x)), dialogs.join(" | "));
           r.check("...and saying no keeps it", (await screenOn(p)) === "screen-setup" && (await p.isVisible("#resumePanel")));
           await p.click("#btnDiscard");

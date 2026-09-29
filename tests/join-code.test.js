@@ -67,14 +67,14 @@ const clone = o => JSON.parse(JSON.stringify(o));
         const p = await setupPage({ relay: "http://127.0.0.1:9" });
         await p.click("#modeSim"); await p.click("#sideT1"); await p.check("#optAuto");
         r.check("the 'Set up by hand' button is not there until the relay fails", !(await p.isVisible("#btnManual")));
-        await p.click("#btnStart");
+        await p.fill("#jurisdiction", "Test County"); await p.click("#btnStart");
         await p.waitForFunction(() => !document.getElementById("startErr").hidden);
         r.check("an unreachable relay at Start says what to do", (await p.$eval("#startErr", e => e.textContent)) === "Can't reach the relay. Check your connection and try again, or set up by hand. Without the relay, teams read codes out loud and type them in.");
         r.check("...and offers 'Set up by hand', with nothing started", (await p.isVisible("#btnManual")) && !(await p.evaluate(() => !!(window.G && G.me))));
         await p.click("#btnManual");
         const u = await ui(p);
         r.check("by hand: Team 2 is offered again, both names are asked, the old hint shows, and there is no Moderator", u.t2 && u.n1 && u.n2 && u.l1 === "Team 1 name" && u.names && !u.hint && !(await p.isVisible("#sideMod")), JSON.stringify(u));
-        await p.click("#btnStart");
+        await p.fill("#jurisdiction", "Test County"); await p.click("#btnStart");
         await p.waitForFunction(() => window.G && G.me, null, { timeout: 15000 });
         const g = await p.evaluate(() => ({ relay: G.relay, code: G.joinCode || null, n1: G.teams.t1.name, n2: G.teams.t2.name }));
         r.check("...and the game starts with no relay and no join code, both names as typed", g.relay === null && g.code === null && g.n1 === "Ashwood County" && g.n2 === "Calder County", JSON.stringify(g));
@@ -91,7 +91,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
       await host.selectOption("#rounds", "4"); await host.fill("#rn1", "Ashwood County");
       await host.uncheck("#optPrec"); await host.check("#optAI"); await host.check("#optAuto");
       await host.fill("#durA", "3:30"); await host.fill("#durD", "4:15");
-      await host.click("#btnStart");
+      await host.fill("#jurisdiction", "Test County"); await host.click("#btnStart");
       await host.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 });
       const code = await host.evaluate(() => G.joinCode);
       r.check("the host gets a join code: a word and three digits", /^[a-z]{3,10}-\d{3}$/.test(code), code);
@@ -120,6 +120,22 @@ const clone = o => JSON.parse(JSON.stringify(o));
       r.check("an unreachable relay says so and what to do", /Can't reach the relay\. Check your connection and try again\./.test(await down.$eval("#joinErr", e => e.textContent)));
       await down.context().close();
 
+      // ---- too many wrong codes (a relay of its own with a limit of 3, so this is quick) ----
+      await withRelay(async relay2 => {
+        const q = await open({ relay: relay2 });
+        await q.click("#btnTitleJoin");
+        const msgs = [];
+        for (let i = 1; i <= 4; i++) {
+          await q.fill("#joinCode", "nosuch-00" + i); await q.click("#btnLookup");
+          await q.waitForFunction(n => document.getElementById("joinErr").hidden === false && document.getElementById("joinErr").dataset.n !== String(n), i - 1).catch(() => {});
+          await q.waitForTimeout(500);
+          msgs.push(await q.$eval("#joinErr", e => e.textContent));
+        }
+        r.check("the first wrong codes just say there is no exercise", msgs.slice(0, 3).every(m => /There is no exercise with that code/.test(m)), msgs.join(" | "));
+        r.check("after the limit, the next says there were too many, and what to do", msgs[3] === "Too many codes that didn't match an exercise. Try again in an hour, or ask whoever set it up to check the code.", msgs[3]);
+        await q.context().close();
+      }, { fresh: true, vars: { WRONG_CODE_LIMIT: "3" } });
+
       // ---- joining ----
       await j.fill("#joinCode", code.toUpperCase()); await j.click("#btnLookup");
       await j.waitForSelector("#joinFound:not([hidden])");
@@ -129,9 +145,11 @@ const clone = o => JSON.parse(JSON.stringify(o));
       r.check("Team 1 is shown as taken, Team 2 is chosen for them, and its name is filled in to change", sides.t1 && !sides.t2 && /taken/.test(sides.t1txt) && sides.t2on && sides.nm === "Team 2", JSON.stringify(sides));
       await j.fill("#joinName", "Calder County"); await j.click("#btnJoin");
       await j.waitForFunction(() => window.G && G.me, null, { timeout: 15000 });
-      const g = await j.evaluate(() => ({ me: G.me, mode: G.mode, rounds: G.maxRounds, prec: G.revealPrec, ai: G.requireAI, durA: G.durA, durD: G.durD, clock: G.clockOn, deck: DECK_VERSION, first: DECK[0].title, n1: G.teams.t1.name, n2: G.teams.t2.name, code: G.joinCode }));
+      const g = await j.evaluate(() => ({ me: G.me, mode: G.mode, rounds: G.maxRounds, prec: G.revealPrec, ai: G.requireAI, durA: G.durA, durD: G.durD, clock: G.clockOn, deck: DECK_VERSION, first: DECK[0].title, n1: G.teams.t1.name, n2: G.teams.t2.name, code: G.joinCode, jur: G.jurisdiction, hint: document.getElementById("def_policy").placeholder }));
       r.check("the joiner started with the host's settings", g.me === "t2" && g.mode === "sim" && g.rounds === 4 && g.prec === false && g.ai === true && g.durA === 210 && g.durD === 255 && g.clock === true, JSON.stringify(g));
       r.check("...and the host's inject deck, though this screen never reached the library", g.deck === 7 && g.first === deckTitle, JSON.stringify([g.deck, g.first]));
+      r.check("...and the host's jurisdiction, used in its response hint", g.jur === "Test County" && /Name the election office or Test County policy, procedure or plan/.test(g.hint), JSON.stringify([g.jur, g.hint]));
+      r.check("the room's settings message carries the jurisdiction", st.j === "Test County", JSON.stringify(st.j));
       r.check("...and knows both team names", g.n1 === "Ashwood County" && g.n2 === "Calder County", JSON.stringify([g.n1, g.n2]));
       const hostSees = await until(async () => (await host.evaluate(() => G.teams.t2.name)) === "Calder County", 10000);
       r.check("the host's screen learns the joiner's team name", hostSees);
@@ -145,7 +163,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
       // ---- a moderator hosts; two screens claim the same side ----
       const mod = await setupPage();
       await mod.click("#modeSim"); await mod.click("#sideMod"); await mod.selectOption("#rounds", "4"); await mod.check("#optAuto");
-      await mod.click("#btnStart"); await mod.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 });
+      await mod.fill("#jurisdiction", "Test County"); await mod.click("#btnStart"); await mod.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 });
       const mcode = await mod.evaluate(() => G.joinCode);
       const mb = () => mod.$eval("#joinBanner", e => e.hidden ? "" : e.textContent);
       r.check("a moderator host's banner waits for both teams", /Waiting for Team 1 and Team 2 to join\./.test(await mb()), await mb());
@@ -180,7 +198,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
         await fetch(relay + "/room/" + taken + "/send", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: "t1", code: "R1-MSG", note: "hi" }) });
         const p = await setupPage();
         await p.evaluate(([a, b]) => { let n = 0; window.genJoinCode = () => (n++ === 0 ? a : b); }, [taken, fresh]);
-        await p.click("#modeSim"); await p.click("#sideT1"); await p.check("#optAuto"); await p.click("#btnStart");
+        await p.click("#modeSim"); await p.click("#sideT1"); await p.check("#optAuto"); await p.fill("#jurisdiction", "Test County"); await p.click("#btnStart");
         await p.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 });
         r.check("a code whose room already has messages is not used; the next is", (await p.evaluate(() => G.joinCode)) === fresh);
         r.check("the words the codes are made of are lower-case, plain and not repeated", await p.evaluate(() => JOIN_WORDS.length >= 200 && new Set(JOIN_WORDS).size === JOIN_WORDS.length && JOIN_WORDS.every(w => /^[a-z]{3,9}$/.test(w))));

@@ -41,12 +41,38 @@ function json(body, status = 200) {
   });
 }
 
+/* Build 18 - a guest joining with a join code goes through /room/<code>/lookup, which reads the room like a moderator's
+   poll does but also keeps count, per visitor (network address), of lookups that found no exercise. After 10 in an hour
+   (WRONG_CODE_LIMIT, WRONG_CODE_WINDOW_SECONDS) every further lookup from that visitor is refused with 429 until the hour
+   is up, so nobody can try codes one after another to find other people's exercises. HONEST LIMIT: this covers the join
+   screen's lookups only. A room's messages can still be read by anyone who has its name (that is the relay's whole model:
+   the room name is the secret), so a script that polls rooms directly is not counted; the length of the code (a word and
+   three digits, about 250,000) is what protects against that. */
+const WRONG_CODE_LIMIT_DEFAULT = 10;
+const WRONG_CODE_WINDOW_DEFAULT_S = 60 * 60;
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
     const url = new URL(request.url);
     if (url.pathname === "/" || url.pathname === "") {
       return json({ ok: true, service: "ballotship-relay" });
+    }
+    const lk = url.pathname.match(/^\/room\/([^/]+)\/lookup$/);
+    if (lk) {
+      if (request.method !== "GET") return json({ error: "use GET" }, 405);
+      const room = decodeURIComponent(lk[1]);
+      if (!ROOM_RE.test(room)) return json({ error: "bad room name" }, 400);
+      const ip = request.headers.get("cf-connecting-ip") || "unknown";
+      const guard = env.GUARD.get(env.GUARD.idFromName("ip:" + ip));
+      if (await guard.blocked()) return json({ error: "too many wrong codes", blocked: true }, 429);
+      const since = Math.max(0, parseInt(url.searchParams.get("since") || "0", 10) || 0);
+      const poll = new Request(new URL("/room/" + encodeURIComponent(room) + "/poll?as=mod&since=" + since, url), { method: "GET" });
+      const res = await env.ROOMS.get(env.ROOMS.idFromName(room)).fetch(poll);
+      if (res.status !== 200) return res;
+      const body = await res.json();
+      if (since === 0 && !(body.messages || []).some((m) => /-SETUP$/.test(String(m.code)))) await guard.miss();
+      return json(body);
     }
     const m = url.pathname.match(/^\/room\/([^/]+)\/(send|poll)$/);
     if (!m) return json({ error: "not found" }, 404);
@@ -150,4 +176,21 @@ export class Room extends DurableObject {
       now: Date.now(),
     });
   }
+}
+
+/* One per visitor: the times of that visitor's lookups that found no exercise, kept for the window and then deleted. */
+export class Guard extends DurableObject {
+  windowMs() { const n = Number(this.env.WRONG_CODE_WINDOW_SECONDS); return (n > 0 ? n : WRONG_CODE_WINDOW_DEFAULT_S) * 1000; }
+  limit() { const n = Number(this.env.WRONG_CODE_LIMIT); return n > 0 ? n : WRONG_CODE_LIMIT_DEFAULT; }
+  async recent() {
+    const cutoff = Date.now() - this.windowMs();
+    return ((await this.ctx.storage.get("misses")) || []).filter((t) => t > cutoff);
+  }
+  async blocked() { return (await this.recent()).length >= this.limit(); }
+  async miss() {
+    const list = await this.recent(); list.push(Date.now());
+    await this.ctx.storage.put("misses", list);
+    await this.ctx.storage.setAlarm(Date.now() + this.windowMs() + 1000);   // tidy up once the window has passed
+  }
+  async alarm() { await this.ctx.storage.deleteAll(); }
 }

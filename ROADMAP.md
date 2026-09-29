@@ -9,39 +9,21 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-**Build 18 (decided, waiting for the owner's approval of the wording table, then built as one build):**
-
-1. **Draws replace the tie-break round.** Games can end in a draw; the sudden-death round is removed (owner's decision, from the
-   questions for TJ). Fewer sites offline wins; if level, fewer cells down wins; only if BOTH are level is it a draw. Touches the end
-   screens, the after-action log (which marks "sudden death" rounds today), the Rules paragraph about ties, the moderator's final
-   score, and the tests (the scripted-shot workaround that avoided sudden death can go).
-2. **A jurisdiction is entered at setup, once for the whole exercise** (a real one, e.g. "Pinal County"), carried to every screen
-   through the join code, shown in the after-action log, and used where the game names a jurisdiction: today the only place is the
-   response hint "Name the Recorder's Office or Pinal County policy..." (two boxes), which will use what was entered. Teams keep
-   their own names. If none is entered the hint falls back to plain wording with no county name.
-3. **The deck version in the log:** one line in the log, in all three exports.
-4. **A limit on wrong join codes: 10 per visitor per hour**, enforced by the relay (a browser's own count would be trivial to get
-   round), so nobody can try codes to find other people's exercises. Counted by the visitor's network address; only lookups that
-   find no exercise count.
-5. **The "Watch a demo" button:** on the title screen under "Set up the exercise" as a quieter second button, and again in the
-   "New to Ballotship?" box (owner agreed the placement). It links to the demo video, so the video has to be re-recorded first
-   (it predates builds 5 to 17), which needs the demo recorder rewritten for join codes (tooling, no build number). The kind
-   (a link, not a self-playing walkthrough) is my assumption; say if you want the walkthrough instead.
+**Build 18 is built on the branch and waits for the owner's staging review:** draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; the "Watch a demo" button (it links to the existing video, which predates builds 5 to 17 and needs re-recording, and the demo recorder needs rewriting for join codes first).
 
 ## Backlog
 
 - **Inject editor sign-in** (live, build 15). **Not done, add when wanted:** a way to remove a person before their day is up
   (today: change `ALLOWED_DOMAINS` and redeploy, which stops new sign-ins but not one already made; or wait a day); a list of
   individual allowed addresses inside the two domains.
-- **Join codes** (live, build 16). **Follow-up:** "remove a screen that joined by mistake" (today, start a new exercise). The
-  limit on wrong codes is item 4 above.
+- **Join codes** (live, build 16). The limit on wrong codes is in build 18. **Follow-ups:** "remove a screen that joined by mistake" (today, start a new exercise); the limit only covers the join screen's lookups (a script polling rooms directly isn't counted, so the code's length is the real protection: consider a longer code if this is ever a worry).
 - **Inject library** (live, build 12). Open follow-ups: only whole-deck saves (two people editing at once: the second is told to
   reload and redo their edit); no per-inject comments; whether the built-in copy of the injects in `index.html` (the offline
   fallback) should ever be refreshed from the library, since it goes stale as the library is edited. Design notes: its own Worker
   and store (`injects/`) with a staging copy; the game fetches the deck when a game starts and keeps it for the whole game; edits
   go live at once with every save a restorable version; a joining screen plays the host's deck (build 16); the server and the game
   both check a deck; one inject has a sponsor credit and there is a third type, "External".
-- **Decide where the demo video lives long-term.** For now it's at https://ballotship-demo.electionadminsuite.workers.dev (its own
+- **Re-record the demo video** (tooling: rewrite `demo/record-demo.js` for join codes; the current video predates builds 5 to 17), then **decide where it lives long-term.** For now it's at https://ballotship-demo.electionadminsuite.workers.dev (its own
   Worker; see `demo/README.md`). Longer term: YouTube or Ready for Tuesday's site? Item 5 above links to it.
 - **Widen test coverage.** Not tested: codes typed by hand in the set-up-by-hand games, resuming after closing the tab, the
   precedent reveal, and timed auto-commit. (Sudden death goes away in build 18.)

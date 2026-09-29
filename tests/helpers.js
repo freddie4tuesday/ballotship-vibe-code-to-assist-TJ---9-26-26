@@ -33,7 +33,9 @@ async function withRelay(fn, opts) {
   const url = "http://127.0.0.1:" + port;
   const args = ["wrangler", "dev", "--port", String(port), "--ip", "127.0.0.1"];
   if (opts.fresh) args.push("--persist-to", fs.mkdtempSync(path.join(require("os").tmpdir(), "ballotship-relay-")));
-  Object.keys(opts.vars || {}).forEach(k => args.push("--var", k + ":" + opts.vars[k]));
+  // Build 18: the shared test relay allows plenty of wrong join codes (one visitor address, many tests); tests of the limit itself start a relay of their own.
+  const rvars = Object.assign({ WRONG_CODE_LIMIT: "1000" }, opts.vars || {});
+  Object.keys(rvars).forEach(k => args.push("--var", k + ":" + rvars[k]));
   const proc = spawn("npx", args, {
     cwd: path.join(ROOT, "worker"), stdio: ["ignore", "pipe", "pipe"], detached: true,
   });
@@ -168,7 +170,7 @@ async function setupScreens(browser, relayUrl, sides, opts) {
       if (await p.isChecked("#optAI")) await p.uncheck("#optAI");
       if (await p.isChecked("#optSfx")) await p.uncheck("#optSfx");
       if (await p.isChecked("#optChime")) await p.uncheck("#optChime");
-      await p.click("#btnStart");
+      await p.fill("#jurisdiction", "Test County"); await p.click("#btnStart");
       await p.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 });
       room = await p.evaluate(() => G.joinCode);
     } else {

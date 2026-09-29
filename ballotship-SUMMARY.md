@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 17 (live; builds 14 to 17 went live together, after 13)
+**Current version:** build 18 (on the branch; live is build 17)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address and needs an emailed sign-in link; see The inject library)
@@ -35,6 +35,8 @@ offers to resume the exercise in progress.
 | Two screens, simultaneous (recommended) | Both teams work the same inject on one clock, swap attacks, then respond on a second clock. A moderator screen runs the clock. |
 | Two screens, taking turns | Each team runs its own copy. Moves pass as short codes read aloud, so no network is needed. |
 | One screen, passed | Teams share one laptop, with a full-screen curtain between phases. |
+
+**Setup:** a jurisdiction (a real one, e.g. Pinal County) is required and appears in the log and the response hints. A game can end in a draw (level on sites offline and cells down); there is no tie-break round.
 
 **Joining:** with the relay on, one screen sets the exercise up (the moderator's if there is a moderator, otherwise Team 1's) and
 the others choose "Join an exercise", type the join code the host's screen shows (one word and three digits, like
@@ -88,6 +90,7 @@ the browser, and if the relay is unreachable the page says so and teams read cod
     and stops after 30 idle minutes. The next click catches up, so nothing is lost.
   - The Worker refuses more than 400 requests a minute for one room, caps a room at 5,000
     messages, and caps a message at 1.5 MB.
+- **Wrong join codes are limited** (build 18): the join screen's lookup goes through `/room/<code>/lookup`, which counts lookups that find no exercise per visitor address and refuses a visitor after 10 in an hour (`WRONG_CODE_LIMIT`, `WRONG_CODE_WINDOW_SECONDS`). A script that polls rooms directly is not counted; the code's length is the protection there.
 - **Rooms delete themselves a week after their last message** (build 17, decided with the owner: the exercise
   makes convincing fake material and the rules say to delete it afterwards). One Durable Object alarm, reset by
   every message; download the after-action log before then if it is needed. `ROOM_TTL_SECONDS` shortens it for tests.

@@ -35,7 +35,7 @@ async function setup(browser, mode, side, relay, room, opts) {
   for (const id of ["#optSfx", "#optChime"]) if (await p.isChecked(id)) await p.uncheck(id);
   if (opts.ai) { if (!(await p.isChecked("#optAI"))) await p.check("#optAI"); }          // build 17: the AI assignment is off unless asked for
   else if (await p.isChecked("#optAI")) await p.uncheck("#optAI");
-  await p.click("#btnStart");
+  await p.fill("#jurisdiction", opts.jurisdiction || "Test County"); await p.click("#btnStart");
   if (relay) { await p.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 }); codes[room] = await p.evaluate(() => G.joinCode); }
   if (side) registry[side] = p;
   return { p, errors };
@@ -44,7 +44,7 @@ async function setup(browser, mode, side, relay, room, opts) {
 /* Shots are scripted, not random. Team 1 always aims where the other county has a site that
    hasn't been hit (a hit); team 2 always aims at empty water (a miss); neither repeats a
    cell it has already fired at. Random shots tie now and then, and a tied simultaneous game
-   goes into sudden death on the taking-turns screens (a question for TJ, on the roadmap),
+   used to go into a sudden-death round (removed in build 18: a tie is now a draw),
    which these tests aren't about and can't drive. Falls back to a random cell if it runs out. */
 const registry = {};                       // side -> page, filled in by setup()
 async function scriptedAim(p, mode) {

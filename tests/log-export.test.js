@@ -131,6 +131,7 @@ const unxml = t => t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;
     const missing = blocks.map(b => norm(b).replace(/ exported .*$/, "")).filter(b => b && !docText.includes(b));
     r.check("every heading, paragraph and list item of the web page is in the Word file (" + blocks.length + " blocks)", missing.length === 0, missing.slice(0, 3).join(" || "));
     r.check("special characters survived (< > &)", docText.includes(NOTE));
+    r.check("the jurisdiction and the inject deck version are in the web page, the Word file and Print (build 18)", [webText, docText, printed.text].every(t => t.includes("Jurisdiction: Test County.") && t.includes("Inject deck: built-in set (16 injects).")));
     r.check("all 8 debrief prompts are there, numbered", [1, 2, 3, 4, 5, 6, 7, 8].every(n => docPars.some(x => x.startsWith(n + "."))));
 
     // Second opinion, if python-docx is installed.

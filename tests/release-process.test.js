@@ -63,7 +63,7 @@ const R_STAGING = "https://ballotship-relay-staging.electionadminsuite.com", R_L
     // Start a game on staging; the live address must not see it.
     await s.click("#btnTitleGo"); await s.click("#modePass");
     if (!(await s.isChecked("#optAuto"))) await s.check("#optAuto");
-    await s.click("#btnStart"); await s.waitForTimeout(500);
+    await s.fill("#jurisdiction", "Test County"); await s.click("#btnStart"); await s.waitForTimeout(500);
     const saved = await s.evaluate(() => !!localStorage.getItem("ballotship:save"));
     const l2 = await open(LIVE), lf2 = await facts(l2);
     r.check("a game started on staging is saved there...", saved);

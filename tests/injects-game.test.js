@@ -38,7 +38,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
           await p.goto(PAGE); await p.click("#btnTitleGo"); await p.click("#modePass");
           return p;
         };
-        const startPass = async p => { if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto"); await p.click("#btnStart"); await p.waitForTimeout(300); };
+        const startPass = async p => { if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto"); await p.fill("#jurisdiction", "Test County"); await p.click("#btnStart"); await p.waitForTimeout(300); };
         const note = p => p.$eval("#deckNote", e => e.textContent);
         const deckNow = p => p.evaluate(() => ({ v: DECK_VERSION, n: DECK.length, start: DECK_START, t6: DECK[5].title, t1: DECK[0].title, first: drawCard().title }));
 

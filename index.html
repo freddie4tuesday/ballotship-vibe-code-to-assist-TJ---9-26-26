@@ -304,6 +304,29 @@
         do; a reload keeps it), tests/join-code.test.js and the relay test (a message resets the clock,
         the room is gone about 3 s after the last message on a 3-second setting and the name works again),
         and the injects API test (an inject with no AI text is accepted, over-long AI text is refused); and, for the relay change, tests/join-code.test.js (no checkbox, the new mode cards word for word, an unreachable relay says what to do and 'Set up by hand' starts an old-style game with no join code), and tests/log-export.test.js (the exercise label in the web page, in print and in the Word file: banner, per-inject line, closing line, header and footer parts, file names).
+  build 18 Draws, a jurisdiction, the deck version in the log, a limit on wrong join codes, and the demo button; all from the
+        owner's answers to the questions for TJ and the follow-ups, and every new word approved as a table first.
+        (1) DRAWS: a game can end in a draw, so the sudden-death round is gone. Fewer sites offline wins; level, fewer cells
+        down wins; level on both is a draw and the game ends there (before, it played one more round, and in a simultaneous
+        game that switched both screens to the taking-turns screens, which looked like a bug). The Rules, the final screen's
+        explanation and the log's round lines say so; the "sudden death" fields are gone from the game and its saves.
+        (2) JURISDICTION: a required field at setup (a real one, e.g. Pinal County), typed once for the whole exercise; it
+        travels to the other screens in the host's settings, is saved with the game, is shown in the log ("Jurisdiction: ..."),
+        and replaces "Pinal County", which the two response boxes' policy hint used to say for every user. Text typed into it is
+        always shown as text. (3) The log has a line "Inject deck: library version N (16 injects)" or "built-in set". (4) A guest
+        who tries join codes that find no exercise is limited to 10 an hour per visitor address: the relay's new lookup
+        (a Guard object per address; refused with 429, and a blocked visitor is refused even a right code so wrong and right
+        can't be told apart), and the join screen says what to do. Honest limit: a script that polls rooms directly is not
+        counted (a room's name is the secret to it), so the length of the code is what protects against that. (5) A
+        "Watch a demo" button on the title screen and in the "New to Ballotship?" box opens the demo video in a new tab; the
+        video predates builds 5 to 17 and needs re-recording (the owner chose to include the button meanwhile). The relay deploys
+        with the page (a new Durable Object migration). Verified by tests/draw-jurisdiction.test.js (a draw ends the game at once
+        in the approved words, fewer cells or sites still win outright, no jurisdiction is refused, it shows in the response hint
+        and the log, survives a reload and is shown as text, the demo links), tests/join-code.test.js (the joiner gets the
+        host's jurisdiction; after the limit the join screen says there were too many wrong codes), tests/relay-api.test.js
+        (10 wrong codes allowed, the 11th and even a right code refused for that visitor, others unaffected, finding real
+        exercises never counts, allowed again after the hour) and tests/log-export.test.js (jurisdiction and deck version in all
+        three exports).
 -->
 <html lang="en">
 <head>
@@ -851,6 +874,8 @@ body{padding-bottom:28px}
     <p class="title-line">The board game keeps it moving. The real exercise is what your team writes each round: who acts, who you tell, and the exact words that go out to voters.</p>
     <button class="btn big orange title-btn" id="btnTitleGo">Set up the exercise</button>
     <button class="btn ghost title-btn" id="btnTitleJoin" type="button" style="margin-top:12px">Join an exercise</button>
+    <!-- build 18: the demo video (its own Worker, see demo/README.md). It opens in a new tab so a game in progress on this page is not lost. -->
+    <a class="btn ghost title-btn" id="btnTitleDemo" href="https://ballotship-demo.electionadminsuite.workers.dev" target="_blank" rel="noopener" style="margin-top:12px;text-decoration:none;display:inline-block">Watch a demo</a>
     <div class="title-foot" id="titleFoot">Ready for Tuesday</div>
   </div>
 </section>
@@ -896,6 +921,7 @@ body{padding-bottom:28px}
       <p>The board works like the classic guessing game Battleship. Each team hides seven election sites on a 6&times;6 grid: polling places, vote centers, a sorting facility, the operations center. The other team can't see where they are. Each round the attacking team aims at a square, and the inject's <b>footprint</b> (the squares it covers) lands there. Any of your sites under it are <b>hit</b>, and a site with every square hit goes <b>offline</b> for the rest of the game. You learn hit or miss for each square, so over the rounds you can work out where the other side's sites are.</p>
       <p>An <b>inject</b> is a scenario card: one realistic problem dropped into the exercise, like a flooded polling place or a fake text telling voters the election moved.</p>
       <p>The board is only half of it. The other half is what your team writes in response, and that's what you review together afterward.</p>
+      <p><a class="btn ghost sm" id="btnSetupDemo" href="https://ballotship-demo.electionadminsuite.workers.dev" target="_blank" rel="noopener" style="text-decoration:none">Watch a demo</a></p>
     </div>
     <p class="lede">Two jurisdictions, seven sites each. Every round one team plays the adversary, draws an inject and picks a target. The other team writes how it responds. Then the inject lands, and any site under it goes offline. Whoever has knocked out more of the other jurisdiction when the rounds run out wins.</p>
     <p class="lede">There are no dice. A hit is a hit. The quality of a response is judged in the debrief, not by the game.</p>
@@ -946,6 +972,11 @@ body{padding-bottom:28px}
     <hr class="rule">
     <div class="two">
       <div>
+        <div class="field">
+          <label class="fl" for="jurisdiction">Jurisdiction</label>
+          <input type="text" id="jurisdiction" maxlength="60" autocomplete="off">
+          <div class="hint">The real jurisdiction this exercise is for, for example Pinal County. It appears in the log and in the response hints.</div>
+        </div>
         <div class="field">
           <label class="fl" for="rounds">Rounds</label>
           <select id="rounds">
@@ -1024,7 +1055,7 @@ body{padding-bottom:28px}
         <p class="ai-only">Start the AI the moment the inject appears. Put one person on the tool while the rest of the table reads the card and argues about the other four boxes. Teams that run it in sequence finish late.</p>
         <p class="ai-only">Fictional county, fictional names, no real people or agencies. Label whatever you make as exercise material. None of it gets posted, and it all goes after the debrief.</p>
         <h3 style="font-size:19px;text-transform:uppercase;margin:15px 0 7px">Winning</h3>
-        <p>When the rounds run out, the jurisdiction with fewer sites offline wins. Tie goes to the one with fewer individual cells down, then to a sudden death round.</p>
+        <p>When the rounds run out, the jurisdiction with fewer sites offline wins. If they are level, the one with fewer individual cells down wins. If they are level on both, the game is a draw.</p>
         <p>Every site counts the same. A one-cell polling place is as expensive to lose as the four-cell operations center, which means the operations center is the hardest site to knock out and the polling places are the cheapest.</p>
         <h3 style="font-size:19px;text-transform:uppercase;margin:15px 0 7px">Breaking, and coming back</h3>
         <p>The exercise saves itself as you go. Close the tab, close the laptop, break for lunch, and reopening this page offers to resume where you stopped. Boards, damage, the log and the relay thread all come back.</p>
@@ -1193,7 +1224,7 @@ body{padding-bottom:28px}
           <div class="rf key"><label for="def_ops"><b>What you do operationally</b></label>
             <textarea id="def_ops" placeholder="The first hour. In order."></textarea></div>
           <div class="rf key"><label for="def_policy"><b>Is this response based on an existing policy?</b></label>
-            <textarea id="def_policy" placeholder="Yes, no or partly. Name the Recorder's Office or Pinal County policy, procedure or plan that guides it. If there is none, say what you are relying on instead."></textarea>
+            <textarea id="def_policy" placeholder="Yes, no or partly. Name the election office or your jurisdiction's policy, procedure or plan that guides it. If there is none, say what you are relying on instead."></textarea>
             <div class="sub">"None" is an honest answer. It usually belongs in the gap box too.</div></div>
           <div class="rf key"><label for="def_comms"><b>Who you tell, and in what order</b></label>
             <textarea id="def_comms" placeholder="Voters at that site, poll workers, the call center, the press, the state. Who hears it first and who signs off."></textarea>
@@ -1371,7 +1402,7 @@ body{padding-bottom:28px}
           <div class="rf key"><label for="sd_ops"><b>What you do operationally</b></label>
             <textarea id="sd_ops" placeholder="The first hour. In order."></textarea></div>
           <div class="rf key"><label for="sd_policy"><b>Is this response based on an existing policy?</b></label>
-            <textarea id="sd_policy" placeholder="Yes, no or partly. Name the Recorder's Office or Pinal County policy, procedure or plan that guides it. If there is none, say what you are relying on instead."></textarea>
+            <textarea id="sd_policy" placeholder="Yes, no or partly. Name the election office or your jurisdiction's policy, procedure or plan that guides it. If there is none, say what you are relying on instead."></textarea>
             <div class="sub">"None" is an honest answer. It usually belongs in the gap box too.</div></div>
           <div class="rf key"><label for="sd_comms"><b>Who you tell, and in what order</b></label>
             <textarea id="sd_comms" placeholder="Voters at that site, poll workers, the call center, the press, the state. Who hears it first and who signs off."></textarea>
@@ -2027,7 +2058,7 @@ function snapshot() {
     mode:G.mode, me:G.me, maxRounds:G.maxRounds, round:G.round, attacker:G.attacker,
     sim:!!G.sim, simPhase:G.simPhase, durA:G.durA, durD:G.durD,
     chime:G.chime, sfx:G.sfx, clockOn:!!G.clockOn,
-    joinCode:G.joinCode || null, hostSide:G.hostSide || null, joined:G.joined || null, joinedCid:G.joinedCid || null, cid:G.cid || null,   /* build 16 */
+    jurisdiction:G.jurisdiction || "", joinCode:G.joinCode || null, hostSide:G.hostSide || null, joined:G.joined || null, joinedCid:G.joinedCid || null, cid:G.cid || null,   /* build 16 */
     deck:{version:DECK_VERSION, start:DECK_START, injects:DECK},   /* build 12: the game keeps the deck it started with */
     /* build 11 — a running clock only records its time when paused or adjusted, so the save held the time it
        started with, and a reload gave the time back. Save what is actually left (see also: the save when the
@@ -2035,7 +2066,7 @@ function snapshot() {
        a clock simply counts down. */
     clock:G.clock ? Object.assign({}, G.clock, {left:clockLeft()}) : null,
     R: G.R ? (function () { var o = {}, k; for (k in G.R) if (k !== "card") o[k] = G.R[k]; o.cardNo = G.R.card.no; return o; })() : null,
-    revealPrec:G.revealPrec, over:G.over, suddenDeath:G.suddenDeath,
+    revealPrec:G.revealPrec, over:G.over,
     phase:G.phase, gateTeam:G.gateTeam, gateRole:G.gateRole, gateNext:G.gateNext,
     winner:G.winner, why:G.why,
     endedEarly:G.endedEarly || null, resumeFrom:G.resumeFrom || null, heldMoves:G.heldMoves || [],
@@ -2078,7 +2109,7 @@ function restore(d) {
   G = {
     mode:d.mode, me:d.me, teams:{}, maxRounds:d.maxRounds, round:d.round,
     attacker:d.attacker, revealPrec:d.revealPrec, log:[], pending:null,
-    over:d.over, suddenDeath:d.suddenDeath, expect:null,
+    over:d.over, expect:null,
     phase:d.phase, gateTeam:d.gateTeam, gateRole:d.gateRole, gateNext:d.gateNext,
     winner:d.winner, why:d.why, relay:d.relay || null,
     endedEarly:d.endedEarly || null, resumeFrom:d.resumeFrom || null, heldMoves:d.heldMoves || [],
@@ -2086,7 +2117,7 @@ function restore(d) {
     sim:!!d.sim, simPhase:d.simPhase || null, durA:d.durA || 600, durD:d.durD || 600,
     chime:d.chime !== false, sfx:d.sfx !== false, clock:d.clock || null, R:null,
     clockOn:d.clockOn !== undefined ? !!d.clockOn : !!d.sim,
-    joinCode:d.joinCode || null, hostSide:d.hostSide || null, joined:d.joined || null, joinedCid:d.joinedCid || null, cid:d.cid || null
+    jurisdiction:d.jurisdiction || "", joinCode:d.joinCode || null, hostSide:d.hostSide || null, joined:d.joined || null, joinedCid:d.joinedCid || null, cid:d.cid || null
   };
   if (d.R) {
     G.R = {}; for (var kr in d.R) if (kr !== "cardNo") G.R[kr] = d.R[kr];
@@ -2110,7 +2141,7 @@ function restore(d) {
     for (var k3 in d.pending) if (k3 !== "cardNo") G.pending[k3] = d.pending[k3];
     G.pending.card = CARD_BY_NO[d.pending.cardNo];
   }
-  applyAiFlag();
+  applyAiFlag(); applyJurisdiction();
   place = d.place ? {key:d.place.key, placed:d.place.placed, active:d.place.active, orient:d.place.orient} : null;
   crisisPick = d.crisisPick || null;
   $("mastSub").textContent = meLabel();
@@ -2516,6 +2547,15 @@ $("sideT2").addEventListener("click", function () { pickSide("t2"); });
 $("sideMod").addEventListener("click", function () { pickSide("mod"); });
 
 /* Starting or joining replaces the saved exercise on this laptop, so ask first (build 6). */
+/* build 18 - the exercise's jurisdiction: a real one, typed once at setup (required), shown in the log and used where the game
+   names a jurisdiction (the response boxes' policy hint, which used to say "Pinal County" for everyone). It travels to the
+   other screens in the host's settings. */
+function cleanJurisdiction(v) { return String(v == null ? "" : v).replace(/[\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60); }
+function applyJurisdiction() {
+  var j = G && G.jurisdiction ? G.jurisdiction : "your jurisdiction";
+  var tail = "Yes, no or partly. Name the election office or " + (G && G.jurisdiction ? j : "your jurisdiction's") + " policy, procedure or plan that guides it. If there is none, say what you are relying on instead.";
+  ["def_policy", "sd_policy"].forEach(function (id) { var e = $(id); if (e) e.placeholder = tail; });
+}
 function replaceSavedOk() {
   var saved = readSave();
   return !(saved && !window.confirm("Starting a new exercise replaces the saved one on this laptop (" +
@@ -2528,6 +2568,8 @@ $("btnStart").addEventListener("click", function () {
   var n2 = $("rn2").value.trim() || "Team 2";
   var sim = setupMode === "sim";
   var relay = sim || setupMode === "relay";
+  var jur = cleanJurisdiction($("jurisdiction").value);
+  if (!jur) { flash("startErr", "Enter the jurisdiction this exercise is for."); $("jurisdiction").focus(); return; }
   var online = relay && !setupManual;
   $("startErr").hidden = true; $("btnManual").hidden = true;
   /* build 16 - with the relay on, the room is a made-up join code, checked to be unused, instead of a name typed
@@ -2550,8 +2592,8 @@ $("btnStart").addEventListener("click", function () {
       clock: null, simPhase: null, R: null, sfx: $("optSfx").checked,
       teams: {}, maxRounds: parseInt($("rounds").value, 10),
       round: 1, attacker: "t1", revealPrec: $("optPrec").checked,
-      log: [], pending: null, over: false, suddenDeath: false, expect: null,
-      relay: null, requireAI: $("optAI").checked, thread: [], inbox: []
+      log: [], pending: null, over: false, expect: null,
+      relay: null, requireAI: $("optAI").checked, thread: [], inbox: [], jurisdiction: jur
     };
     if (code) {
       G.relay = {url: defaultRelay(), room: code, cursor: 0};
@@ -2560,7 +2602,7 @@ $("btnStart").addEventListener("click", function () {
       if (setupSide === "mod") { n1 = "Team 1"; n2 = "Team 2"; } else n2 = "Team 2";   // a joining team names itself
     }
     clearSave();
-    applyAiFlag();
+    applyAiFlag(); applyJurisdiction();
     chooseDeck();     /* build 12: the deck is fixed for this game from here on */
     G.teams.t1 = newTeam(n1, !relay || setupSide === "t1");
     G.teams.t2 = newTeam(n2, !relay || setupSide === "t2");
@@ -2611,11 +2653,14 @@ function defaultRelay() {
   return ((typeof window.BALLOTSHIP_RELAY_URL === "string" && window.BALLOTSHIP_RELAY_URL) || $("relayUrl").value).replace(/\/+$/, "");
 }
 /* Everything in a room, oldest first (the moderator's view of the relay shows all messages, and reading changes nothing). */
-function readRoom(code, done) {
+function readRoom(code, done, lookup) {
+  /* lookup: the join screen's first look at a code goes through /lookup, which the relay counts wrong codes on (10 an hour per
+     visitor, build 18); every other read is a plain poll. A refused lookup comes back as an error with .blocked set. */
   var all = [], since = 0;
   (function next(guard) {
-    window.fetch(defaultRelay() + "/room/" + encodeURIComponent(code) + "/poll?since=" + since + "&as=mod").then(function (r) {
-      return r.json().then(function (b) { if (!r.ok) throw new Error(b && b.error ? b.error : "relay returned " + r.status); return b; });
+    var url = lookup ? defaultRelay() + "/room/" + encodeURIComponent(code) + "/lookup?since=" + since : defaultRelay() + "/room/" + encodeURIComponent(code) + "/poll?since=" + since + "&as=mod";
+    window.fetch(url).then(function (r) {
+      return r.json().then(function (b) { if (!r.ok) { var e = new Error(b && b.error ? b.error : "relay returned " + r.status); e.blocked = !!(b && b.blocked); throw e; } return b; });
     }).then(function (b) {
       var m = b.messages || [];
       m.forEach(function (x) { all.push(x); since = x.seq; });
@@ -2637,7 +2682,7 @@ function findFreeRoom(done) {
 /* The host puts the shared settings, and the deck, into the room for joiners to read. */
 function postSetup(hostName) {
   var st = {v:1, mode:G.mode, rounds:G.maxRounds, prec:G.revealPrec, clock:!!G.clockOn, durA:G.durA, durD:G.durD,
-    chime:G.chime, sfx:G.sfx, ai:G.requireAI, auto:$("optAuto").checked, host:G.hostSide, hostName:G.hostSide === "t1" ? hostName : ""};
+    chime:G.chime, sfx:G.sfx, ai:G.requireAI, auto:$("optAuto").checked, j:G.jurisdiction, host:G.hostSide, hostName:G.hostSide === "t1" ? hostName : ""};
   var deck = {version:DECK_VERSION, start:DECK_START, injects:DECK};
   relaySend("R0-SETUP", {note:JSON.stringify(st), note2:JSON.stringify(deck)}, function () {
     if (G.hostSide === "t1") sendJoin("t1", hostName);
@@ -2699,6 +2744,7 @@ function readSetupFrom(msgs) {
     if (/-JOIN$/.test(c)) { try { var j = JSON.parse(x.note); if ((j.side === "t1" || j.side === "t2") && j.side === x.from && !taken[j.side]) { taken[j.side] = true; names[j.side] = j.name; cids[j.side] = j.cid; } } catch (e) {} }
   });
   if (!st || st.v !== 1 || (st.mode !== "sim" && st.mode !== "relay") || (st.host !== "t1" && st.host !== "mod")) return null;
+  st.j = cleanJurisdiction(st.j);   // an exercise set up before build 18 has none
   return {st:st, deck:deck, taken:taken, names:names, cids:cids};
 }
 $("btnLookup").addEventListener("click", function () {
@@ -2706,11 +2752,12 @@ $("btnLookup").addEventListener("click", function () {
   $("joinErr").hidden = true; $("joinFound").hidden = true;
   if (!/^[a-z0-9][a-z0-9-]{2,47}$/.test(code)) { joinErr("There is no exercise with that code. Check it with whoever set it up, then try again."); return; }
   readRoom(code, function (err, msgs) {
+    if (err && err.blocked) { joinErr("Too many codes that didn't match an exercise. Try again in an hour, or ask whoever set it up to check the code."); return; }
     if (err) { joinErr("Can't reach the relay. Check your connection and try again."); return; }
     var r = readSetupFrom(msgs);
     if (!r) { joinErr("There is no exercise with that code. Check it with whoever set it up, then try again."); return; }
     showJoinFound(code, r, null);
-  });
+  }, true);
 });
 function showJoinFound(code, r, msg) {
   joinFound = {code:code, st:r.st, deck:r.deck, taken:r.taken, names:r.names, side:null};
@@ -2759,14 +2806,14 @@ function enterJoined(code, r, side, name, cid) {
     durA: st.durA || 600, durD: st.durD || 600, chime: st.chime !== false, clockOn: sim || !!st.clock,
     clock: null, simPhase: null, R: null, sfx: st.sfx !== false,
     teams: {}, maxRounds: st.rounds, round: 1, attacker: "t1", revealPrec: st.prec !== false,
-    log: [], pending: null, over: false, suddenDeath: false, expect: null,
+    log: [], pending: null, over: false, expect: null,
     relay: {url: defaultRelay(), room: code, cursor: 0}, requireAI: st.ai !== false, thread: [], inbox: [],
-    joinCode: code, hostSide: st.host, joined: {t1:!!r.taken.t1 || side === "t1", t2:!!r.taken.t2 || side === "t2"}, joinedCid: {t1:r.cids.t1 || null, t2:r.cids.t2 || null}, cid: cid
+    jurisdiction: st.j || "", joinCode: code, hostSide: st.host, joined: {t1:!!r.taken.t1 || side === "t1", t2:!!r.taken.t2 || side === "t2"}, joinedCid: {t1:r.cids.t1 || null, t2:r.cids.t2 || null}, cid: cid
   };
   G.joinedCid[side] = cid;
   if (st.host === "t1") { G.joined.t1 = true; }
   clearSave();
-  applyAiFlag();
+  applyAiFlag(); applyJurisdiction();
   var sd = r.deck ? sanitizeDeck(r.deck) : null;
   if (sd) useDeck(sd); else chooseDeck();      /* the host's own deck, so every screen plays the same injects */
   var other = side === "t1" ? "t2" : "t1";
@@ -4781,7 +4828,7 @@ function simLogRound() {
   var th = R.theirHit || {marks:[], sunkNames:[]};
   var hits = (th.marks || []).filter(function (m) { return m.h; }).length;
   /* our strike on them */
-  G.log.push({round:G.round, sd:G.suddenDeath, atk:me.name, def:them.name, iDefended:false,
+  G.log.push({round:G.round, atk:me.name, def:them.name, iDefended:false,
     bothWords:!!R.tresp.words, card:R.card,
     attackDesc:R.mine.desc + (R.mine.auto ? " (target picked at random, time ran out)" : ""),
     atkParts:R.mine.parts || null,
@@ -4793,7 +4840,7 @@ function simLogRound() {
     hits:R.card.crisis ? (th.crisisN || 0) : hits, sunk:th.sunkNames || [],
     offline:offlineCount(them), down:them.cellsDown, code:R.mine.code || ""});
   /* their strike on us */
-  G.log.push({round:G.round, sd:G.suddenDeath, atk:them.name, def:me.name, iDefended:true,
+  G.log.push({round:G.round, atk:them.name, def:me.name, iDefended:true,
     bothWords:!!R.theirs.words, card:R.card,
     attackDesc:R.theirs.desc, aiDesc:R.theirs.ai,
     defDesc:R.resp.desc + (R.resp.auto ? " (cells chosen automatically, time ran out)" : ""),
@@ -4882,7 +4929,7 @@ function logTurn() {
   var p = G.pending, def = teamOf(p.defKey);
   var hits = (p.marks || []).filter(function (m) { return m.h; }).length;
   G.log.push({
-    round:G.round, sd:G.suddenDeath,
+    round:G.round,
     atk:teamOf(p.atkKey).name, def:teamOf(p.defKey).name,
     iDefended: G.mode === "pass" || p.defKey === G.me,
     bothWords: !!p.theirWords,
@@ -4923,7 +4970,7 @@ function renderLog() {
     var li = document.createElement("li");
     li.className = e.crisis ? "crisis" : (e.hits === 0 ? "clear" : "landed");
     li.innerHTML =
-      '<div class="lh">Round ' + e.round + (e.sd ? " (sudden death)" : "") + " \u00b7 " + esc(e.atk) + " attacking " + esc(e.def) +
+      '<div class="lh">Round ' + e.round + "" + " \u00b7 " + esc(e.atk) + " attacking " + esc(e.def) +
         " \u00b7 " + CATS[e.card.cat].label + " \u00b7 " + e.card.type + (e.code ? " \u00b7 " + esc(e.code) : "") + "</div>" +
       '<div class="lt">' + esc(e.card.title) + "</div>" +
       (e.atkParts ? atkHTML(e.atkParts)
@@ -4939,15 +4986,15 @@ function renderLog() {
 
 /* ============================================================
    ENDGAME
-   Fewer sites offline wins. Tie on sites goes to fewer cells down,
-   then to one sudden death round.
+   Fewer sites offline wins. Tie on sites goes to fewer cells down.
+   Level on both is a draw (build 18: there used to be one sudden death
+   round after that; the owner decided games can simply end in a draw).
    ============================================================ */
 function judgeEnd() {
   var a = G.teams.t1, b = G.teams.t2;
   var oa = offlineCount(a), ob = offlineCount(b);
   if (oa !== ob) { endGame(oa < ob ? "t1" : "t2", "sites"); return; }
   if (a.cellsDown !== b.cellsDown) { endGame(a.cellsDown < b.cellsDown ? "t1" : "t2", "cells"); return; }
-  if (!G.suddenDeath) { G.suddenDeath = true; G.maxRounds++; G.round++; updateChrome(); beginHalf(); return; }
   endGame(null, "tie");
 }
 function endGame(winnerKey, why) {
@@ -4965,7 +5012,7 @@ function renderOver() {
   var reasons = {
     sites: (w && l) ? w.name + " finished with " + offlineCount(w) + " of seven sites offline against " + offlineCount(l) + ". Fewer sites lost wins it." : "",
     cells: (w && l) ? "Both jurisdictions finished with " + offlineCount(w) + " of seven sites offline. " + w.name + " took less damage underneath, " + w.cellsDown + " cells down against " + l.cellsDown + "." : "",
-    tie: "Level on sites offline and level on cells down, through sudden death. Two jurisdictions that placed well and got hit about the same. Go straight to the debrief."
+    tie: "Level on sites offline and level on cells down, so the game is a draw. Two jurisdictions that placed well and got hit about the same. Go straight to the debrief."
   };
   if (why === "earlytie") reasons.earlytie = "Level on sites offline and level on cells down when the exercise ended. Go straight to the debrief.";
   $("overWhy").textContent = reasons[why] || "";
@@ -5073,7 +5120,7 @@ var EXERCISE = {
 function logHTML() {
   var stamp = new Date().toLocaleString();
   var rows = G.log.map(function (e) {
-    return "<article><h3>Round " + e.round + (e.sd ? " (sudden death)" : "") + " &middot; " + esc(e.atk) + " attacking " + esc(e.def) +
+    return "<article><h3>Round " + e.round + "" + " &middot; " + esc(e.atk) + " attacking " + esc(e.def) +
       (e.code ? " &middot; " + esc(e.code) : "") + "</h3>" +
       "<p class=xnote>" + esc(EXERCISE.perInject) + "</p>" +
       "<p class=cat>" + CATS[e.card.cat].label + (e.crisis ? " &middot; crisis inject" : "") + " &middot; " + e.card.type + "</p>" +
@@ -5125,6 +5172,8 @@ function logHTML() {
     "@media print{.pagehead,.pagefoot{display:block;position:fixed;left:0;right:0;text-align:center;color:#C6006F;font-weight:bold;font-size:.8em;letter-spacing:.05em}.pagehead{top:0}.pagefoot{bottom:0}}</style>" +
     "<div class=pagehead>" + esc(EXERCISE.page) + "</div><div class=pagefoot>" + esc(EXERCISE.page) + "</div>" +
     "<p class=banner>" + esc(EXERCISE.banner) + "</p>" +
+    (G.jurisdiction ? "<p class=meta>Jurisdiction: " + esc(G.jurisdiction) + ".</p>" : "") +
+    "<p class=meta>Inject deck: " + (DECK_VERSION ? "library version " + DECK_VERSION : "built-in set") + " (" + DECK.length + " injects).</p>" +
     "<h1>Ballotship after-action log</h1><p class=meta>" + esc(G.teams.t1.name) + " against " + esc(G.teams.t2.name) +
     " &middot; " + G.log.length + " injects &middot; " +
     (G.me && G.me !== "mod" ? (G.mode === "sim" ? "simultaneous" : "two screens") + ", logged from " + esc(G.teams[G.me].name) : "one screen") +
@@ -5461,8 +5510,8 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 <div class="join-banner no-print" id="joinBanner" hidden></div>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 17</span>
-  <span>the AI assignment is an option, off by default; relay rooms delete after a week; the join box forgives the code's shape</span>
+  <span class="tag">build 18</span>
+  <span>games can end in a draw; a jurisdiction is entered at setup and shown in the log; wrong join codes are limited; a demo button</span>
 </div>
 
 </body>
