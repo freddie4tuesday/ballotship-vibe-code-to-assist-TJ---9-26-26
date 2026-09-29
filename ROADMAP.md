@@ -9,7 +9,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Build 13 (the inject editor without a key) is on staging, waiting for you to look and say go live.** Builds 8 to 12 are live.
+- Nothing is waiting on review. Builds 8 to 13 are live.
 
 ## Backlog
 
@@ -85,6 +85,8 @@ Each item: a short title, then one or two lines on what and why.
 ---
 
 ## Done
+
+- **The inject editor at a plain address, no key** - build 13, live.
 
 - **Builds 8 to 12 released together: moderator score fix, staging, clock wording, clocks in step and a clock option, the inject library and its editor page** - builds 8 to 12, live.
 
