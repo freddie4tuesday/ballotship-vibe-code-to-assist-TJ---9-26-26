@@ -13,6 +13,24 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Backlog
 
+- **Auto-delete relay rooms after 1 week: decided, not built yet.** Why: the exercise makes convincing fake
+  material (spoofed alerts, fake headlines), and the game's own rules say to delete it after the retro; without
+  this it stays on Cloudflare until someone removes it, which is a privacy and misuse risk if a room name leaks, and
+  storage grows slowly. Against: a facilitator may want the relay record for a later report (each screen also
+  keeps its own copy, and the after-action log can be downloaded first). To settle when building: a week counts
+  from the room's LAST message (so a game under way never vanishes), and the game should say on the setup screen
+  that rooms are deleted after a week. Plan: a Durable Object alarm in the relay that deletes the room's messages.
+- **"Watch a demo" button before the game starts: wanted, placement and kind to settle.** Proposed place: the title
+  screen, under "Set up the exercise" as a quieter second button, and again in the "New to Ballotship?" box on the
+  setup screen. Open: a link to the video (needs re-recording first, since it predates builds 5 to 13) or a
+  self-playing walkthrough inside the game (bigger, never goes stale). New wording needs approval first.
+- **One person sets up the exercise; the other screens join with one code: to design.** Today each screen has to
+  enter the same settings by hand (mode, relay address and room, rounds, team names, precedent, AI requirement,
+  clock times). Idea: the person who sets up gets a join code (a link, plus a short code to read aloud); the others
+  choose "Join", enter it, pick their side, and every shared setting arrives with it. Per-screen choices (sound,
+  random placement) stay per screen. Open questions are in the conversation of the day it was raised: who
+  hosts, how much the joiner can still change, and how the code travels when there is no relay.
+
 - **Inject library page: live (build 12); open follow-ups below.** A page at its own address where the injects are
   listed and can be added, edited, reordered and deleted. Today the 16 injects are code inside
   `index.html` (`DECK`, from "the scenario workbook", which we haven't seen). **Decided:**
@@ -67,16 +85,6 @@ Each item: a short title, then one or two lines on what and why.
 - **"Watch a demo" button in the game (Option B).** A self-playing walkthrough built into
   Ballotship, so it never goes out of date. Bigger than the video. Decide after seeing which
   parts of the video people still find confusing.
-- **Auto-delete relay rooms after a set time (e.g. 24 hours) — consider, not decided.** Left
-  out of the relay on purpose for now. Why it's worth considering: the exercise asks teams to
-  make convincing fake material (spoofed alerts, fake headlines, voice memos), and the game's own
-  rules say to "keep it in the room, and delete it after the retro." Without auto-delete, that
-  material and every written attack and response stays on Cloudflare until someone removes it,
-  which is a privacy and misuse risk if a room name leaks. It also keeps storage from slowly
-  growing. Why it might not be wanted: a facilitator may want the relay record available for a
-  later debrief or report, and each screen already keeps its own copy of the thread, so the
-  relay copy may be the only shared one. A middle ground would be a longer window (e.g. 7 or
-  30 days) or a "delete this room" button for the facilitator.
 - **Host the board art ourselves (someday, not soon).** The board image is loaded from a
   readyfortuesday.com upload; if that file moves, the board goes plain (the game still works).
   Low priority: this project is going back to Ready for Tuesday, and linking to their copy keeps
