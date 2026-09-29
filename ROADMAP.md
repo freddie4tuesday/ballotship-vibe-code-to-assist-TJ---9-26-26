@@ -10,7 +10,6 @@ Each item: a short title, then one or two lines on what and why.
 ## Up next
 
 - Nothing is waiting on review. Builds 14 to 17 went live together. **Still open:** the demo recorder (`demo/record-demo.js`) uses the old relay fields and needs rewriting when the video is re-recorded.
-  builds 8 to 13 are live.
 
 ## Backlog
 
