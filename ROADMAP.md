@@ -9,7 +9,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Builds 14 (the game starts with the first inject, on staging) and 15 (the inject editor's emailed sign-in) are waiting on review.** Builds 8 to 13 are live.
+- **Builds 14 (game starts with the first inject) and 15 (the editor's emailed sign-in) are on staging; build 16 (join codes) is on the branch.** Builds 8 to 13 are live. All wait on your review.
 
 ## Backlog
 
@@ -40,19 +40,13 @@ Each item: a short title, then one or two lines on what and why.
   screen, under "Set up the exercise" as a quieter second button, and again in the "New to Ballotship?" box on the
   setup screen. Open: a link to the video (needs re-recording first, since it predates builds 5 to 13) or a
   self-playing walkthrough inside the game (bigger, never goes stale). New wording needs approval first.
-- **One person sets up the exercise; the other screens join with a code: decided, not built.** Today each screen
-  enters the same settings by hand (mode, relay address and room, rounds, team names, precedent, AI requirement,
-  clock times), so a typo in the room name or rounds gives two screens that quietly don't match. **Decided:**
-  - **The join code is a short code typed into a box, not a link** (a link is too much to read aloud or copy).
-    With a relay, the code is the room name (something like `amber-falcon-42`, made for the host) and the shared
-    settings are stored in the room, so joining fetches them.
-  - **Who sets up:** the moderator, if the game has one; otherwise the first team (Team 1).
-  - **The other team enters the code and chooses its own team name. Everything else is already set** by the host
-    (mode, rounds, precedent, AI requirement, clock times, random placement, sound, the inject deck version).
-  - **To settle when building:** the two-screen game with no relay (codes read aloud) can't fetch settings, so it
-    keeps today's manual setup unless told otherwise; a custom relay address can't ride in a short code, so joining
-    uses the page's own relay; if both teams pick the same side, the second is told to pick the other; a short
-    code is guessable in principle (about a million combinations), which protects only exercise material.
+- **One person sets up the exercise; the others join with a code: built (build 16), waiting on staging review.**
+  Moderator hosts if there is one, else Team 1; a short code (one word and three digits) typed into a box; the joining
+  team picks its side and names itself; everything else comes from the host, including the inject deck. Setup by
+  hand stays for one laptop and for taking turns with no relay. **Follow-ups:** the demo recorder
+  (`demo/record-demo.js`) still types the old relay fields and needs updating before the next re-record; a global
+  limit on lookups of codes that don't exist (a stranger could try codes; each try is one relay request); "remove a
+  screen that joined by mistake" (today, start a new exercise).
 
 - **Inject library page: live (build 12); open follow-ups below.** A page at its own address where the injects are
   listed and can be added, edited, reordered and deleted. Today the 16 injects are code inside

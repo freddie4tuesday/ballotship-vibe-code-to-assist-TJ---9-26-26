@@ -124,32 +124,53 @@ async function withInjects(fn, opts) {
   }
 }
 
-/* Open one screen per side on the setup page, simultaneous mode, relay on,
-   random placement, no AI artifact required. Returns {pages, errors}. */
+/* Join an exercise the way a person does (build 16): the Join button, the code, a side, a name. The page must be
+   loaded on the title screen. Returns once the game has started on this screen. */
+async function joinGame(p, code, side, name) {
+  await p.click("#btnTitleJoin");
+  await p.fill("#joinCode", code);
+  await p.click("#btnLookup");
+  await p.waitForSelector("#joinFound:not([hidden])");
+  await p.click(side === "t1" ? "#joinT1" : "#joinT2");
+  if (name) await p.fill("#joinName", name);
+  await p.click("#btnJoin");
+  await p.waitForFunction(() => window.G && G.me, null, { timeout: 15000 });
+}
+
+/* Open one screen per side, simultaneous mode, relay on, random placement, no AI artifact required. One screen sets the
+   exercise up and the others join with its code (build 16): the moderator sets up when there is one, otherwise team 1.
+   Returns {pages, errors, room} (room is the join code). */
 async function setupScreens(browser, relayUrl, sides, opts) {
   opts = opts || {};
-  const room = "test-" + Date.now() + "-" + Math.floor(Math.random() * 1e6);
+  const host = sides.includes("mod") ? "mod" : "t1";
+  const order = [host, ...sides.filter(s => s !== host)];
   const pages = {}, errors = [];
-  for (const side of sides) {
+  let room = null;
+  for (const side of order) {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await ctx.addInitScript(ms => { window.BALLOTSHIP_POLL_MS = ms; }, opts.pollMs || 250);
+    await ctx.addInitScript(u => { window.BALLOTSHIP_RELAY_URL = u; }, relayUrl);   // the page's default relay is this local one
     if (opts.deckUrls && opts.deckUrls[side] !== undefined) await ctx.addInitScript(u => { window.BALLOTSHIP_DECK_URL = u; }, opts.deckUrls[side]);   // build 12: which inject library this screen reads
     const p = await ctx.newPage();
     p.on("pageerror", e => errors.push(side + ": " + e.message));
     pages[side] = p;
     await p.goto(PAGE);
-    await p.getByText("Set up the exercise").first().click();
-    await p.click("#modeSim");
-    await p.click("#side" + side[0].toUpperCase() + side.slice(1));
-    if (opts.rounds) await p.selectOption("#rounds", String(opts.rounds));
-    if (!(await p.isChecked("#optOnline"))) await p.check("#optOnline");
-    await p.fill("#relayUrl", relayUrl);
-    await p.fill("#relayRoom", room);
-    if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto");
-    if (await p.isChecked("#optAI")) await p.uncheck("#optAI");
-    if (await p.isChecked("#optSfx")) await p.uncheck("#optSfx");
-    if (await p.isChecked("#optChime")) await p.uncheck("#optChime");
-    await p.click("#btnStart");
+    if (side === host) {
+      await p.getByText("Set up the exercise").first().click();
+      await p.click("#modeSim");
+      await p.click("#side" + side[0].toUpperCase() + side.slice(1));
+      if (opts.rounds) await p.selectOption("#rounds", String(opts.rounds));
+      if (!(await p.isChecked("#optOnline"))) await p.check("#optOnline");
+      if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto");
+      if (await p.isChecked("#optAI")) await p.uncheck("#optAI");
+      if (await p.isChecked("#optSfx")) await p.uncheck("#optSfx");
+      if (await p.isChecked("#optChime")) await p.uncheck("#optChime");
+      await p.click("#btnStart");
+      await p.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 });
+      room = await p.evaluate(() => G.joinCode);
+    } else {
+      await joinGame(p, room, side);
+    }
     await p.waitForTimeout(200);
   }
   return { pages, errors, room };
@@ -158,4 +179,4 @@ async function setupScreens(browser, relayUrl, sides, opts) {
 const screenOn = p => p.$eval(".screen.on", e => e.id).catch(() => "");
 const threadHas = (p, text) => p.evaluate(t => JSON.stringify(G.thread).includes(t), text);
 
-module.exports = { ROOT, PAGE, reporter, withRelay, withInjects, launch, setupScreens, screenOn, threadHas };
+module.exports = { ROOT, PAGE, reporter, withRelay, withInjects, launch, setupScreens, joinGame, screenOn, threadHas };

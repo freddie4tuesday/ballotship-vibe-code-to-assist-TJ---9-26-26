@@ -43,7 +43,7 @@ const { ROOT, PAGE, reporter, launch } = require("./helpers");
     await p.click("#modeSim");
     if (await p.isChecked("#optOnline")) await p.uncheck("#optOnline");
     await p.click("#sideMod");
-    r.check("choosing Moderator switches the relay on", (await p.isChecked("#optOnline")) && (await p.isVisible("#relayRoom")));
+    r.check("choosing Moderator switches the relay on", (await p.isChecked("#optOnline")) && (await p.isVisible("#hostHint")));
     r.check("the page loads with no JavaScript errors", errors.length === 0, errors.join("; "));
   } catch (e) {
     r.fail("test crashed", e.message);

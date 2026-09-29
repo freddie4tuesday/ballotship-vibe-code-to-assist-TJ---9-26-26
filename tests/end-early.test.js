@@ -22,7 +22,10 @@ async function run(browser, mode, relay, r, ender) {
   const m = mode === "sim+mod" ? "sim" : mode;
   const screens = [];
   // Three screens at the default test speed would pass the relay's 400-a-minute room limit on their own.
-  for (const s of sides) screens.push(await setup(browser, m, s, mode === "pass" ? null : relay, room, { pollMs: sides.length > 2 ? 600 : 150 }));
+  // The moderator sets up when there is one (build 16), so it is created first; the screens are kept in `sides` order.
+  const made = {};
+  for (const s of (sides.includes("mod") ? ["mod", ...sides.filter(x => x !== "mod")] : sides)) made[s] = await setup(browser, m, s, mode === "pass" ? null : relay, room, { pollMs: sides.length > 2 ? 600 : 150 });
+  for (const s of sides) screens.push(made[s]);
   const players = screens.filter((x, i) => sides[i] !== "mod");
   const mod = screens[sides.indexOf("mod")];
   // A moderator presses "Start round N" as the teams move on (not "End the exercise").

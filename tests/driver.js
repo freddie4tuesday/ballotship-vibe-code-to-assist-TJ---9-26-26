@@ -3,7 +3,8 @@
   playing: "pass" (one screen passed), "relay" (two screens taking turns) and
   "sim" (two screens simultaneous). Used by shot-marks and end-early tests.
 */
-const { PAGE, screenOn } = require("./helpers");
+const { PAGE, screenOn, joinGame } = require("./helpers");
+const codes = {};   // room key -> the join code its host got (build 16: the first screen of a room sets up, the rest join)
 
 const TEXT = "Automated test entry, written by the shot-marks test.";
 const setVals = (p, sel) => p.evaluate(([sel, t]) => {
@@ -14,17 +15,20 @@ async function setup(browser, mode, side, relay, room, opts) {
   opts = opts || {};
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await ctx.addInitScript(ms => { window.BALLOTSHIP_POLL_MS = ms; }, opts.pollMs || 150);
+  await ctx.addInitScript(u => { window.BALLOTSHIP_RELAY_URL = u; }, relay || "");   // the page's default relay is the local one
   const p = await ctx.newPage();
   const errors = [];
   p.on("pageerror", e => errors.push(e.message));
   await p.goto(PAGE);
+  /* Build 16: with a relay, the first screen of a room sets the exercise up and the others join with its code.
+     A moderator, if there is one, must be the first (the moderator sets up when there is one). */
+  if (relay && codes[room]) { await joinGame(p, codes[room], side); registry[side] = p; return { p, errors }; }
   await p.click("#btnTitleGo");
   await p.click({ pass: "#modePass", relay: "#modeRelay", sim: "#modeSim" }[mode]);
   if (side) await p.click({ t1: "#sideT1", t2: "#sideT2", mod: "#sideMod" }[side]);
   await p.selectOption("#rounds", String(opts.rounds || 4));
   if (relay) {
     if (!(await p.isChecked("#optOnline"))) await p.check("#optOnline");
-    await p.evaluate(([u, r]) => { const a = document.getElementById("relayUrl"), b = document.getElementById("relayRoom"); a.value = u; b.value = r; }, [relay, room]);
   }
   if (opts.clock) {                                   // one laptop / taking turns: "Use a clock", with times like "0:05"
     await p.check("#optClock");
@@ -33,6 +37,7 @@ async function setup(browser, mode, side, relay, room, opts) {
   if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto");
   for (const id of ["#optAI", "#optSfx", "#optChime"]) if (await p.isChecked(id)) await p.uncheck(id);
   await p.click("#btnStart");
+  if (relay) { await p.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 }); codes[room] = await p.evaluate(() => G.joinCode); }
   if (side) registry[side] = p;
   return { p, errors };
 }

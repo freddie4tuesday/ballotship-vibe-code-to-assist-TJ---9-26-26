@@ -36,9 +36,10 @@ async function relayMsgs(relay, room) {
   try {
     await withRelay(async relay => {
       browser = await launch();
-      const room = "clk-" + Date.now();
+      let room = "clk-" + Date.now();   // becomes the join code once the moderator has set up
       const opts = { pollMs: 700 };
-      const t1 = await setup(browser, "sim", "t1", relay, room, opts), t2 = await setup(browser, "sim", "t2", relay, room, opts), mod = await setup(browser, "sim", "mod", relay, room, opts);
+      const mod = await setup(browser, "sim", "mod", relay, room, opts), t1 = await setup(browser, "sim", "t1", relay, room, opts), t2 = await setup(browser, "sim", "t2", relay, room, opts);   // the moderator sets up; the teams join
+      room = await mod.p.evaluate(() => G.joinCode);
       const all = [t1, t2, mod], errors = () => all.flatMap(s => s.errors);
       await until(async () => (await screenOn(t1.p)) === "screen-sim-attack" && (await screenOn(t2.p)) === "screen-sim-attack" && (await screenOn(mod.p)) === "screen-mod", 30000);
       const clocks = async () => Promise.all(all.map(s => ck(s.p)));

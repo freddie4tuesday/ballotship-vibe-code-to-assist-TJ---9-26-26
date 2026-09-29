@@ -25,6 +25,7 @@ const { reporter, withRelay } = require("./helpers");
       r.check("'since' skips what a screen already has", (await poll("mod", 2)).messages.length === 0);
 
       r.check("the moderator cannot send moves", (await send({ from: "mod", code: "X" })).status === 400);
+      r.check("...but may post an exercise's settings (a join code, build 16), and still not a join", (await send({ from: "mod", code: "R0-SETUP" })).status === 200 && (await send({ from: "mod", code: "R0-JOIN" })).status === 400);
       const modRoom = relay + "/room/mod-" + Date.now() + "/send";
       const modSend = code => fetch(modRoom, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: "mod", code }) });
       r.check("the moderator can send clock changes", (await modSend("R2-CLK")).status === 200);

@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 15 (on the branch; staging is build 14, live is build 13)
+**Current version:** build 16 (on the branch; staging is build 15, live is build 13)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address and needs an emailed sign-in link; see The inject library)
@@ -35,6 +35,12 @@ offers to resume the exercise in progress.
 | Two screens, simultaneous (recommended) | Both teams work the same inject on one clock, swap attacks, then respond on a second clock. A moderator screen runs the clock. |
 | Two screens, taking turns | Each team runs its own copy. Moves pass as short codes read aloud, so no network is needed. |
 | One screen, passed | Teams share one laptop, with a full-screen curtain between phases. |
+
+**Joining:** with the relay on, one screen sets the exercise up (the moderator's if there is a moderator, otherwise Team 1's) and
+the others choose "Join an exercise", type the join code the host's screen shows (one word and three digits, like
+`falcon-482`), pick Team 1 or Team 2 and type their team's name. Everything else comes from the host. The code is the relay
+room's name; the host posts one settings message, including the inject deck, into it. With the relay off every screen is set up
+by hand, as before.
 
 Optional features on the setup screen: a relay that passes codes automatically between buildings,
 an AI assignment required with every attack, a reveal of the real-world precedent after each

@@ -96,8 +96,9 @@ export class Room extends DurableObject {
     const code = String(b.code || "");
     // The moderator only watches, except that it may end the exercise early or
     // resume it (build 6), or change the clock (build 11), which the team screens
-    // need to hear about.
-    const modControl = /-(END|RESUME|CLK)$/.test(code);
+    // need to hear about. Build 16: and it may post the exercise's settings when it sets an
+    // exercise up (a join code), which the teams read.
+    const modControl = /-(END|RESUME|CLK|SETUP)$/.test(code);
     if (!SIDES.includes(side) || (side === "mod" && !modControl)) return json({ error: "from must be t1 or t2" }, 400);
     const note = String(b.note || "");
     const note2 = String(b.note2 || "");

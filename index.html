@@ -249,6 +249,29 @@
         cookie's flags, sign-out, the hourly limit, and links and sign-ins that expire), and by
         tests/injects-api.test.js and injects-game.test.js, which now sign in first (the editor page end
         to end, including the sign-in box and the confirm step).
+  build 16 One screen sets the exercise up and the others join with a code. Asked for: "why can't we let one
+        person or team make all the decisions and then give the other team a single code to enter?" Until
+        now every screen typed the same relay address, room name, round count, team names and options, and one
+        typo gave two screens that quietly didn't match. Now, with the relay on, the moderator sets up when
+        there is one, otherwise Team 1. Starting makes a join code (one word and three digits, like falcon-482;
+        about 250,000 combinations, checked to be an unused room) and shows it on the host's screen until
+        everyone is in. The code IS the relay room. The host posts one message into the room with every
+        shared setting (mode, rounds, precedent, clock times, sound, AI, random placement) and the inject deck
+        itself (about 35 KB), so all screens play the same injects even if the library is edited meanwhile.
+        A new "Join an exercise" button leads to a box for the code, a one-line summary, Team 1 or Team 2
+        (the free ones), and the team's own name; each screen learns the other team's name from a JOIN
+        message, the moderator sees both, and if two screens pick the same side the first the relay stored
+        wins and the other is told to choose again. The relay address and room name fields are gone from
+        the form (the page's own relay is used); with the relay off, or one laptop, setup is by hand as
+        before. The relay now lets a moderator post the settings message (it deploys with the page). A
+        moderator is always the host when there is one, so nobody joins as moderator. Wording for all the
+        new screens was approved as a table first ("taken" beside a chosen side is the one addition).
+        Tests that set up relay games now set up on one screen and join on the others. Verified by
+        tests/join-code.test.js (the form in each state; the code and the room's contents; the joiner starts
+        with the host's settings and deck though it can't reach the library; names both ways; two screens
+        claiming one side; wrong code and unreachable relay; a used room is skipped; a saved host game keeps
+        its code), by the relay test (moderator may post settings only), and by breaking the page on purpose:
+        without the first-claim rule both screens get in, and without the name update the tests fail.
 -->
 <html lang="en">
 <head>
@@ -747,6 +770,8 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--orange);border-c
 
 /* ---- build footer (build number + change summary) ---- */
 .deck-note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.join-banner{position:fixed;left:0;right:0;bottom:28px;z-index:56;background:var(--evergreen-deep);color:#fff;padding:9px 16px;font-size:14px;border-top:3px solid var(--orange)}
+.join-banner b{font-family:var(--code);font-size:18px;letter-spacing:.06em;background:#fff;color:var(--ink);padding:1px 8px;border-radius:3px}
 .deck-warn{position:fixed;left:0;right:0;bottom:28px;z-index:56;background:var(--magenta);color:#fff;padding:10px 16px;font-weight:600;font-size:14px}
 .build-footer{position:fixed;left:0;right:0;bottom:0;height:28px;background:var(--evergreen-deep);color:#A9C2B3;font-family:var(--code);font-size:11.5px;padding:0 16px;z-index:55;display:flex;gap:10px;align-items:center;white-space:nowrap;overflow-x:auto}
 .build-footer .tag{color:#fff;background:var(--orange);border-radius:3px;padding:1px 6px;font-weight:600;flex-shrink:0}
@@ -791,11 +816,36 @@ body{padding-bottom:28px}
     <p class="title-line">Two jurisdictions. One inject at a time. Half of it is a guessing game on a hidden board, and half of it is the part that matters.</p>
     <p class="title-line">The board game keeps it moving. The real exercise is what your team writes each round: who acts, who you tell, and the exact words that go out to voters.</p>
     <button class="btn big orange title-btn" id="btnTitleGo">Set up the exercise</button>
+    <button class="btn ghost title-btn" id="btnTitleJoin" type="button" style="margin-top:12px">Join an exercise</button>
     <div class="title-foot" id="titleFoot">Ready for Tuesday</div>
   </div>
 </section>
 
 <!-- ============ SETUP ============ -->
+<section class="screen" id="screen-join">
+  <div class="panel">
+    <div class="panel-h"><h2>Join an exercise</h2><span class="n">JOIN CODE</span></div>
+    <div class="field">
+      <label class="fl" for="joinCode">Join code</label>
+      <input type="text" id="joinCode" autocomplete="off" spellcheck="false" autocapitalize="none" maxlength="48">
+      <div class="hint">Ask whoever set up the exercise. It looks like falcon-482.</div>
+    </div>
+    <div class="btnrow"><button class="btn orange" id="btnLookup" type="button">Look it up</button></div>
+    <div class="err" id="joinErr" hidden style="width:100%"></div>
+    <div id="joinFound" hidden>
+      <hr class="rule">
+      <p class="lede" id="joinSummary"></p>
+      <label class="fl">Which are you?</label>
+      <div class="modes" style="grid-template-columns:1fr 1fr">
+        <button class="mode" id="joinT1" type="button"><h3 style="font-size:17px">Team 1</h3></button>
+        <button class="mode" id="joinT2" type="button"><h3 style="font-size:17px">Team 2</h3></button>
+      </div>
+      <div class="field" style="margin-top:12px"><label class="fl" for="joinName">Your team name</label><input type="text" id="joinName" maxlength="28" autocomplete="off"></div>
+      <div class="btnrow"><button class="btn big orange" id="btnJoin" type="button">Join</button></div>
+    </div>
+  </div>
+</section>
+
 <section class="screen" id="screen-setup">
   <div class="panel" id="resumePanel" hidden style="border-left:5px solid var(--orange)">
     <div class="panel-h"><h2>An exercise is in progress</h2><span class="n" id="resumeN"></span></div>
@@ -846,28 +896,18 @@ body{padding-bottom:28px}
             <button class="mode" id="sideT2" type="button"><h3 style="font-size:17px">Team 2</h3><p>Plays a jurisdiction.</p></button>
             <button class="mode" id="sideMod" type="button"><h3 style="font-size:17px">Moderator</h3><p>No board. Runs the clock and watches the traffic.</p></button>
           </div>
+          <div class="hint" id="hostHint" hidden style="margin-top:10px">If there is a moderator, the moderator sets up the exercise. Otherwise Team 1 does. Everyone else joins with a code.</div>
           <div class="hint" style="margin-top:10px">Each screen runs its own clock, with its own start, pause and adjust buttons. Phase changes start the clocks together. When anyone pauses, resumes, adds or takes a minute, or resets, the other screens follow at their next check, within about 15 seconds, and any time that ran on before the change reached them is given back.</div>
         </div>
         <div>
-          <div class="field"><label class="fl" for="rn1">Team 1 name</label><input type="text" id="rn1" value="Ashwood County" maxlength="28"></div>
-          <div class="field"><label class="fl" for="rn2">Team 2 name</label><input type="text" id="rn2" value="Calder County" maxlength="28"></div>
-          <div class="hint">Both devices need the same two names and the same round count. Set them together before you start.</div>
+          <div class="field" id="fldN1"><label class="fl" for="rn1" id="lblN1">Team 1 name</label><input type="text" id="rn1" value="Ashwood County" maxlength="28"></div>
+          <div class="field" id="fldN2"><label class="fl" for="rn2">Team 2 name</label><input type="text" id="rn2" value="Calder County" maxlength="28"></div>
+          <div class="hint" id="namesHint">Both devices need the same two names and the same round count. Set them together before you start.</div>
         </div>
       </div>
       <hr class="rule">
-      <div class="chk"><input type="checkbox" id="optOnline"><label for="optOnline"><b>Pass codes automatically through a relay.</b> For teams in different buildings. Without this, one team reads the code out and the other types it, which works over any phone call, chat or video call.</label></div>
-      <div class="two" id="onlineFields" hidden>
-        <div class="field">
-          <label class="fl" for="relayUrl">Relay address</label>
-          <input type="text" id="relayUrl" value="https://ballotship-relay.electionadminsuite.com" placeholder="https://ballotship-relay.electionadminsuite.com" autocomplete="off" spellcheck="false">
-          <div class="hint">The Cloudflare Worker from <span class="mono">worker/</span>, filled in already. Same address on both devices.</div>
-        </div>
-        <div class="field">
-          <label class="fl" for="relayRoom">Room name</label>
-          <input type="text" id="relayRoom" placeholder="ashwood-calder-march" autocomplete="off" spellcheck="false">
-          <div class="hint">Any unguessable phrase. Lowercase letters, numbers and hyphens. Same room on both devices, and treat it like a password.</div>
-        </div>
-      </div>
+      <div class="chk"><input type="checkbox" id="optOnline"><label for="optOnline"><b>Pass codes automatically through a relay.</b> For teams in different buildings. Without this, one team reads the code out and the other types it, which works over any phone call, chat or video call. Turn this on to get a join code the other screens can type in. Without it, every screen is set up by hand.</label></div>
+      <input type="hidden" id="relayUrl" value="https://ballotship-relay.electionadminsuite.com" placeholder="https://ballotship-relay.electionadminsuite.com">
     </div>
 
     <hr class="rule">
@@ -1953,6 +1993,7 @@ function snapshot() {
     mode:G.mode, me:G.me, maxRounds:G.maxRounds, round:G.round, attacker:G.attacker,
     sim:!!G.sim, simPhase:G.simPhase, durA:G.durA, durD:G.durD,
     chime:G.chime, sfx:G.sfx, clockOn:!!G.clockOn,
+    joinCode:G.joinCode || null, hostSide:G.hostSide || null, joined:G.joined || null, joinedCid:G.joinedCid || null, cid:G.cid || null,   /* build 16 */
     deck:{version:DECK_VERSION, start:DECK_START, injects:DECK},   /* build 12: the game keeps the deck it started with */
     /* build 11 — a running clock only records its time when paused or adjusted, so the save held the time it
        started with, and a reload gave the time back. Save what is actually left (see also: the save when the
@@ -2010,7 +2051,8 @@ function restore(d) {
     requireAI:d.requireAI !== false, thread:d.thread || [], inbox:d.inbox || [],
     sim:!!d.sim, simPhase:d.simPhase || null, durA:d.durA || 600, durD:d.durD || 600,
     chime:d.chime !== false, sfx:d.sfx !== false, clock:d.clock || null, R:null,
-    clockOn:d.clockOn !== undefined ? !!d.clockOn : !!d.sim
+    clockOn:d.clockOn !== undefined ? !!d.clockOn : !!d.sim,
+    joinCode:d.joinCode || null, hostSide:d.hostSide || null, joined:d.joined || null, joinedCid:d.joinedCid || null, cid:d.cid || null
   };
   if (d.R) {
     G.R = {}; for (var kr in d.R) if (kr !== "cardNo") G.R[kr] = d.R[kr];
@@ -2349,6 +2391,7 @@ function cardEl(card) {
 }
 
 function updateChrome() {
+  paintJoinBanner();
   $("btnEndEarly").hidden = !G || G.over || !G.phase || G.phase === "place";
   if (!G) { $("roundchip").textContent = "Setup"; $("score").hidden = true; return; }
   $("roundchip").textContent = G.over ? "Complete" : "Round " + G.round + " of " + G.maxRounds;
@@ -2382,8 +2425,23 @@ function pickMode(m) {
   syncClockUI();
   $("sideMod").hidden = (m !== "sim");
   if (m !== "sim" && setupSide === "mod") pickSide("t1");
+  syncHostUI();
 }
-/* build 11 — simultaneous games always have a clock; one laptop, or two screens taking turns,
+/* build 16 - with the relay on, this screen SETS UP the exercise for everyone and the other screens join with a
+   code, so it is either the moderator's or Team 1's (Team 2 only exists as a joiner), and only Team 1 has a name
+   to type here (a joining team names itself). Without the relay every screen is still set up by hand, as before,
+   and needs both names. */
+function syncHostUI() {
+  var hosted = setupMode !== "pass" && $("optOnline").checked;
+  $("sideT2").hidden = hosted;
+  if (hosted && setupSide === "t2") { pickSide("t1"); return; }
+  $("hostHint").hidden = !hosted;
+  $("fldN2").hidden = hosted;
+  $("fldN1").hidden = hosted && setupSide === "mod";
+  $("lblN1").textContent = hosted ? "Your team name" : "Team 1 name";
+  $("namesHint").hidden = hosted;
+}
+/* build 11 - simultaneous games always have a clock; one laptop, or two screens taking turns,
    only if the facilitator asks (off by default, so those games work as they always did). */
 function syncClockUI() {
   var sim = setupMode === "sim";
@@ -2396,13 +2454,13 @@ function pickSide(s) {
   $("sideT1").classList.toggle("on", s === "t1");
   $("sideT2").classList.toggle("on", s === "t2");
   $("sideMod").classList.toggle("on", s === "mod");
-  /* build 6 — a moderator screen needs the relay, and used to say so only after
+  /* build 6 - a moderator screen needs the relay, and used to say so only after
      Start was pressed. Choosing Moderator now switches it on. */
-  if (s === "mod" && !$("optOnline").checked) { $("optOnline").checked = true; $("onlineFields").hidden = false; }
+  if (s === "mod" && !$("optOnline").checked) $("optOnline").checked = true;
+  syncHostUI();
 }
-$("optOnline").addEventListener("change", function () {
-  $("onlineFields").hidden = !$("optOnline").checked;
-});
+$("optOnline").addEventListener("change", syncHostUI);
+syncHostUI();
 $("modeSim").addEventListener("click", function () { pickMode("sim"); });
 $("modeRelay").addEventListener("click", function () { pickMode("relay"); });
 $("modePass").addEventListener("click", function () { pickMode("pass"); });
@@ -2410,12 +2468,15 @@ $("sideT1").addEventListener("click", function () { pickSide("t1"); });
 $("sideT2").addEventListener("click", function () { pickSide("t2"); });
 $("sideMod").addEventListener("click", function () { pickSide("mod"); });
 
-$("btnStart").addEventListener("click", function () {
-  /* build 6 — starting used to replace a saved exercise on this laptop without asking. */
+/* Starting or joining replaces the saved exercise on this laptop, so ask first (build 6). */
+function replaceSavedOk() {
   var saved = readSave();
-  if (saved && !window.confirm("Starting a new exercise replaces the saved one on this laptop (" +
-      saved.teams.t1.name + " against " + saved.teams.t2.name + ", " + (saved.over ? "finished" : "round " + saved.round) +
-      "). It can't be brought back. Start a new one anyway?")) return;
+  return !(saved && !window.confirm("Starting a new exercise replaces the saved one on this laptop (" +
+    saved.teams.t1.name + " against " + saved.teams.t2.name + ", " + (saved.over ? "finished" : "round " + saved.round) +
+    "). It can't be brought back. Start a new one anyway?"));
+}
+$("btnStart").addEventListener("click", function () {
+  if (!replaceSavedOk()) return;
   var n1 = $("rn1").value.trim() || "Team 1";
   var n2 = $("rn2").value.trim() || "Team 2";
   var sim = setupMode === "sim";
@@ -2424,39 +2485,247 @@ $("btnStart").addEventListener("click", function () {
     flash("startErr", "A moderator screen needs the automatic relay switched on, otherwise nothing reaches it.");
     return;
   }
-  G = {
-    mode: sim ? "sim" : relay ? "relay" : "pass",
-    sim: sim, me: relay ? setupSide : null,
-    durA: parseDur($("durA").value, 600), durD: parseDur($("durD").value, 600),
-    chime: $("optChime").checked, clockOn: sim || $("optClock").checked,
-    clock: null, simPhase: null, R: null, sfx: $("optSfx").checked,
-    teams: {}, maxRounds: parseInt($("rounds").value, 10),
-    round: 1, attacker: "t1", revealPrec: $("optPrec").checked,
-    log: [], pending: null, over: false, suddenDeath: false, expect: null,
-    relay: null, requireAI: $("optAI").checked, thread: [], inbox: []
-  };
-  if (relay && $("optOnline").checked) {
-    var ru = $("relayUrl").value.trim().replace(/\/+$/, "");
-    var rr = $("relayRoom").value.trim().toLowerCase();
-    if (!/^https?:\/\//.test(ru)) { flash("startErr", "The relay address needs to start with https://"); return; }
-    if (!/^[a-z0-9][a-z0-9-]{2,47}$/.test(rr)) { flash("startErr", "The room name needs 3 to 48 characters: lowercase letters, numbers and hyphens."); return; }
-    G.relay = {url: ru, room: rr, cursor: 0};
-  }
+  var online = relay && $("optOnline").checked;
   $("startErr").hidden = true;
+  /* build 16 - with the relay on, the room is a made-up join code, checked to be unused, instead of a name typed
+     identically on every screen. Before this, each screen typed the relay address, the room and the settings. */
+  if (online) findFreeRoom(function (code) {
+    if (!code) { flash("startErr", "Can't reach the relay. Check your connection and try again."); return; }
+    doStart(code);
+  });
+  else doStart(null);
+
+  function doStart(code) {
+    G = {
+      mode: sim ? "sim" : relay ? "relay" : "pass",
+      sim: sim, me: relay ? setupSide : null,
+      durA: parseDur($("durA").value, 600), durD: parseDur($("durD").value, 600),
+      chime: $("optChime").checked, clockOn: sim || $("optClock").checked,
+      clock: null, simPhase: null, R: null, sfx: $("optSfx").checked,
+      teams: {}, maxRounds: parseInt($("rounds").value, 10),
+      round: 1, attacker: "t1", revealPrec: $("optPrec").checked,
+      log: [], pending: null, over: false, suddenDeath: false, expect: null,
+      relay: null, requireAI: $("optAI").checked, thread: [], inbox: []
+    };
+    if (code) {
+      G.relay = {url: defaultRelay(), room: code, cursor: 0};
+      G.joinCode = code; G.hostSide = setupSide; G.joined = {t1:false, t2:false}; G.joinedCid = {}; G.cid = randomId();
+      if (setupSide === "t1") { G.joined.t1 = true; G.joinedCid.t1 = G.cid; }
+      if (setupSide === "mod") { n1 = "Team 1"; n2 = "Team 2"; } else n2 = "Team 2";   // a joining team names itself
+    }
+    clearSave();
+    chooseDeck();     /* build 12: the deck is fixed for this game from here on */
+    G.teams.t1 = newTeam(n1, !relay || setupSide === "t1");
+    G.teams.t2 = newTeam(n2, !relay || setupSide === "t2");
+    $("mastSub").textContent = meLabel();
+    updateChrome();
+    mountDock();
+    startRelay();
+    announceDeck();
+    if (code) postSetup(n1);
+    if (G.me === "mod") { G.phase = "sim"; simStartRound(); return; }
+    var mine = relay ? [G.me] : ["t1","t2"];
+    if ($("optAuto").checked) { mine.forEach(function (k) { autoPlace(G.teams[k]); }); beginPlay(); }
+    else startPlacement(mine[0]);
+  }
+});
+
+/* ------------------------------------------------------------------
+   JOIN CODES (build 16)
+   One screen sets the exercise up and the others type a short code. The code is the relay room's name. The
+   host posts ONE message into the room that carries every shared setting and the inject deck itself (about 35 KB,
+   so every screen plays exactly the same injects even if the library is edited in the meantime). A joining screen
+   reads it, picks its side, names its team, and says so with a JOIN message; every screen learns the other team's
+   name from that message. A moderator is always the host when there is one (a game with a moderator has the
+   moderator set it up), so joiners are only ever Team 1 or Team 2.
+   Two screens can pick the same side at once: the first JOIN the relay stored for a side wins, and the other
+   is told to choose again. The code is one word and three digits (about 250,000 combinations) chosen to be
+   short to read aloud; it protects exercise material, not secrets, and a room is empty until the host posts.
+   ------------------------------------------------------------------ */
+var JOIN_WORDS = ("acorn alder amber anchor apple arrow aspen atlas badger bamboo banjo barley basil beacon beaver birch bison " +
+  "blossom bramble breeze brook cactus camel canyon cedar cherry clover cobalt comet copper coral cotton coyote crane creek " +
+  "crimson crystal cypress daisy dawn delta desert dolphin dove drift eagle ember falcon feather fern finch fjord flint forest " +
+  "fox garnet ginger glacier granite grove harbor hawk hazel heron hickory hollow honey iris island ivory jade jasper juniper " +
+  "kayak kestrel kite lagoon lantern larch laurel lemon lilac linden lotus lynx maple marble meadow mesa mint mist moose " +
+  "moss mulberry nectar nutmeg oak oasis olive onyx orchid osprey otter panda pebble pepper pine plum pond poppy prairie " +
+  "quail quartz quill raven reed ridge river robin rowan saffron sage salmon sandal sequoia shore silver sparrow spruce " +
+  "summit sunset swan tamarack thistle thyme tiger topaz tulip tundra valley velvet violet walnut willow wren yarrow zephyr " +
+  "almond aurora azure balsam basalt bluebell buttercup canary caribou cardinal chestnut cinder cliff cloud cricket dahlia " +
+  "dune elm emerald fable firefly flax gale gull halo hemlock ibis jay kelp lark lavender magnolia marigold mole nettle " +
+  "orbit peach pear petal pike plover puffin ranger rose sable sapphire seal shale spark stork sundew swift teal tern trout " +
+  "umber vine vole warbler wheat wisp yew zinnia").split(" ");
+function randomId() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+function genJoinCode() {
+  var w = JOIN_WORDS[Math.floor(Math.random() * JOIN_WORDS.length)], n = Math.floor(Math.random() * 1000);
+  return w + "-" + ("00" + n).slice(-3);
+}
+/* Which relay this page uses by default: the live one, or staging's on a staging address. Tests set their own. */
+function defaultRelay() {
+  return ((typeof window.BALLOTSHIP_RELAY_URL === "string" && window.BALLOTSHIP_RELAY_URL) || $("relayUrl").value).replace(/\/+$/, "");
+}
+/* Everything in a room, oldest first (the moderator's view of the relay shows all messages, and reading changes nothing). */
+function readRoom(code, done) {
+  var all = [], since = 0;
+  (function next(guard) {
+    window.fetch(defaultRelay() + "/room/" + encodeURIComponent(code) + "/poll?since=" + since + "&as=mod").then(function (r) {
+      return r.json().then(function (b) { if (!r.ok) throw new Error(b && b.error ? b.error : "relay returned " + r.status); return b; });
+    }).then(function (b) {
+      var m = b.messages || [];
+      m.forEach(function (x) { all.push(x); since = x.seq; });
+      if (m.length >= 50 && guard < 20) next(guard + 1); else done(null, all);
+    }, function (e) { done(e || new Error("failed"), null); });
+  })(0);
+}
+function findFreeRoom(done) {
+  var tries = 0;
+  (function next() {
+    var code = genJoinCode();
+    readRoom(code, function (err, msgs) {
+      if (err) { done(null); return; }
+      if (msgs.length === 0) { done(code); return; }
+      if (++tries < 8) next(); else done(null);
+    });
+  })();
+}
+/* The host puts the shared settings, and the deck, into the room for joiners to read. */
+function postSetup(hostName) {
+  var st = {v:1, mode:G.mode, rounds:G.maxRounds, prec:G.revealPrec, clock:!!G.clockOn, durA:G.durA, durD:G.durD,
+    chime:G.chime, sfx:G.sfx, ai:G.requireAI, auto:$("optAuto").checked, host:G.hostSide, hostName:G.hostSide === "t1" ? hostName : ""};
+  var deck = {version:DECK_VERSION, start:DECK_START, injects:DECK};
+  relaySend("R0-SETUP", {note:JSON.stringify(st), note2:JSON.stringify(deck)}, function () {
+    if (G.hostSide === "t1") sendJoin("t1", hostName);
+  }, function (e) { relayStatus("The join details could not be posted (" + e + "). Other screens cannot join yet. Start a new exercise once the relay is reachable.", true); });
+}
+function sendJoin(side, name) {
+  relaySend("R0-JOIN", {note:JSON.stringify({side:side, name:name, cid:G.cid})}, function () {}, function () {});
+}
+/* A team has joined (seen on the host's screen and on the other team's). The first claim on a side stands. */
+function applyJoin(note, from) {
+  var m; try { m = JSON.parse(note); } catch (e) { return; }
+  if (!m || (m.side !== "t1" && m.side !== "t2") || m.side !== from || typeof m.cid !== "string" || !G || !G.teams) return;   // a JOIN only counts from the side it names
+  if (m.side === G.me) return;
+  G.joined = G.joined || {t1:false, t2:false}; G.joinedCid = G.joinedCid || {};
+  if (G.joined[m.side] && G.joinedCid[m.side] && G.joinedCid[m.side] !== m.cid) return;
+  var name = String(m.name == null ? "" : m.name).replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 28);
+  G.teams[m.side].name = name || (m.side === "t1" ? "Team 1" : "Team 2");
+  G.joined[m.side] = true; G.joinedCid[m.side] = m.cid;
+  $("mastSub").textContent = meLabel();
+  updateChrome(); save();
+}
+/* The host's reminder of the code, until everyone has joined. */
+function paintJoinBanner() {
+  var el = $("joinBanner");
+  if (!G || !G.joinCode || G.hostSide !== G.me || G.over) { el.hidden = true; return; }
+  var need = G.hostSide === "mod" ? ["t1", "t2"] : ["t2"], j = G.joined || {}, waiting = need.filter(function (k) { return !j[k]; });
+  if (!waiting.length) { el.hidden = true; return; }
+  var label = function (k) { return (k === "t1" ? "Team 1" : "Team 2"); };
+  var txt = need.filter(function (k) { return j[k]; }).map(function (k) { return label(k) + " (" + esc(G.teams[k].name) + ") has joined."; }).join(" ");
+  txt += (txt ? " " : "") + "Waiting for " + waiting.map(label).join(" and ") + " to join.";
+  el.innerHTML = "Join code: <b>" + esc(G.joinCode) + "</b>. Give it to the other screens. " + txt;
+  el.hidden = false;
+}
+
+/* ---- the Join screen ---- */
+var joinFound = null;   // {code, st, deck, taken:{t1,t2}, names:{t1,t2}, side}
+$("btnTitleJoin").addEventListener("click", function () { $("joinFound").hidden = true; $("joinErr").hidden = true; show("screen-join"); $("joinCode").focus(); });
+function joinErr(msg) { flash("joinErr", msg); }
+function pickJoinSide(k) {
+  if (!joinFound || joinFound.taken[k]) return;
+  joinFound.side = k;
+  $("joinT1").classList.toggle("on", k === "t1"); $("joinT2").classList.toggle("on", k === "t2");
+  if (!$("joinName").value.trim() || /^Team [12]$/.test($("joinName").value.trim())) $("joinName").value = (k === "t1" ? "Team 1" : "Team 2");
+}
+$("joinT1").addEventListener("click", function () { pickJoinSide("t1"); });
+$("joinT2").addEventListener("click", function () { pickJoinSide("t2"); });
+/* What a room says: the host's settings, and who has taken which side (the first JOIN for a side counts). */
+function readSetupFrom(msgs) {
+  var st = null, deck = null, taken = {t1:false, t2:false}, names = {}, cids = {};
+  msgs.forEach(function (x) {
+    var c = String(x.code || "").toUpperCase();
+    if (!st && /-SETUP$/.test(c)) { try { st = JSON.parse(x.note); deck = JSON.parse(x.note2); } catch (e) { st = null; } }
+    if (/-JOIN$/.test(c)) { try { var j = JSON.parse(x.note); if ((j.side === "t1" || j.side === "t2") && j.side === x.from && !taken[j.side]) { taken[j.side] = true; names[j.side] = j.name; cids[j.side] = j.cid; } } catch (e) {} }
+  });
+  if (!st || st.v !== 1 || (st.mode !== "sim" && st.mode !== "relay") || (st.host !== "t1" && st.host !== "mod")) return null;
+  return {st:st, deck:deck, taken:taken, names:names, cids:cids};
+}
+$("btnLookup").addEventListener("click", function () {
+  var code = $("joinCode").value.trim().toLowerCase();
+  $("joinErr").hidden = true; $("joinFound").hidden = true;
+  if (!/^[a-z0-9][a-z0-9-]{2,47}$/.test(code)) { joinErr("There is no exercise with that code. Check it with whoever set it up, then try again."); return; }
+  readRoom(code, function (err, msgs) {
+    if (err) { joinErr("Can't reach the relay. Check your connection and try again."); return; }
+    var r = readSetupFrom(msgs);
+    if (!r) { joinErr("There is no exercise with that code. Check it with whoever set it up, then try again."); return; }
+    showJoinFound(code, r, null);
+  });
+});
+function showJoinFound(code, r, msg) {
+  joinFound = {code:code, st:r.st, deck:r.deck, taken:r.taken, names:r.names, side:null};
+  if (r.st.host === "t1") joinFound.taken.t1 = true;     // the host team is Team 1
+  var how = r.st.mode === "sim" ? "two screens, simultaneous" : "two screens, taking turns";
+  var by = r.st.host === "mod" ? "the moderator" : "Team 1" + (r.names.t1 || r.st.hostName ? " (" + (r.names.t1 || r.st.hostName) + ")" : "");
+  $("joinSummary").textContent = "This exercise: " + how + ", " + r.st.rounds + " rounds. Set up by " + by + ".";
+  ["t1", "t2"].forEach(function (k) {
+    var b = $(k === "t1" ? "joinT1" : "joinT2");
+    b.disabled = !!joinFound.taken[k];
+    b.querySelector("h3").textContent = (k === "t1" ? "Team 1" : "Team 2") + (joinFound.taken[k] ? " (taken)" : "");
+    b.classList.remove("on");
+  });
+  $("joinFound").hidden = false;
+  var free = ["t1", "t2"].filter(function (k) { return !joinFound.taken[k]; });
+  if (free.length === 1) pickJoinSide(free[0]);
+  if (msg) joinErr(msg);
+}
+$("btnJoin").addEventListener("click", function () {
+  if (!joinFound) return;
+  if (!joinFound.side) { joinErr("Choose Team 1 or Team 2 first."); return; }
+  if (!replaceSavedOk()) return;
+  var f = joinFound, side = f.side, cid = randomId(), name = $("joinName").value.trim().slice(0, 28) || (side === "t1" ? "Team 1" : "Team 2");
+  $("joinErr").hidden = true; $("btnJoin").disabled = true;
+  var base = defaultRelay() + "/room/" + encodeURIComponent(f.code);
+  window.fetch(base + "/send", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({from:side, code:"R0-JOIN", note:JSON.stringify({side:side, name:name, cid:cid}), note2:""})})
+    .then(function (r) { if (!r.ok) throw new Error("send"); return null; })
+    .then(function () {
+      readRoom(f.code, function (err, msgs) {
+        $("btnJoin").disabled = false;
+        if (err) { joinErr("Can't reach the relay. Check your connection and try again."); return; }
+        var r = readSetupFrom(msgs);
+        if (!r) { joinErr("There is no exercise with that code. Check it with whoever set it up, then try again."); return; }
+        if (r.cids[side] !== cid) {      // another screen claimed this side first
+          showJoinFound(f.code, r, "Team " + side.slice(1) + " is already taken by another screen. Choose the other side.");
+          return;
+        }
+        enterJoined(f.code, r, side, name, cid);
+      });
+    }, function () { $("btnJoin").disabled = false; joinErr("Can't reach the relay. Check your connection and try again."); });
+});
+function enterJoined(code, r, side, name, cid) {
+  var st = r.st, sim = st.mode === "sim";
+  G = {
+    mode: st.mode, sim: sim, me: side,
+    durA: st.durA || 600, durD: st.durD || 600, chime: st.chime !== false, clockOn: sim || !!st.clock,
+    clock: null, simPhase: null, R: null, sfx: st.sfx !== false,
+    teams: {}, maxRounds: st.rounds, round: 1, attacker: "t1", revealPrec: st.prec !== false,
+    log: [], pending: null, over: false, suddenDeath: false, expect: null,
+    relay: {url: defaultRelay(), room: code, cursor: 0}, requireAI: st.ai !== false, thread: [], inbox: [],
+    joinCode: code, hostSide: st.host, joined: {t1:!!r.taken.t1 || side === "t1", t2:!!r.taken.t2 || side === "t2"}, joinedCid: {t1:r.cids.t1 || null, t2:r.cids.t2 || null}, cid: cid
+  };
+  G.joinedCid[side] = cid;
+  if (st.host === "t1") { G.joined.t1 = true; }
   clearSave();
-  chooseDeck();     /* build 12: the deck is fixed for this game from here on */
-  G.teams.t1 = newTeam(n1, !relay || setupSide === "t1");
-  G.teams.t2 = newTeam(n2, !relay || setupSide === "t2");
+  var sd = r.deck ? sanitizeDeck(r.deck) : null;
+  if (sd) useDeck(sd); else chooseDeck();      /* the host's own deck, so every screen plays the same injects */
+  var other = side === "t1" ? "t2" : "t1";
+  G.teams[side] = newTeam(name, true);
+  G.teams[other] = newTeam(r.names[other] || (other === "t1" && st.hostName ? st.hostName : (other === "t1" ? "Team 1" : "Team 2")), false);
   $("mastSub").textContent = meLabel();
   updateChrome();
   mountDock();
   startRelay();
   announceDeck();
-  if (G.me === "mod") { G.phase = "sim"; simStartRound(); return; }
-  var mine = relay ? [G.me] : ["t1","t2"];
-  if ($("optAuto").checked) { mine.forEach(function (k) { autoPlace(G.teams[k]); }); beginPlay(); }
-  else startPlacement(mine[0]);
-});
+  if (st.auto) { autoPlace(G.teams[side]); beginPlay(); }
+  else startPlacement(side);
+}
 
 function autoPlace(t) {
   for (var i = 0; i < N * N; i++) t.board[i] = null;
@@ -2843,6 +3112,9 @@ function routeIncoming(code, note, note2, from, meta) {
   if (parts.indexOf("CLK") >= 0) { if (!G.over) applyRemoteClock(note, meta); return false; }
   /* build 12 - the other screen's inject deck version; only compared, never a move. */
   if (parts.indexOf("DECK") >= 0) { checkOtherDeck(note, from, meta); return false; }
+  /* build 16 - the host's settings are only read by a screen joining; a JOIN tells this screen the other team's name. */
+  if (parts.indexOf("SETUP") >= 0) return false;
+  if (parts.indexOf("JOIN") >= 0) { applyJoin(note, from); return false; }
   /* A move can still be on its way when the game ends early. Keep it, and play it
      in after a resume, or both screens would wait on it forever. */
   if (G.over) { if (G.resumeFrom) (G.heldMoves = G.heldMoves || []).push({code:code, note:note, note2:note2, from:from}); return false; }
@@ -5103,10 +5375,11 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
   });
 })();
 </script>
+<div class="join-banner no-print" id="joinBanner" hidden></div>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 15</span>
-  <span>the inject editor needs an emailed sign-in link (readyfortuesday.com or decaro.net addresses)</span>
+  <span class="tag">build 16</span>
+  <span>one screen sets the exercise up; the others join with a code</span>
 </div>
 
 </body>

@@ -85,3 +85,6 @@ is 25 MB per file.
   was built in can't load them in the browser directly. Anywhere else this is harmless.
 - **Nothing touches the live site or the live relay.** The script stops if either screen
   isn't on the local relay.
+
+
+**Out of date (build 16):** the recorder still fills in the relay address and room name on each screen. Setup now works by a join code (one screen sets up, the other joins), so `record-demo.js` needs its setup step rewritten before the next recording.
