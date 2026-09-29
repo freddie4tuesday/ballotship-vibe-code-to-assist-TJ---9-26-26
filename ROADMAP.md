@@ -9,16 +9,11 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Builds 8 to 12 are waiting on staging review.** Build 8 fixes the moderator screen's final
-  score (it was always 0–0 and started sudden death; it now reads each county's damage from the
-  result codes). Build 9 adds staging itself. Build 10 fixes the clock note on the moderator
-  screen that contradicted itself (approved wording). Build 11 is the clock work (below). Build 12 is the inject library (below). All are on the
-  `staging` branch; 8 to 10 are on the staging address now, and 11 goes there once its wording is
-  approved. They go live when you say so after looking.
+- Nothing is waiting on review. Builds 8 to 12 are live.
 
 ## Backlog
 
-- **Inject library page: built (build 12), waiting on wording approval and staging review.** A page at its own address where the injects are
+- **Inject library page: live (build 12); open follow-ups below.** A page at its own address where the injects are
   listed and can be added, edited, reordered and deleted. Today the 16 injects are code inside
   `index.html` (`DECK`, from "the scenario workbook", which we haven't seen). **Decided:**
   - **Edits go live immediately** (no draft step). A saved edit is what the next game uses. Because a
@@ -88,6 +83,8 @@ Each item: a short title, then one or two lines on what and why.
 ---
 
 ## Done
+
+- **Builds 8 to 12 released together: moderator score fix, staging, clock wording, clocks in step and a clock option, the inject library and its editor page** - builds 8 to 12, live.
 
 - **Publish live at ballotship.electionadminsuite.com** — build 1.
 - **Build number footer and change log** — build 1.

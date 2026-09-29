@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 12 (build 7 is what's live until 8 to 12 are released; see Releasing)
+**Current version:** build 12 (live; builds 8 to 12 went live together)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor page's address includes a secret, see The inject library)
