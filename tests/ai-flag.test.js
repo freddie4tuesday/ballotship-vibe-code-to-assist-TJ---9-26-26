@@ -32,7 +32,7 @@ const shown = (p, sel) => p.evaluate(s => { const l = [...document.querySelector
       await until(async () => (await screenOn(p)) === "screen-offense", 5000);
       r.check(tag + "the checkbox setting reached the game", (await p.evaluate(() => G.requireAI)) === ai);
       r.check(tag + "the AI paragraphs of the Rules are " + (ai ? "shown" : "hidden"), ai ? await shown(p, ".ai-only:not(.rf)") : await hidden(p, ".ai-only:not(.rf)"));
-      await step(p);                                                       // pick a target
+      await step(p, "pass");                                                       // pick a target
       r.check(tag + "the attack screen " + (ai ? "shows" : "has no") + " AI box", (await p.isVisible("#off_ai")) === ai && (await p.isVisible("#off_aiTask")) === ai);
       await p.fill("#off_where", "Somewhere in the county, at a test site"); await p.fill("#off_what", "The automated test does the thing");
       await p.fill("#off_when", "At a set moment, because tests are precise"); await p.fill("#off_goal", "To find out whether the box is required");
@@ -45,7 +45,7 @@ const shown = (p, sel) => p.evaluate(s => { const l = [...document.querySelector
       await p.click("#btnCommitAttack");
       r.check(tag + "the attack commits " + (ai ? "once it is filled in" : "with no AI box at all"), await until(async () => (await screenOn(p)) !== "screen-offense", 5000), await screenOn(p));
       // on to the other team's response
-      for (let i = 0; i < 12 && (await screenOn(p)) !== "screen-defense"; i++) { await step(p); await p.waitForTimeout(150); }
+      for (let i = 0; i < 12 && (await screenOn(p)) !== "screen-defense"; i++) { await step(p, "pass"); await p.waitForTimeout(150); }
       if ((await screenOn(p)) === "screen-defense") {
         await p.evaluate(() => { const b = document.getElementById("briefSheet"); if (b && !b.hidden) document.getElementById("btnBriefX").click(); });
         r.check(tag + "the defending team " + (ai ? "sees what was made with AI" : "is shown no AI panel"), (await p.isVisible("#theirArtifact")) === ai && (!ai || /made with AI/.test(await p.$eval("#theirArtifact", e => e.textContent))));
@@ -54,7 +54,7 @@ const shown = (p, sel) => p.evaluate(s => { const l = [...document.querySelector
       await p.reload(); await p.click("#btnTitleGo"); await p.click("#btnResume"); await p.waitForTimeout(400);
       r.check(tag + "after a reload the game is still " + (ai ? "on" : "off") + " (page class and setting)", (await p.evaluate(() => G.requireAI)) === ai && (await p.evaluate(() => document.body.classList.contains("no-ai"))) === !ai);
       // play out the round and read the log
-      for (let i = 0; i < 60 && (await screenOn(p)) !== "screen-over"; i++) { await step(p).catch(() => {}); await p.waitForTimeout(120); }
+      for (let i = 0; i < 250 && (await screenOn(p)) !== "screen-over"; i++) { await step(p, "pass").catch(() => {}); await p.waitForTimeout(120); }
       r.check(tag + "the game reached the end", (await screenOn(p)) === "screen-over", await screenOn(p));
       const log = await p.evaluate(() => logHTML());
       r.check(tag + "the log " + (ai ? "records the AI artifact and the debrief asks about it" : "has no AI lines and the debrief doesn't ask about AI"),

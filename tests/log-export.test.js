@@ -38,7 +38,7 @@ const unxml = t => t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;
   let browser;
   try {
     browser = await launch();
-    const { p, errors } = await setup(browser, "pass", null, null, null, { rounds: 1 });
+    const { p, errors } = await setup(browser, "pass", null, null, null, { rounds: 1, ai: true });   // build 17: with the AI assignment ON, the log carries the AI lines and all 8 debrief prompts
     const NOTE = "Facilitator note: see the sample <chart> & the link", LINK = "https://example.com/report?a=1&b=2";
     await p.$eval("#dockTab", e => { if (e.getAttribute("aria-expanded") !== "true") e.click(); });
     await p.$eval("#msgText", (e, t) => { e.value = t; }, NOTE);
