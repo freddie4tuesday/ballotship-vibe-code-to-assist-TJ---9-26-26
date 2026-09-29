@@ -46,16 +46,38 @@ const clone = o => JSON.parse(JSON.stringify(o));
       // ---- the setup form ----
       {
         const p = await setupPage();
-        await p.click("#modeSim"); await p.check("#optOnline");
+        r.check("there is no relay checkbox on the setup screen", (await p.$("#optOnline")) === null);
+        await p.click("#modeSim");
         let u = await ui(p);
-        r.check("relay on: no Team 2 choice, the host hint shows, only Team 1's name is asked (as 'Your team name')", !u.t2 && u.hint && u.n1 && !u.n2 && u.l1 === "Your team name" && !u.names, JSON.stringify(u));
+        r.check("two screens: no Team 2 choice, the host hint shows, only Team 1's name is asked (as 'Your team name')", !u.t2 && u.hint && u.n1 && !u.n2 && u.l1 === "Your team name" && !u.names, JSON.stringify(u));
         r.check("...and there is no relay address or room name to type", !u.room && !u.relayShown);
         await p.click("#sideMod"); u = await ui(p);
-        r.check("relay on, moderator: no team names asked at all", !u.n1 && !u.n2, JSON.stringify(u));
-        await p.uncheck("#optOnline"); await p.click("#sideT1"); u = await ui(p);
-        r.check("relay off (set up by hand): Team 2 is offered, both names are asked, the old hint shows", u.t2 && u.n1 && u.n2 && u.l1 === "Team 1 name" && u.names && !u.hint, JSON.stringify(u));
-        await p.click("#sideT2"); await p.check("#optOnline"); u = await ui(p);
-        r.check("switching the relay on while Team 2 is chosen moves to Team 1", (await p.$eval("#sideT1", e => e.classList.contains("on"))) && !u.t2);
+        r.check("moderator: no team names asked at all", !u.n1 && !u.n2, JSON.stringify(u));
+        await p.click("#modeRelay"); u = await ui(p);
+        r.check("taking turns: no Moderator choice (only simultaneous has one), so it moves to Team 1", !(await p.isVisible("#sideMod")) && (await p.$eval("#sideT1", e => e.classList.contains("on"))));
+        r.check("the mode cards say what is true now (join code, moderator optional; needs internet at the start)",
+          (await p.$eval("#modeSim p", e => e.textContent)) === "Both teams get the same inject at the same time. They write their attacks on one clock, swap them, then write their responses on a second clock. One screen sets up and the others join with a code. A moderator is optional; any screen can pause the clock and the others follow." &&
+          (await p.$eval("#modeRelay p", e => e.textContent)) === "Each team runs its own copy on its own device and plays in turn: one team attacks, the other responds. One screen sets up and the other joins with a code. Needs internet at the start.");
+        await p.click("#modePass"); u = await ui(p);
+        r.check("one laptop: no relay anywhere, so nothing to set up by hand", true);
+        await p.context().close();
+      }
+      // ---- no relay reachable: the way round is "Set up by hand" ----
+      {
+        const p = await setupPage({ relay: "http://127.0.0.1:9" });
+        await p.click("#modeSim"); await p.click("#sideT1"); await p.check("#optAuto");
+        r.check("the 'Set up by hand' button is not there until the relay fails", !(await p.isVisible("#btnManual")));
+        await p.click("#btnStart");
+        await p.waitForFunction(() => !document.getElementById("startErr").hidden);
+        r.check("an unreachable relay at Start says what to do", (await p.$eval("#startErr", e => e.textContent)) === "Can't reach the relay. Check your connection and try again, or set up by hand. Without the relay, teams read codes out loud and type them in.");
+        r.check("...and offers 'Set up by hand', with nothing started", (await p.isVisible("#btnManual")) && !(await p.evaluate(() => !!(window.G && G.me))));
+        await p.click("#btnManual");
+        const u = await ui(p);
+        r.check("by hand: Team 2 is offered again, both names are asked, the old hint shows, and there is no Moderator", u.t2 && u.n1 && u.n2 && u.l1 === "Team 1 name" && u.names && !u.hint && !(await p.isVisible("#sideMod")), JSON.stringify(u));
+        await p.click("#btnStart");
+        await p.waitForFunction(() => window.G && G.me, null, { timeout: 15000 });
+        const g = await p.evaluate(() => ({ relay: G.relay, code: G.joinCode || null, n1: G.teams.t1.name, n2: G.teams.t2.name }));
+        r.check("...and the game starts with no relay and no join code, both names as typed", g.relay === null && g.code === null && g.n1 === "Ashwood County" && g.n2 === "Calder County", JSON.stringify(g));
         await p.context().close();
       }
 
@@ -65,7 +87,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
       const hostRoute = async p => { const d = await fakeDeck(); await p.route("https://lib.test/deck", route => route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(d) })); };
       const host = await setupPage({ deckUrl: "https://lib.test/deck", route: hostRoute });
       await until(async () => /library version 7/.test(await host.$eval("#deckNote", e => e.textContent)), 8000);
-      await host.click("#modeSim"); await host.click("#sideT1"); await host.check("#optOnline");
+      await host.click("#modeSim"); await host.click("#sideT1");
       await host.selectOption("#rounds", "4"); await host.fill("#rn1", "Ashwood County");
       await host.uncheck("#optPrec"); await host.check("#optAI"); await host.check("#optAuto");
       await host.fill("#durA", "3:30"); await host.fill("#durD", "4:15");
@@ -80,6 +102,8 @@ const clone = o => JSON.parse(JSON.stringify(o));
       const st = setup && JSON.parse(setup.note), dk = setup && JSON.parse(setup.note2);
       r.check("the room holds one settings message with the shared settings", !!st && st.rounds === 4 && st.mode === "sim" && st.prec === false && st.ai === true && st.auto === true && st.durA === 210 && st.durD === 255 && st.host === "t1" && st.hostName === "Ashwood County", JSON.stringify(st));
       r.check("...and the host's inject deck (version 7, the host's first title)", dk && dk.version === 7 && dk.injects[0].title === deckTitle && dk.injects.length === 16);
+      await until(async () => (await room(code)).some(m => /-JOIN$/.test(m.code)), 5000);   // the host's JOIN is sent once its settings message has been accepted
+      msgs = await room(code);
       r.check("...and the host's own JOIN", msgs.some(m => /-JOIN$/.test(m.code) && JSON.parse(m.note).side === "t1" && JSON.parse(m.note).name === "Ashwood County"));
 
       // ---- errors ----
@@ -156,7 +180,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
         await fetch(relay + "/room/" + taken + "/send", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: "t1", code: "R1-MSG", note: "hi" }) });
         const p = await setupPage();
         await p.evaluate(([a, b]) => { let n = 0; window.genJoinCode = () => (n++ === 0 ? a : b); }, [taken, fresh]);
-        await p.click("#modeSim"); await p.click("#sideT1"); await p.check("#optOnline"); await p.check("#optAuto"); await p.click("#btnStart");
+        await p.click("#modeSim"); await p.click("#sideT1"); await p.check("#optAuto"); await p.click("#btnStart");
         await p.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 });
         r.check("a code whose room already has messages is not used; the next is", (await p.evaluate(() => G.joinCode)) === fresh);
         r.check("the words the codes are made of are lower-case, plain and not repeated", await p.evaluate(() => JOIN_WORDS.length >= 200 && new Set(JOIN_WORDS).size === JOIN_WORDS.length && JOIN_WORDS.every(w => /^[a-z]{3,9}$/.test(w))));

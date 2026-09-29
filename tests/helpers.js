@@ -164,7 +164,6 @@ async function setupScreens(browser, relayUrl, sides, opts) {
       await p.click("#modeSim");
       await p.click("#side" + side[0].toUpperCase() + side.slice(1));
       if (opts.rounds) await p.selectOption("#rounds", String(opts.rounds));
-      if (!(await p.isChecked("#optOnline"))) await p.check("#optOnline");
       if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto");
       if (await p.isChecked("#optAI")) await p.uncheck("#optAI");
       if (await p.isChecked("#optSfx")) await p.uncheck("#optSfx");

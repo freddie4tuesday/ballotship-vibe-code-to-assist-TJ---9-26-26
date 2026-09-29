@@ -15,7 +15,7 @@ async function setup(browser, mode, side, relay, room, opts) {
   opts = opts || {};
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   await ctx.addInitScript(ms => { window.BALLOTSHIP_POLL_MS = ms; }, opts.pollMs || 150);
-  await ctx.addInitScript(u => { window.BALLOTSHIP_RELAY_URL = u; }, relay || "");   // the page's default relay is the local one
+  await ctx.addInitScript(u => { window.BALLOTSHIP_RELAY_URL = u; }, relay || "http://127.0.0.1:9");   // the page's relay is the local one; with none given, an unreachable one, so a test can never reach the live relay (build 17: two-screen modes always use the relay)
   const p = await ctx.newPage();
   const errors = [];
   p.on("pageerror", e => errors.push(e.message));
@@ -27,9 +27,6 @@ async function setup(browser, mode, side, relay, room, opts) {
   await p.click({ pass: "#modePass", relay: "#modeRelay", sim: "#modeSim" }[mode]);
   if (side) await p.click({ t1: "#sideT1", t2: "#sideT2", mod: "#sideMod" }[side]);
   await p.selectOption("#rounds", String(opts.rounds || 4));
-  if (relay) {
-    if (!(await p.isChecked("#optOnline"))) await p.check("#optOnline");
-  }
   if (opts.clock) {                                   // one laptop / taking turns: "Use a clock", with times like "0:05"
     await p.check("#optClock");
     await p.evaluate(([a, d]) => { document.getElementById("durA").value = a; document.getElementById("durD").value = d; }, [opts.clock.a || "10:00", opts.clock.d || "10:00"]);

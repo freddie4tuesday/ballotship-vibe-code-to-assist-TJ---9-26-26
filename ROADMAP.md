@@ -9,29 +9,25 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Build 17 is built on the branch and partly held.** Done: the forgiving join code box; the AI assignment as an option (off by
-  default, hidden when off); relay rooms deleting a week after their last message. **Held for the owner's approval of the wording
-  (a table has been sent):** the relay always on for two-screen games with the checkbox gone; the new mode descriptions and the
-  "set up by hand" fallback message; the exercise label in the after-action log (a condition of the relay change, the owner
-  wants it "very clear ... several times"); and rewording the few Rules sentences that mention AI inside other text.
-  **Not done:** the demo recorder (`demo/record-demo.js`) still sets up with the old relay fields and needs rewriting
-  (docs/tooling only) when the video is re-recorded, which it needs anyway.
+- **Build 17 is on the branch, one piece short.** Done: the forgiving join code box; the AI assignment as an option (off by default,
+  hidden when off); relay rooms deleting a week after their last message; the relay always on for two-screen games (checkbox gone,
+  "Set up by hand" if the relay can't be reached); the updated mode cards. **Not built yet: the exercise label in the after-action
+  log** (owner's condition for accepting that everything teams write passes through Cloudflare): its exact wording awaits approval,
+  and the build must not go live without it. **Also open:** the setup lede still says the order is "the one set in the scenario
+  workbook", which is out of date now that the library sets the order (wording change, needs approval); the demo recorder still
+  uses the old relay fields and needs rewriting when the video is re-recorded.
 - Builds 14 (game starts with inject 1), 15 (emailed editor sign-in) and 16 (join codes) are on staging awaiting review;
   builds 8 to 13 are live.
 
 ## Backlog
 
-- **Relay always on for two-screen games, the mode descriptions, and the exercise label in the log: decided, held for wording approval.**
-  Decided: the two two-screen modes always use the relay (no checkbox; one laptop never does), because the owner accepted that
-  what teams write is stored for up to a week, **on condition that the after-action log says, very clearly and several times, that
-  this is an ELECTION EXERCISE and not real events** ("we don't want there to be any way to mistake that these are real events").
-  Today the log's only mention is its title. Proposal for the label: a banner at the top; the same line at the head of every round
-  and inject (so a copied paragraph or torn-out page still says it); a closing line; in the Word file and in print, the line in the
-  header and footer of every page; the downloaded file's name starting EXERCISE; the relay-traffic section and the page title too.
-  All three exports share one function, so one change covers them, and a test checks each carries it. The three mode cards are
-  out of date (simultaneous says a moderator runs the clock and omits join codes; taking turns says nothing is connected and codes
-  are read aloud, true only without the relay), and the relay checkbox sits far from the other options. If the relay can't be reached
-  when Start is pressed, offer "set up by hand" (today's manual path). New wording comes as a table for approval first.
+- **The exercise label in the after-action log: decided, not built, wording awaiting approval; a condition of going live with build 17.**
+  The owner accepted that two-screen games always use the relay (what teams write stored up to a week, then deleted) **on condition that
+  the log says, very clearly and several times, that this is an ELECTION EXERCISE and not real events** ("we don't want there to be any
+  way to mistake that these are real events"). Today the log's only mention is its title. Proposal: a banner at the top; the same line
+  under every inject; a closing line; in the Word file and in print the line in the header and footer of every page; the downloaded
+  file's name starting EXERCISE; the relay-traffic section labelled too. One function makes all three exports, so one change covers
+  them, and a test checks each copy carries it.
 - **Inject editor sign-in: built (build 15), waiting on staging review.** Emailed one-time link for readyfortuesday.com
   and decaro.net addresses, 1-day sign-in, sent with Resend from `ballotship-no-reply@electionadminsuite.com`; saves record who
   made them. **Not done, add when wanted:** a way to remove a person before their day is up (today: change

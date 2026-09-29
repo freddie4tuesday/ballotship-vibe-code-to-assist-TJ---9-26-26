@@ -272,7 +272,7 @@
         claiming one side; wrong code and unreachable relay; a used room is skipped; a saved host game keeps
         its code), by the relay test (moderator may post settings only), and by breaking the page on purpose:
         without the first-claim rule both screens get in, and without the name update the tests fail.
-  build 17 Three things from the queue, and three held for approval. DONE: (1) The join box forgives the code's
+  build 17 Six things from the queue. First three: (1) The join box forgives the code's
         shape: falcon482, "Falcon 482" and falcon-482 all find the same room (cleanJoinCode); before, the
         dash was required and anything else said "no exercise with that code". (2) The AI assignment is a
         setup choice, OFF by default ("we don't need the AI in every game"). Before, the checkbox was on and
@@ -285,16 +285,20 @@
         checks, the game's checks, the editor). (3) Relay rooms are deleted a week after their LAST message
         (a Durable Object alarm, reset by each message; a room that is only read never gets one), decided
         with the owner so exercise material doesn't sit on Cloudflare. The relay deploys with the page.
-        HELD until the owner has approved the wording (they are new on-screen words, and the standing rule
-        is a table first): the relay always on for two-screen games with the checkbox gone and a "set up by
-        hand" fallback when the relay can't be reached; the updated descriptions of the three modes; and
-        the after-action log saying several times that it is an election exercise, not real events; also
-        the Rules sentences that mention AI inside other text (the setup lede, the round steps and the chat
-        box hint), which need rewording rather than hiding. Verified by tests/ai-flag.test.js (both settings on one
+        ADDED once the owner approved the wording as a table: (4) two-screen games always use the relay: the "Pass codes
+        automatically through a relay" checkbox is gone (one laptop never uses it), the moderator is offered only where it
+        works, and if the relay can't be reached when Start is pressed the screen says so and offers "Set up by hand", which is
+        the old setup (every screen typed, codes read out loud; no join code). Because what teams write now always passes
+        through Cloudflare (stored up to a week, then deleted), the owner's condition is that the log says clearly and
+        several times that this is an election exercise; THAT LABEL IS NOT BUILT YET (its exact words await approval), so
+        this build must not go live without it. (5) The three mode cards now describe how the game works (join code, a
+        moderator optional, any screen can pause, needs internet at the start). (6) The few Rules sentences that mention
+        AI inside other text are hidden with the rest when the AI assignment is off (the setup lede's AI sentence, the
+        round steps' "builds one piece of it with an AI tool" clause), and the chat box's hint drops its AI clause. Verified by tests/ai-flag.test.js (both settings on one
         laptop: the box, panel, Rules, brief, log and debrief; required when on and the message says what to
         do; a reload keeps it), tests/join-code.test.js and the relay test (a message resets the clock,
         the room is gone about 3 s after the last message on a 3-second setting and the name works again),
-        and the injects API test (an inject with no AI text is accepted, over-long AI text is refused).
+        and the injects API test (an inject with no AI text is accepted, over-long AI text is refused); and, for the relay change, tests/join-code.test.js (no checkbox, the new mode cards word for word, an unreachable relay says what to do and 'Set up by hand' starts an old-style game with no join code).
 -->
 <html lang="en">
 <head>
@@ -890,19 +894,19 @@ body{padding-bottom:28px}
     </div>
     <p class="lede">Two jurisdictions, seven sites each. Every round one team plays the adversary, draws an inject and picks a target. The other team writes how it responds. Then the inject lands, and any site under it goes offline. Whoever has knocked out more of the other jurisdiction when the rounds run out wins.</p>
     <p class="lede">There are no dice. A hit is a hit. The quality of a response is judged in the debrief, not by the game.</p>
-    <p class="lede">The injects run in a fixed order, the one set in the scenario workbook. Every inject carries an AI assignment: a team has to build part of its attack with an AI tool before it can commit.</p>
+    <p class="lede">The injects run in a fixed order, the one set in the scenario workbook. <span class="ai-only">Every inject carries an AI assignment: a team has to build part of its attack with an AI tool before it can commit.</span></p>
     <p class="lede">In simultaneous play there is one inject a round and both teams work it at once, first as the adversary and then as the office. Both boards face the same footprint, so neither side gets an easier deck than the other.</p>
     <hr class="rule">
     <div class="modes">
       <button class="mode on" id="modeSim" type="button">
         <div class="tagline">Recommended</div>
         <h3>Two screens, simultaneous</h3>
-        <p>Both teams get the same inject at the same time. They write their attacks on one clock, swap them, then write their responses on a second clock. A moderator starts and pauses the clock and both screens follow it.</p>
+        <p>Both teams get the same inject at the same time. They write their attacks on one clock, swap them, then write their responses on a second clock. One screen sets up and the others join with a code. A moderator is optional; any screen can pause the clock and the others follow.</p>
       </button>
       <button class="mode" id="modeRelay" type="button">
         <div class="tagline">Alternating</div>
         <h3>Two screens, taking turns</h3>
-        <p>Each team runs its own copy of this file on its own device. Nothing is connected to anything. Teams read each other a short code out loud and type it in. Works with no internet and no shared network.</p>
+        <p>Each team runs its own copy on its own device and plays in turn: one team attacks, the other responds. One screen sets up and the other joins with a code. Needs internet at the start.</p>
       </button>
       <button class="mode" id="modePass" type="button">
         <div class="tagline">Fallback</div>
@@ -931,7 +935,6 @@ body{padding-bottom:28px}
         </div>
       </div>
       <hr class="rule">
-      <div class="chk"><input type="checkbox" id="optOnline"><label for="optOnline"><b>Pass codes automatically through a relay.</b> For teams in different buildings. Without this, one team reads the code out and the other types it, which works over any phone call, chat or video call. Turn this on to get a join code the other screens can type in. Without it, every screen is set up by hand.</label></div>
       <input type="hidden" id="relayUrl" value="https://ballotship-relay.electionadminsuite.com" placeholder="https://ballotship-relay.electionadminsuite.com">
     </div>
 
@@ -973,6 +976,7 @@ body{padding-bottom:28px}
     <p class="deck-note" id="deckNote" aria-live="polite"></p>
     <div class="btnrow">
       <button class="btn big orange" id="btnStart">Start the exercise</button>
+      <button class="btn ghost sm" id="btnManual" type="button" hidden>Set up by hand</button>
       <button class="btn ghost sm" id="btnRules">Read the rules</button>
       <div class="err" id="startErr" hidden style="width:100%"></div>
     </div>
@@ -1559,7 +1563,7 @@ body{padding-bottom:28px}
       <h3>A round, step by step</h3>
       <ol>
         <li>Both teams get the same inject at the same time.</li>
-        <li>On the first clock, each team writes how it would run that situation against the other jurisdiction, and builds one piece of it with an AI tool.</li>
+        <li>On the first clock, each team writes how it would run that situation against the other jurisdiction<span class="ai-only">, and builds one piece of it with an AI tool</span>.</li>
         <li>The two attacks swap automatically.</li>
         <li>On the second clock, each team answers the attack it received, using the response boxes.</li>
         <li>The round resolves on both boards at once and the next inject comes up.</li>
@@ -2113,7 +2117,10 @@ function restore(d) {
 /* build 17 - the AI assignment is a setup choice (off by default). One class on the page hides every part of it when it is off;
    before a game exists it follows the setup checkbox, so the Rules a facilitator reads match what the game will show. */
 function applyAiFlag() {
-  document.body.classList.toggle("no-ai", G ? !G.requireAI : !$("optAI").checked);
+  var on = G ? !!G.requireAI : $("optAI").checked;
+  document.body.classList.toggle("no-ai", !on);
+  /* the chat box's hint names "the text of what your AI tool produced"; with the assignment off it just stops at "context" */
+  $("msgText").placeholder = on ? "Anything you want the other team to have. Questions, context, the text of what your AI tool produced." : "Anything you want the other team to have. Questions, context.";
 }
 function enterFromTitle() {
   applyAiFlag();
@@ -2455,16 +2462,21 @@ function pickMode(m) {
   $("modePass").classList.toggle("on", m === "pass");
   $("relayFields").hidden = (m === "pass");
   syncClockUI();
-  $("sideMod").hidden = (m !== "sim");
-  if (m !== "sim" && setupSide === "mod") pickSide("t1");
+  setupManual = false; $("btnManual").hidden = true; $("startErr").hidden = true;
   syncHostUI();
 }
 /* build 16 - with the relay on, this screen SETS UP the exercise for everyone and the other screens join with a
    code, so it is either the moderator's or Team 1's (Team 2 only exists as a joiner), and only Team 1 has a name
    to type here (a joining team names itself). Without the relay every screen is still set up by hand, as before,
    and needs both names. */
+/* build 17 - the relay is no longer a checkbox: the two two-screen modes always use it (a join code), one laptop never
+   does. The one way round is "Set up by hand", offered only when the relay can't be reached at Start (no internet), which is
+   the old setup: every screen typed by hand, codes read out loud. */
+var setupManual = false;
 function syncHostUI() {
-  var hosted = setupMode !== "pass" && $("optOnline").checked;
+  var hosted = setupMode !== "pass" && !setupManual;
+  $("sideMod").hidden = (setupMode !== "sim") || setupManual;      // a moderator screen only works through the relay
+  if (setupSide === "mod" && $("sideMod").hidden) { pickSide("t1"); return; }
   $("sideT2").hidden = hosted;
   if (hosted && setupSide === "t2") { pickSide("t1"); return; }
   $("hostHint").hidden = !hosted;
@@ -2486,12 +2498,9 @@ function pickSide(s) {
   $("sideT1").classList.toggle("on", s === "t1");
   $("sideT2").classList.toggle("on", s === "t2");
   $("sideMod").classList.toggle("on", s === "mod");
-  /* build 6 - a moderator screen needs the relay, and used to say so only after
-     Start was pressed. Choosing Moderator now switches it on. */
-  if (s === "mod" && !$("optOnline").checked) $("optOnline").checked = true;
   syncHostUI();
 }
-$("optOnline").addEventListener("change", syncHostUI);
+$("btnManual").addEventListener("click", function () { setupManual = true; $("btnManual").hidden = true; $("startErr").hidden = true; syncHostUI(); });
 $("optAI").addEventListener("change", applyAiFlag);
 syncHostUI();
 $("modeSim").addEventListener("click", function () { pickMode("sim"); });
@@ -2514,16 +2523,15 @@ $("btnStart").addEventListener("click", function () {
   var n2 = $("rn2").value.trim() || "Team 2";
   var sim = setupMode === "sim";
   var relay = sim || setupMode === "relay";
-  if (sim && setupSide === "mod" && !$("optOnline").checked) {
-    flash("startErr", "A moderator screen needs the automatic relay switched on, otherwise nothing reaches it.");
-    return;
-  }
-  var online = relay && $("optOnline").checked;
-  $("startErr").hidden = true;
+  var online = relay && !setupManual;
+  $("startErr").hidden = true; $("btnManual").hidden = true;
   /* build 16 - with the relay on, the room is a made-up join code, checked to be unused, instead of a name typed
      identically on every screen. Before this, each screen typed the relay address, the room and the settings. */
   if (online) findFreeRoom(function (code) {
-    if (!code) { flash("startErr", "Can't reach the relay. Check your connection and try again."); return; }
+    if (!code) {
+      flash("startErr", "Can't reach the relay. Check your connection and try again, or set up by hand. Without the relay, teams read codes out loud and type them in.");
+      $("btnManual").hidden = false; return;
+    }
     doStart(code);
   });
   else doStart(null);

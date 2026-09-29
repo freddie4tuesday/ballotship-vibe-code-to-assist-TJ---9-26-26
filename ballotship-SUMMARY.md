@@ -42,7 +42,7 @@ the others choose "Join an exercise", type the join code the host's screen shows
 room's name; the host posts one settings message, including the inject deck, into it. With the relay off every screen is set up
 by hand, as before.
 
-Optional features on the setup screen: a relay that passes codes automatically between buildings,
+Two-screen games always use the relay (one laptop never does); if it can't be reached when Start is pressed the screen offers "Set up by hand" (every screen typed, codes read out loud, no join code). Optional features on the setup screen:
 an AI assignment (off by default; when off it is hidden everywhere, when on an attack can't be committed without it), a reveal of the real-world precedent after each
 response, sounds, and random site placement. The round count runs from 4 to 12.
 

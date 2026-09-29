@@ -41,9 +41,8 @@ const { ROOT, PAGE, reporter, launch } = require("./helpers");
     const last = await p.$eval("#rounds", e => { const o = e.options[e.options.length - 1]; return o.value + "|" + o.textContent; });
     r.check("the last round choice is 1 round, for testing", last === "1|1 round (for testing purposes)", last);
     await p.click("#modeSim");
-    if (await p.isChecked("#optOnline")) await p.uncheck("#optOnline");
     await p.click("#sideMod");
-    r.check("choosing Moderator switches the relay on", (await p.isChecked("#optOnline")) && (await p.isVisible("#hostHint")));
+    r.check("there is no relay checkbox; choosing Moderator shows the host hint (the moderator sets up)", (await p.$("#optOnline")) === null && (await p.isVisible("#hostHint")));
     r.check("the page loads with no JavaScript errors", errors.length === 0, errors.join("; "));
   } catch (e) {
     r.fail("test crashed", e.message);
