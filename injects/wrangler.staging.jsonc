@@ -1,6 +1,6 @@
 // The STAGING inject library: a separate store from the live one, so code changes and test edits
 // never touch the live deck. Deploy with ../deploy.sh staging.
-// Deploy with ../deploy.sh. The editor is at /edit, with no secret (build 13; see src/index.js).
+// Deploy with ../deploy.sh. The editor is at /edit and needs an emailed sign-in link (build 15; see src/index.js).
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "ballotship-injects-staging",
@@ -8,6 +8,9 @@
   "main": "src/index.js",
   "compatibility_date": "2026-09-25",
   "workers_dev": true,
+  // Who may sign in to the editor, and the address the sign-in emails come from (a Resend-verified address).
+  // RESEND_API_KEY is a secret set with `wrangler secret put`, not here.
+  "vars": { "ALLOWED_DOMAINS": "readyfortuesday.com,decaro.net", "MAIL_FROM": "Ballotship <ballotship-no-reply@electionadminsuite.com>" },
   "assets": { "directory": "site", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none" },
   "durable_objects": { "bindings": [{ "name": "DECK", "class_name": "Deck" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Deck"] }],

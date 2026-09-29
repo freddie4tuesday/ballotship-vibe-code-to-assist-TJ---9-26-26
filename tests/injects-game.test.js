@@ -24,12 +24,13 @@ const clone = o => JSON.parse(JSON.stringify(o));
   const r = reporter("Inject library with the game and the editor page");
   let browser;
   try {
-    await withInjects(async (lib) => {
+    await withInjects(async (lib, mail) => {
       await withRelay(async relay => {
         browser = await launch();
         const E = lib + "/api/edit/";
         const getDeck = () => fetch(lib + "/api/deck").then(x => x.json());
-        const save = async (mutate, summary) => { const d = await getDeck(); const inj = clone(d.injects); mutate(inj, d); const x = await fetch(E + "save", { method: "POST", body: JSON.stringify({ base: d.version, start: d.start, injects: inj, summary }) }); return x.json(); };
+        const apiCookie = await mail.signIn("helper@decaro.net");   // the test's own sign-in for saving through the API
+        const save = async (mutate, summary) => { const d = await getDeck(); const inj = clone(d.injects); mutate(inj, d); const x = await fetch(E + "save", { method: "POST", headers: { cookie: apiCookie }, body: JSON.stringify({ base: d.version, start: d.start, injects: inj, summary }) }); return x.json(); };
         const openGame = async (url, opts) => {
           const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
           await ctx.addInitScript(u => { window.BALLOTSHIP_DECK_URL = u; }, url);
@@ -109,9 +110,25 @@ const clone = o => JSON.parse(JSON.stringify(o));
         const ed = await ctx.newPage(); const eerr = []; ed.on("pageerror", e => eerr.push(e.message)); ed.on("dialog", dlg => dlg.accept());
         const old = await ctx.newPage(); const wr = await old.goto(lib + "/edit/some-old-secret");
         r.check("the old secret-style editor address is not found", wr.status() === 404);
-        await ed.goto(lib + "/edit"); await ed.waitForSelector("#list li");
+        await ed.goto(lib + "/edit");
+        await ed.waitForSelector("#gate:not([hidden])");
+        r.check("not signed in: the editor shows only the sign-in box, no injects and no Save", (await ed.$$("#list li")).length === 0 && !(await ed.isVisible("main")) && !(await ed.isVisible("#btnSave")));
+        await ed.fill("#email", "stranger@gmail.com"); await ed.click("#btnMail"); await ed.waitForFunction(() => /on its way/.test(document.getElementById("gateMsg").textContent));
+        const sent0 = mail.messages.length; await ed.waitForTimeout(700);
+        r.check("an address outside the allowed domains gets the same answer and no email", mail.messages.length === sent0 && sent0 === mail.messages.filter(m => /helper@decaro.net/.test(m.to)).length);
+        await ed.fill("#email", "editor@readyfortuesday.com"); await ed.click("#btnMail");
+        r.check("an allowed address is emailed a link", await mail.waitFor(sent0 + 1) && mail.messages[sent0].to === "editor@readyfortuesday.com");
+        await ed.goto(lib + "/edit?t=" + mail.tokenOf(mail.messages[sent0]));
+        await ed.waitForSelector("#gateConfirm:not([hidden])");
+        r.check("opening the link asks for one more press (so a mail scanner can't use it up)", /Confirm sign-in/.test(await ed.$eval("#gateH", e => e.textContent)) && (await ed.$$("#list li")).length === 0);
+        await ed.click("#btnConfirm"); await ed.waitForSelector("#list li");
+        r.check("...pressing it signs in: the address shows, the link is gone from the address bar", /Signed in as editor@readyfortuesday.com/.test(await ed.$eval("#who", e => e.textContent)) && !/t=/.test(ed.url()), ed.url());
+        const used = await ed.context().newPage(); await used.goto(lib + "/edit?t=" + mail.tokenOf(mail.messages[sent0])); await used.waitForSelector("#gateConfirm:not([hidden])"); await used.click("#btnConfirm");
+        await used.waitForFunction(() => /expired or was already used/.test(document.getElementById("gateMsg").textContent));
+        r.check("using the same link again says it has expired or was used, and offers a new one", await used.isVisible("#btnMail"));
+        await used.close();
         const before = await getDeck();
-        r.check("the editor lists every inject", (await ed.$$("#list li")).length === before.injects.length, "" + (await ed.$$("#list li")).length);
+        r.check("the editor lists every inject once signed in", (await ed.$$("#list li")).length === before.injects.length, "" + (await ed.$$("#list li")).length);
         r.check("the Ready for Tuesday name is on the page", /Ready for Tuesday/.test(await ed.$eval("header", e => e.textContent)));
         r.check("the first inject on the list is marked as the one that starts the game", (await ed.$eval("#list li:nth-child(1) .badge", e => e.textContent)) === "Starts" && (await ed.$$("#list .badge")).length >= 1);
         r.check("Save is off until something changes", await ed.$eval("#btnSave", b => b.disabled));
@@ -165,7 +182,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
         // history
         await ed.click("#btnHist"); await ed.waitForSelector("#hist table");
         const rows = await ed.$$eval("#hist tr", t => t.length);
-        r.check("History lists the versions with what each did", rows > 4 && /Retitled the second one/.test(await ed.$eval("#hist", e => e.textContent)));
+        r.check("History lists the versions with what each did and who made them", rows > 4 && /Retitled the second one/.test(await ed.$eval("#hist", e => e.textContent)) && /editor@readyfortuesday.com/.test(await ed.$eval("#hist", e => e.textContent)));
         await ed.click("#hist [data-a=chg][data-v='3']"); await ed.waitForFunction(() => { const t = document.querySelector("#hist [data-a=chg][data-v='3']").closest("tr").nextElementSibling; return !t.hidden && t.textContent.length > 0; });
         const dtext = await ed.$eval("#hist [data-a=chg][data-v='3']", b => b.closest("tr").nextElementSibling.textContent);
         r.check("'What changed' names the inject and the fields that changed", /changed/.test(dtext) && /title/.test(dtext), dtext);

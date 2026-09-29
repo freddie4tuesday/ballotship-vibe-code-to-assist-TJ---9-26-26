@@ -56,6 +56,12 @@ legend{font:700 14px var(--disp);letter-spacing:.06em;text-transform:uppercase;c
 #hist td,#hist th{border-bottom:1px solid var(--sage);padding:6px 8px;text-align:left;vertical-align:top}
 .diff{font:400 13px var(--mono);white-space:pre-wrap;background:var(--sage);padding:8px;border-radius:4px;margin-top:6px}
 .diff b{color:var(--magenta)} .diff u{color:var(--evergreen);text-decoration:none;font-weight:600}
+.gate{max-width:520px;margin:40px auto;padding:20px 22px}
+.gate h2{font:700 24px var(--disp);text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px}
+.gate .row1{display:flex;gap:8px;margin-top:12px}
+.gate .row1 input{flex:1}
+#who{font-size:13px;color:#cfe0d6}
+body:not(.in) .authed{display:none}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -63,12 +69,22 @@ legend{font:700 14px var(--disp);letter-spacing:.06em;text-transform:uppercase;c
 <header>
   <div><div class="rft">Ready for Tuesday</div><h1>Ballotship inject library</h1></div>
   <div class="sp"></div>
+  <span id="who" hidden></span><button id="btnOut" type="button" hidden>Sign out</button>
   <span id="status" role="status"></span>
-  <button id="btnHist" type="button">History</button>
-  <label style="color:#fff;min-width:220px"><span class="hint" style="color:#cfe0d6">What did you change? (optional)</span><input id="summary" maxlength="200" placeholder="e.g. Reworded inject 4"></label>
-  <button id="btnSave" type="button" class="pri" disabled>Save to live deck</button>
+  <button id="btnHist" type="button" class="authed">History</button>
+  <label class="authed" style="color:#fff;min-width:220px"><span class="hint" style="color:#cfe0d6">What did you change? (optional)</span><input id="summary" maxlength="200" placeholder="e.g. Reworded inject 4"></label>
+  <button id="btnSave" type="button" class="pri authed" disabled>Save to live deck</button>
 </header>
-<main>
+<section class="panel gate" id="gate" hidden>
+  <h2 id="gateH">Sign in to edit the injects</h2>
+  <p id="gateP">Enter your Ready for Tuesday or decaro.net email address. We'll email you a link that signs you in for one day. Anyone can play the game; only people with one of those addresses can change the injects.</p>
+  <div id="gateAsk">
+    <div class="row1"><input id="email" type="email" autocomplete="email" placeholder="you@readyfortuesday.com" aria-label="Email address"><button id="btnMail" type="button" class="pri">Email me a link</button></div>
+  </div>
+  <div id="gateConfirm" hidden><button id="btnConfirm" type="button" class="pri">Sign in</button></div>
+  <p id="gateMsg" role="status" style="margin-top:12px"></p>
+</section>
+<main hidden>
   <div class="panel intro" id="intro">
     An <b>inject</b> is a surprise handed to a team during the exercise. This page lists them all. <b>Saving changes the
     deck immediately:</b> the next game that starts uses it (games already under way keep the deck they began with).
@@ -88,7 +104,7 @@ legend{font:700 14px var(--disp);letter-spacing:.06em;text-transform:uppercase;c
 <script>
 (function(){
 "use strict";
-var API = "/api/edit/";
+var API = "/api/edit/", AUTH = "/api/auth/";
 var M = window.META, L = {title:120,scene:400,where:300,what:300,when:300,goal:300,op:400,comms:500,prec:700,src:120,task:400,prompt:800,sname:40,sfull:120,url:300};
 var deck = null, base = 0, saved = "", sel = 0, N = 6;
 var $ = function(id){return document.getElementById(id);};
@@ -96,11 +112,18 @@ function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&am
 function status(t, bad){var s=$("status");s.textContent=t||"";s.className=bad?"err":"";}
 function api(path, body){
   return fetch(API+path, body===undefined?{}:{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)})
-    .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});})
+    .then(function(r){return r.json().then(function(j){if(r.status===401&&path.indexOf("auth/")<0)ended(j.error);return {ok:r.ok,status:r.status,j:j};});})
     .catch(function(){return {ok:false,status:0,j:{error:"Couldn't reach the server. Check your connection, then try again. Your changes here are still on this page."}};});
 }
+function authApi(path,body){
+  return fetch(AUTH+path,body===undefined?{}:{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});})
+    .catch(function(){return {ok:false,status:0,j:{error:"Couldn't reach the server. Check your connection, then try again."}};});
+}
+/* A save (or any editor call) came back 401: the one-day sign-in ended. What is typed on this page is kept. */
+function ended(msg){status((msg||"Your sign-in has ended.")+" Open the editor in a new tab to sign in again, then come back here and Save.",true);}
 function snap(){return JSON.stringify({injects:deck.injects});}
-function dirty(){return snap()!==saved;}
+function dirty(){return !!deck&&snap()!==saved;}   // no deck yet while the sign-in box is showing
 function refreshSave(){$("btnSave").disabled=!dirty();if(dirty())status("Unsaved changes.");else if(base)status("Live deck is version "+base+".");}
 window.addEventListener("beforeunload",function(e){if(dirty()){e.preventDefault();e.returnValue="";}});
 
@@ -238,8 +261,8 @@ $("btnHist").onclick=function(){
   api("history").then(function(r){
     if(!r.ok){status("Couldn't load history.",true);return;}
     h.hidden=false;$("f").hidden=true;$("empty").hidden=true;
-    h.innerHTML="<h2 style=\"font:700 20px var(--disp);text-transform:uppercase;margin:0 0 8px\">History</h2><table><tr><th>Version</th><th>When</th><th>What</th><th></th></tr>"
-      +r.j.map(function(v){return "<tr><td>"+v.version+(v.version===base?" (live)":"")+"</td><td>"+esc(when(v.at))+"</td><td>"+esc(v.summary)+"</td><td><button type=\"button\" data-v=\""+v.version+"\" data-a=\"chg\">What changed</button> "+(v.version===base?"":"<button type=\"button\" data-v=\""+v.version+"\" data-a=\"rest\">Restore</button>")+"</td></tr><tr hidden><td colspan=\"4\"><div class=\"diff\"></div></td></tr>";}).join("")+"</table>";
+    h.innerHTML="<h2 style=\"font:700 20px var(--disp);text-transform:uppercase;margin:0 0 8px\">History</h2><table><tr><th>Version</th><th>When</th><th>What</th><th>By</th><th></th></tr>"
+      +r.j.map(function(v){return "<tr><td>"+v.version+(v.version===base?" (live)":"")+"</td><td>"+esc(when(v.at))+"</td><td>"+esc(v.summary)+"</td><td>"+esc(v.by||"")+"</td><td><button type=\"button\" data-v=\""+v.version+"\" data-a=\"chg\">What changed</button> "+(v.version===base?"":"<button type=\"button\" data-v=\""+v.version+"\" data-a=\"rest\">Restore</button>")+"</td></tr><tr hidden><td colspan=\"5\"><div class=\"diff\"></div></td></tr>";}).join("")+"</table>";
   });
 };
 $("hist").addEventListener("click",function(e){
@@ -257,7 +280,40 @@ $("hist").addEventListener("click",function(e){
     api("restore",{version:v}).then(function(r){if(r.ok){$("hist").hidden=true;load().then(function(){status("Restored. The live deck is now version "+r.j.version+".");});}else status(r.j.error||"Couldn't restore.",true);});
   }
 });
-load();
+function showGate(mode,msg){
+  $("gate").hidden=false;document.querySelector("main").hidden=true;
+  $("gateAsk").hidden=mode==="confirm";$("gateConfirm").hidden=mode!=="confirm";
+  $("gateH").textContent=mode==="confirm"?"Confirm sign-in":"Sign in to edit the injects";
+  if(mode==="confirm")$("gateP").textContent="You opened a sign-in link. Press the button to sign in on this browser for one day.";
+  $("gateMsg").textContent=msg||"";
+}
+function enter(email){
+  document.body.classList.add("in");$("gate").hidden=true;document.querySelector("main").hidden=false;
+  $("who").hidden=false;$("who").textContent="Signed in as "+email;$("btnOut").hidden=false;
+  load();
+}
+$("btnMail").onclick=function(){
+  var v=$("email").value.trim();if(!v){$("gateMsg").textContent="Type your email address first.";return;}
+  $("btnMail").disabled=true;$("gateMsg").textContent="Sending...";
+  authApi("request",{email:v}).then(function(r){
+    $("gateMsg").textContent=r.ok?r.j.message:(r.j.error||"That didn't work. Try again.");$("btnMail").disabled=false;
+  });
+};
+$("email").addEventListener("keydown",function(e){if(e.key==="Enter")$("btnMail").click();});
+$("btnConfirm").onclick=function(){
+  var t=new URLSearchParams(location.search).get("t")||"";
+  $("btnConfirm").disabled=true;
+  authApi("verify",{token:t}).then(function(r){
+    if(r.ok){history.replaceState(null,"","/edit");enter(r.j.email);}
+    else{history.replaceState(null,"","/edit");showGate("ask",(r.j.error||"That link didn't work.")+" You can ask for a new one below.");$("btnConfirm").disabled=false;}
+  });
+};
+$("btnOut").onclick=function(){
+  if(dirty()&&!confirm("You have unsaved changes on this page. Sign out anyway?"))return;
+  authApi("logout",{}).then(function(){location.href="/edit";});
+};
+if(new URLSearchParams(location.search).get("t"))showGate("confirm");
+else authApi("me").then(function(r){if(r.ok)enter(r.j.email);else showGate("ask");});
 })();
 </script>
 </body>

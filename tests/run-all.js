@@ -12,7 +12,7 @@ const { withRelay } = require("./helpers");
 
 const ROOT = path.join(__dirname, "..");
 const files = fs.readdirSync(__dirname).filter(f => f.endsWith(".test.js")).sort();
-const FINGERPRINTED = ["index.html", "worker/src/index.js", "injects/src/index.js", "injects/src/validate.js", "injects/src/meta.json", "injects/seed.json", "injects/site/editor.html", "injects/site/meta.js"];
+const FINGERPRINTED = ["index.html", "worker/src/index.js", "injects/src/index.js", "injects/src/auth.js", "injects/src/validate.js", "injects/src/meta.json", "injects/seed.json", "injects/site/editor.html", "injects/site/meta.js"];
 const fingerprint = () => FINGERPRINTED.map(f =>
   crypto.createHash("sha256").update(fs.readFileSync(path.join(ROOT, f))).digest("hex") + "  " + f + "\n").join("");   // same as `sha256sum` of the same files, in the same order, which is what ../deploy.sh runs
 

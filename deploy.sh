@@ -35,7 +35,7 @@ wrangler=${WRANGLER:-npx -y wrangler@latest}
 [ -n "${CLOUDFLARE_API_TOKEN:-}" ] || fail "set CLOUDFLARE_API_TOKEN first"
 [ "$(git branch --show-current)" = "$branch" ] || fail "$target deploys from the '$branch' branch; you are on '$(git branch --show-current)'"
 [ -z "$(git status --porcelain)" ] || fail "there are uncommitted changes; commit them first"
-diff -q <(sha256sum index.html worker/src/index.js injects/src/index.js injects/src/validate.js injects/src/meta.json injects/seed.json injects/site/editor.html injects/site/meta.js) tests/.last-pass >/dev/null 2>&1 \
+diff -q <(sha256sum index.html worker/src/index.js injects/src/index.js injects/src/auth.js injects/src/validate.js injects/src/meta.json injects/seed.json injects/site/editor.html injects/site/meta.js) tests/.last-pass >/dev/null 2>&1 \
   || fail "the tests haven't passed on this exact code. Run: (cd tests && npm test)"
 
 n=$(grep -o '<span class="tag">build [0-9]*' index.html | grep -o '[0-9]*$')
@@ -68,6 +68,11 @@ curl -fsS "$relay/room/$room/poll?as=t2" | grep -q 'R1-MSG' || fail "relay did n
 curl -fsS "$inj/api/deck" | grep -q '"injects"' || fail "the inject library did not return a deck at $inj/api/deck"
 # (a variable, not a pipe: grep -q quits early, which under pipefail makes curl "fail" on a page this size)
 editor=$(curl -fsS "$inj/edit"); [[ "$editor" == *"inject library"* ]] || fail "the inject editor page did not load at $inj/edit"
+[ "$(curl -s -o /dev/null -w '%{http_code}' "$inj/api/edit/history")" = 401 ] || fail "the inject editor's history answered without a sign-in at $inj/api/edit/history (it must be 401)"
+if ! ( cd injects && $wrangler secret list --config "$injcfg" 2>/dev/null | grep -q RESEND_API_KEY ); then
+  echo "NOTE: the inject library has no RESEND_API_KEY secret, so sign-in emails cannot be sent (the game is unaffected)."
+  echo "      Set it: (cd injects && npx wrangler secret put RESEND_API_KEY --config $injcfg)"
+fi
 echo "OK: $page is build $n, the relay at $relay works, and the inject library at $inj answers (editor: $inj/edit)."
 
 if [ "$target" = production ]; then

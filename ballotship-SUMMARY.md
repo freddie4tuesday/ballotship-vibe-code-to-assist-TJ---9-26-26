@@ -1,9 +1,9 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 14 (on staging; live is build 13)
+**Current version:** build 15 (on the branch; staging is build 14, live is build 13)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
-**Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address, open to anyone who has it; see The inject library)
+**Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address and needs an emailed sign-in link; see The inject library)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
 deploy config (`wrangler.jsonc`, `.assetsignore`), `worker/` (the relay), `injects/` (the inject library), `tests/`, and `demo/`
 
@@ -98,12 +98,18 @@ list is the play order and a game starts with the first inject (build 14; it use
   the store starts from, made from `index.html` by `node injects/tools/extract.js` (the tests check it
   still matches). After that first read the store is the truth and the array inside `index.html` is
   only the built-in copy the game falls back to.
-- **Editing:** at `https://ballotship-injects.electionadminsuite.com/edit` (staging: `ballotship-injects-staging...`). **There is no
-  key or login (build 13, at the owner's request; build 12 had a secret in the address).** Anyone who finds the
-  address can change the live injects. What limits the damage: every save is a version that History restores,
-  the page is not linked from anywhere or indexed, and a save sent from another website's page is refused (a
-  speed bump, not a lock: anyone typing the address, or a script, still can). To lock it again, add a
-  login or a secret in `injects/src/index.js`; ROADMAP has the question for TJ.
+- **Editing:** at `https://ballotship-injects.electionadminsuite.com/edit` (staging: `ballotship-injects-staging...`). It shows
+  a sign-in box. **Who may edit (build 15):** anyone who can receive email at `readyfortuesday.com` or `decaro.net`
+  (`ALLOWED_DOMAINS` in `injects/wrangler*.jsonc`; the domain must match exactly, so subdomains and look-alikes
+  don't count). They type their address, get a one-time link (from `ballotship-no-reply@electionadminsuite.com`,
+  through Resend) that works for 15 minutes, press the button it leads to, and are signed in on that browser for
+  1 day. Each save records who made it (History shows it). History: build 12 had a secret link, build 13 was open to
+  anyone, build 15 is this.
+  - **The Resend key** is the secret `RESEND_API_KEY` on both library Workers (`wrangler secret put RESEND_API_KEY
+    --config wrangler.jsonc`, and `--config wrangler.staging.jsonc`). If emails stop arriving, check the key, and that
+    `electionadminsuite.com` is still verified in Resend. To let another domain in, change `ALLOWED_DOMAINS` and deploy.
+  - Limits: 5 links an hour per address, 60 an hour in all. The store keeps only hashes of links and sessions.
+  - Someone who leaves keeps access until their 1-day sign-in ends; there's no "remove this person" button yet (ROADMAP).
 - **Edits go live at once.** Every save is a numbered version (the last 500 are kept). The editor's History
   shows what changed and restores any version (a restore is itself a new version, so nothing is lost).
   Two people saving at once: the second is told to reload.

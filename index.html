@@ -231,6 +231,24 @@
         inject N" still reads correctly). Verified by tests/injects-game.test.js (round 1 is the
         first inject of the library's deck; moving an inject to the top makes it start; a game saved
         with a start of 6 keeps it) and tests/injects-api.test.js (a deck comes back with no start).
+  build 15 The inject editor needs a sign-in again, this time by emailed link. Asked for: "use a magic
+        link which will allow anyone from the domains readyfortuesday.com or decaro.net to get the
+        link", signed in for 1 day, sent with Resend. Build 13 had made the editor open to anyone who found
+        it. Now /edit shows a sign-in box; an address on exactly readyfortuesday.com or decaro.net
+        (not a subdomain, not a look-alike, not a list of addresses) is emailed a one-time link from
+        ballotship-no-reply@electionadminsuite.com that works for 15 minutes; opening it asks for one more
+        button press (mail scanners open links to check them and would otherwise use it up), and that signs
+        the browser in for 1 day. The page gives the same answer whether or not the address is allowed, at
+        most 5 links an hour go to one address and 60 an hour in all, and signing out ends it at once.
+        Every save now records who made it and History shows that. Reading the deck stays public, so the
+        game is unaffected. Only hashes of tokens and sessions are stored. The game itself is unchanged, so
+        no new game wording; the sign-in texts are on the editor page and in the email. The library
+        deploys with the page as before; the Resend key is a secret on the library's Workers.
+        Verified by tests/injects-auth.test.js (with a stand-in for Resend that keeps the emails: 17
+        look-alike or malformed addresses get nothing, the answer is identical, one use per link, the
+        cookie's flags, sign-out, the hourly limit, and links and sign-ins that expire), and by
+        tests/injects-api.test.js and injects-game.test.js, which now sign in first (the editor page end
+        to end, including the sign-in box and the confirm step).
 -->
 <html lang="en">
 <head>
@@ -5087,8 +5105,8 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 </script>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 14</span>
-  <span>a game starts with the first inject; the order is set in the inject library</span>
+  <span class="tag">build 15</span>
+  <span>the inject editor needs an emailed sign-in link (readyfortuesday.com or decaro.net addresses)</span>
 </div>
 
 </body>

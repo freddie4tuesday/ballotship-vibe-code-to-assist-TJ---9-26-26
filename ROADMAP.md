@@ -9,24 +9,15 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Build 14 (the game starts with the first inject) is on the branch, waiting for staging review.** Builds 8 to 13 are live.
+- **Builds 14 (the game starts with the first inject, on staging) and 15 (the inject editor's emailed sign-in) are waiting on review.** Builds 8 to 13 are live.
 
 ## Backlog
 
-- **Secure the inject editor with an emailed sign-in link ("magic link"): decided, not built.** Replaces the open
-  editor of build 13. Anyone with an email at **readyfortuesday.com or decaro.net** can get in; nobody else. **Plan:**
-  the editor asks for an email address; if its domain is exactly one of those two (subdomains and look-alikes such as
-  `readyfortuesday.com.evil.com` don't count), the library emails a one-time link that expires in about 15 minutes
-  and can be used once; opening it signs that browser in for **1 day** (decided) with a signed cookie; saving
-  and restoring need the cookie; the page gives the same answer whether or not the address is allowed, and limits
-  requests per address and per visitor. The deck stays readable by the game with no sign-in. Bonus: History can say
-  WHO made each change (the address is recorded). Reasons against or costs: it needs a way to send email (see the
-  question below), a list of allowed domains to keep current, and a person who leaves the organisation keeps access
-  until their session ends unless we can revoke it. **Decided:** links are sent with **Resend**. A `RESEND_API_KEY` secret already exists on the
-  `poll-worker-system` Workers (live and staging) but a secret can't be read back, so the inject library needs its
-  own copy set on each of its two Workers (`wrangler secret put RESEND_API_KEY`). **Open before building:** the
-  address the links are sent FROM (it must be one Resend has verified), and whether the game's own new-game setup
-  ever needs the same protection (today it doesn't).
+- **Inject editor sign-in: built (build 15), waiting on staging review.** Emailed one-time link for readyfortuesday.com
+  and decaro.net addresses, 1-day sign-in, sent with Resend from `ballotship-no-reply@electionadminsuite.com`; saves record who
+  made them. **Not done, add when wanted:** a way to remove a person before their day is up (today: change
+  `ALLOWED_DOMAINS` and redeploy, which stops new sign-ins but not one already made; or wait a day); a list of
+  individual allowed addresses inside the two domains; the game's own setup is not protected (today it doesn't need to be).
 
 - **The AI assignment becomes a feature flag: decided, not built.** "We don't need the AI in every game." Today the
   setup option "Require an AI-made artifact with every attack" is on by default, and turning it off only makes the AI

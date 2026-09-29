@@ -67,17 +67,47 @@ function launch() {
 }
 
 /* A local inject library (../injects) on its own port, with an empty store in a temporary folder, so tests never
-   touch a real one. fn(baseUrl). */
-async function withInjects(fn) {
+   touch a real one, and a stand-in for Resend that keeps every sign-in email instead of sending it (build 15).
+   fn(baseUrl, mail) where mail = { messages: [{to, from, subject, text}], waitFor(n), tokenOf(message), signIn(email) }.
+   opts.vars: extra settings for the Worker, e.g. { SESSION_TTL_SECONDS: "3" } to test a sign-in ending. */
+async function withInjects(fn, opts) {
+  opts = opts || {};
+  const http = require("http");
+  const messages = [];
+  const resend = http.createServer((req, res) => {
+    let b = ""; req.on("data", d => (b += d));
+    req.on("end", () => {
+      try { const j = JSON.parse(b); messages.push({ to: j.to && j.to[0], from: j.from, subject: j.subject, text: j.text, auth: req.headers.authorization }); } catch (e) {}
+      res.writeHead(200, { "content-type": "application/json" }); res.end('{"id":"test"}');
+    });
+  });
+  await new Promise(r => resend.listen(0, "127.0.0.1", r));
+  const mailPort = resend.address().port;
   const port = 8890 + Math.floor(Math.random() * 100);
   const url = "http://127.0.0.1:" + port;
   const store = fs.mkdtempSync(path.join(require("os").tmpdir(), "ballotship-injects-"));
-  const proc = spawn("npx", ["wrangler", "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", store], {
-    cwd: path.join(ROOT, "injects"), stdio: ["ignore", "pipe", "pipe"], detached: true,
-  });
+  const vars = Object.assign({ RESEND_URL: "http://127.0.0.1:" + mailPort + "/emails", RESEND_API_KEY: "re_test_key" }, opts.vars || {});
+  const args = ["wrangler", "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", store];
+  Object.keys(vars).forEach(k => args.push("--var", k + ":" + vars[k]));
+  const proc = spawn("npx", args, { cwd: path.join(ROOT, "injects"), stdio: ["ignore", "pipe", "pipe"], detached: true });
   let log = "";
   proc.stdout.on("data", d => (log += d));
   proc.stderr.on("data", d => (log += d));
+  const mail = {
+    messages,
+    async waitFor(n, ms) { const end = Date.now() + (ms || 8000); while (messages.length < n && Date.now() < end) await new Promise(r => setTimeout(r, 100)); return messages.length >= n; },
+    tokenOf(m) { const x = /[?&]t=([A-Za-z0-9_-]+)/.exec(m.text); return x ? x[1] : ""; },
+    /* Ask for a link, "open" it and return the cookie the browser would keep. */
+    async signIn(email) {
+      const before = messages.length;
+      await fetch(url + "/api/auth/request", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) });
+      if (!(await mail.waitFor(before + 1))) throw new Error("no sign-in email arrived for " + email);
+      const res = await fetch(url + "/api/auth/verify", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token: mail.tokenOf(messages[messages.length - 1]) }) });
+      const set = res.headers.get("set-cookie") || "";
+      if (!res.ok || !set) throw new Error("sign-in failed: " + res.status);
+      return set.split(";")[0];
+    },
+  };
   try {
     const end = Date.now() + 90000;
     let up = false;
@@ -86,9 +116,10 @@ async function withInjects(fn) {
       if (!up) await new Promise(r => setTimeout(r, 1000));
     }
     if (!up) throw new Error("local inject library did not start:\n" + log.slice(-2000));
-    return await fn(url);
+    return await fn(url, mail);
   } finally {
     try { process.kill(-proc.pid); } catch (e) { proc.kill(); }
+    resend.close();
     try { fs.rmSync(store, { recursive: true, force: true }); } catch (e) {}
   }
 }
