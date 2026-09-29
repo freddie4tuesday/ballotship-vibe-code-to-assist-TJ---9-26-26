@@ -29,7 +29,9 @@ const { ROOT, PAGE, reporter, launch } = require("./helpers");
     p.on("pageerror", e => errors.push(e.message));
     await p.goto(PAGE);
     await p.waitForTimeout(500);
-    r.check("footer on screen shows build " + newest, (await p.textContent(".build-footer .tag")) === "build " + newest);
+    const ver = await p.evaluate(() => APP_VERSION);
+    r.check("footer on screen (a saved copy counts as live) shows the version, not the build: version " + ver, (await p.textContent(".build-footer .tag")) === "version " + ver && /^\d+\.\d+$/.test(ver));
+    r.check("...while the page's own footer HTML still holds build " + newest + " for the release script", footer === newest);
     r.check("Ready for Tuesday branding is present", /Ready for Tuesday/.test(await p.textContent("#titleFoot")));
     // The moderator panel's clock note (build 10): it used to say the clock was "advisory" while also saying time
     // running out commits what's written. Wording is Ready for Tuesday's, so it only changes on approval.

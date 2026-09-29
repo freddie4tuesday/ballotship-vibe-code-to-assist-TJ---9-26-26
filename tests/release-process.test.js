@@ -42,7 +42,7 @@ const R_STAGING = "https://ballotship-relay-staging.electionadminsuite.com", R_L
 
     const l = await open(LIVE), lf = await facts(l);
     r.check("live: no STAGING anywhere", !/STAGING/i.test(lf.title + lf.tags.join("") + lf.foot), JSON.stringify(lf));
-    r.check("live: one footer tag, the build number", lf.tags.length === 1 && /^build \d+$/.test(lf.tags[0]), lf.tags.join(" | "));
+    r.check("live: one footer tag, a version number (no build number)", lf.tags.length === 1 && /^version \d+\.\d+$/.test(lf.tags[0]), lf.tags.join(" | "));
     r.check("live: the relay defaults to the live relay", lf.relay === R_LIVE && lf.placeholder === R_LIVE, lf.relay);
 
     // Build 12: which inject library each address reads. (Tests switch the library off with an override; take it away to ask.)
@@ -58,7 +58,7 @@ const R_STAGING = "https://ballotship-relay-staging.electionadminsuite.com", R_L
     r.check("the inject library is kept off the game's site (a saved deck or the editor page is never served from it)", /^injects$/m.test(fs.readFileSync(path.join(ROOT, ".assetsignore"), "utf8")));
     const f = await ctx.newPage(); await f.goto("file://" + path.join(ROOT, "index.html")); await f.waitForTimeout(300);
     const ff = await facts(f);
-    r.check("a saved copy of the file behaves as live", !/STAGING/i.test(ff.title + ff.foot) && ff.relay === R_LIVE, JSON.stringify(ff));
+    r.check("a saved copy of the file behaves as live (version footer too)", !/STAGING/i.test(ff.title + ff.foot) && ff.relay === R_LIVE && ff.tags.length === 1 && /^version \d+\.\d+$/.test(ff.tags[0]), JSON.stringify(ff));
 
     // Start a game on staging; the live address must not see it.
     await s.click("#btnTitleGo"); await s.click("#modePass");

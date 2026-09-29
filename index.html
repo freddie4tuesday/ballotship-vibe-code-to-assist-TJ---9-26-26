@@ -327,6 +327,14 @@
         (10 wrong codes allowed, the 11th and even a right code refused for that visitor, others unaffected, finding real
         exercises never counts, allowed again after the hour) and tests/log-export.test.js (jurisdiction and deck version in all
         three exports).
+  build 19 The live game's footer shows a version number instead of the build number. Asked for: "remove the build number
+        for live and change it to a version number which appears in a footer. Leave it the way it is on staging." The page is one
+        file for staging and live (a release must be exactly what was on staging), so the footer chooses at load by address:
+        staging keeps "build N" and its STAGING tag; live, and a saved copy of the file, show only "version 1.0" (APP_VERSION), without the build's one-line summary. The
+        version moves once per release that goes live (next: 1.1); build numbers carry on in the build log, commits, deploys
+        and the staging footer, and the footer's HTML still holds the build number, which the release script reads. Verified by
+        tests/release-process.test.js (staging still says STAGING and build 19; live and a saved copy say only "version 1.0"; the
+        two pages are byte-for-byte the same file) and tests/build-number.test.js.
 -->
 <html lang="en">
 <head>
@@ -5493,6 +5501,19 @@ startClockTick();
    (A browser keeps saved games per address, so staging and live games can't overwrite
    each other either.) */
 var IS_STAGING = /staging/i.test(window.location.hostname);
+/* build 19 - the LIVE game's footer shows a version number, not the build number. Builds are how the work is tracked
+   (the build log, the commits, the deploys, and the staging footer); a version is what the people using the game see, and it
+   moves once per release that goes live: 1.0 was the first, the next is 1.1, and so on (see "Versions" in the summary). The
+   page is one file for both addresses (a release must be exactly the page that was on staging), so the footer decides at
+   load: staging keeps "build N" (plus the STAGING tag), everywhere else, including a saved copy of the file, says
+   "version X". The build number stays in the footer's HTML, which is what the release script reads. */
+var APP_VERSION = "1.0";
+if (!IS_STAGING) document.addEventListener("DOMContentLoaded", function () {
+  var tag = document.querySelector(".build-footer .tag");
+  if (!tag) return;
+  tag.textContent = "version " + APP_VERSION;
+  if (tag.nextElementSibling) tag.nextElementSibling.hidden = true;   // the one-line summary of the build is for staging and the build log
+});
 prefetchDeck();   /* build 12: as early as the page can, so the setup screen already knows */
 (function () {
   var relay = IS_STAGING ? "https://ballotship-relay-staging.electionadminsuite.com" : "https://ballotship-relay.electionadminsuite.com";
@@ -5510,8 +5531,8 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 <div class="join-banner no-print" id="joinBanner" hidden></div>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 18</span>
-  <span>games can end in a draw; a jurisdiction is entered at setup and shown in the log; wrong join codes are limited; a demo button</span>
+  <span class="tag">build 19</span>
+  <span>the live game shows a version number in its footer; the build number stays on staging</span>
 </div>
 
 </body>

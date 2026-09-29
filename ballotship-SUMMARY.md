@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 18 (live)
+**Current version:** build 19 (staging; live is build 18 until this is released as version 1.0)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address and needs an emailed sign-in link; see The inject library)
@@ -47,6 +47,18 @@ by hand, as before.
 Two-screen games always use the relay (one laptop never does); if it can't be reached when Start is pressed the screen offers "Set up by hand" (every screen typed, codes read out loud, no join code). Optional features on the setup screen:
 an AI assignment (off by default; when off it is hidden everywhere, when on an attack can't be committed without it), a reveal of the real-world precedent after each
 response, sounds, and random site placement. The round count runs from 4 to 12.
+
+---
+
+## Versions (what people see) and builds (how the work is tracked)
+
+The live game's footer shows a **version number** (`APP_VERSION` in `index.html`), from build 19 on. It moves once per release that goes live: **1.0** first (build 19), then 1.1, 1.2, and so on (a change of the first number is for a big change to how the game is played). The same file runs on staging and live, so the footer decides by address: staging shows `build N` with the STAGING tag; live, and a saved copy of the file, show only `version X`. Builds are unchanged internally: the build log, the commit titles, the deploy messages and the staging footer all use them, and the footer's HTML still holds the build number because `deploy.sh` reads it.
+
+| Version | Build | Released |
+|---|---|---|
+| 1.0 | 19 | first version-numbered release (builds 1 to 18 went live before versions existed) |
+
+To release a new version: bump `APP_VERSION`, add its row here, and go live as usual.
 
 ---
 

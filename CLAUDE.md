@@ -33,6 +33,7 @@ Read `ballotship-SUMMARY.md` first (current build, standing rules, deploy and ro
 
 Full standard: DOCUMENTATION-BEST-PRACTICES.md in this project.
 
+- The live game shows a version number (`APP_VERSION`, bumped once per go-live, listed under "Versions" in the summary); the build number shows only on staging. Everything else below is about builds.
 - Every app change gets the next build number, updated in four places that must agree: the
   build log comment at the top of the main file, the footer, the commit title ("Build N: ..."),
   and the deploy message ("build N"). Docs-only or test-only changes get no build number.
