@@ -203,6 +203,20 @@
         two screens warn only when their decks differ; the editor page end to end), and by breaking
         the page on purpose: with the https check removed the game accepts a javascript: link and
         the test fails on exactly that.
+  build 13 The inject editor no longer needs a secret. Asked for: "get rid of the key. I just
+        want a plain url for now." Build 12 put a secret in the editor's address; it is now
+        /edit on the inject library's address, with nothing to look up, and the old secret-style
+        address is gone. The trade is that anyone who finds the address can change the injects
+        that real games use. What limits the damage: every save is a version that History can
+        restore, the page isn't linked from anywhere or indexed by search engines, and a save
+        sent from another website's page is refused (the library checks where a save came
+        from; that stops a stranger's web page acting through your browser, but not someone
+        typing the address). ROADMAP keeps the question for TJ of who should be allowed to
+        edit, and the way back (a login) if this proves too open. Nothing in the game changed,
+        so no new on-screen wording. Verified by tests/injects-api.test.js (the plain address
+        works, the old one is not found, a save from another site is refused, a save from the
+        editor's own site is accepted) and tests/injects-game.test.js (the editor end to end at
+        /edit).
 -->
 <html lang="en">
 <head>
@@ -5054,8 +5068,8 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 </script>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 12</span>
-  <span>the injects now come from the inject library, which has its own editor page; a game keeps the deck it started with</span>
+  <span class="tag">build 13</span>
+  <span>the inject editor is a plain address, no secret; the injects come from the inject library and a game keeps the deck it started with</span>
 </div>
 
 </body>

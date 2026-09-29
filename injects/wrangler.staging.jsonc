@@ -1,7 +1,6 @@
 // The STAGING inject library: a separate store from the live one, so code changes and test edits
 // never touch the live deck. Deploy with ../deploy.sh staging.
-// Deploy with ../deploy.sh. Needs a secret: `npx wrangler secret put EDIT_TOKEN --config wrangler.staging.jsonc`
-// (a long random string; the editor's address is /edit/<that string>).
+// Deploy with ../deploy.sh. The editor is at /edit, with no secret (build 13; see src/index.js).
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "ballotship-injects-staging",

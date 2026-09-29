@@ -1,9 +1,9 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 12 (live; builds 8 to 12 went live together)
+**Current version:** build 13 (on staging; live is build 12, builds 8 to 12 went live together)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
-**Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor page's address includes a secret, see The inject library)
+**Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address, open to anyone who has it; see The inject library)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
 deploy config (`wrangler.jsonc`, `.assetsignore`), `worker/` (the relay), `injects/` (the inject library), `tests/`, and `demo/`
 
@@ -98,12 +98,12 @@ to choose which one starts (it was number 6). It has its own address and its own
   the store starts from, made from `index.html` by `node injects/tools/extract.js` (the tests check it
   still matches). After that first read the store is the truth and the array inside `index.html` is
   only the built-in copy the game falls back to.
-- **Editing:** at `https://ballotship-injects.electionadminsuite.com/edit/<secret>`. The secret is the
-  `EDIT_TOKEN` value, set once with `cd injects && npx wrangler secret put EDIT_TOKEN --config wrangler.jsonc`
-  (the staging one with `wrangler.staging.jsonc`, and a different value). It is a secret in the
-  address, not a login: anyone who has the link can edit, and it can leak through browser history or a
-  forwarded link. Change it by putting a new value (the old link stops working). If it isn't set, editing is
-  off and the game is unaffected. ROADMAP: ask TJ who should be allowed to edit.
+- **Editing:** at `https://ballotship-injects.electionadminsuite.com/edit` (staging: `ballotship-injects-staging...`). **There is no
+  key or login (build 13, at the owner's request; build 12 had a secret in the address).** Anyone who finds the
+  address can change the live injects. What limits the damage: every save is a version that History restores,
+  the page is not linked from anywhere or indexed, and a save sent from another website's page is refused (a
+  speed bump, not a lock: anyone typing the address, or a script, still can). To lock it again, add a
+  login or a secret in `injects/src/index.js`; ROADMAP has the question for TJ.
 - **Edits go live at once.** Every save is a numbered version (the last 500 are kept). The editor's History
   shows what changed and restores any version (a restore is itself a new version, so nothing is lost).
   Two people saving at once: the second is told to reload.

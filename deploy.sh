@@ -66,11 +66,8 @@ room="deploycheck-$(date +%s)"
 curl -fsS -X POST "$relay/room/$room/send" -H 'content-type: application/json' -d '{"from":"t1","code":"R1-MSG"}' | grep -q '"ok":true' || fail "relay did not accept a message at $relay"
 curl -fsS "$relay/room/$room/poll?as=t2" | grep -q 'R1-MSG' || fail "relay did not return the message at $relay"
 curl -fsS "$inj/api/deck" | grep -q '"injects"' || fail "the inject library did not return a deck at $inj/api/deck"
-if ! ( cd injects && $wrangler secret list --config "$injcfg" 2>/dev/null | grep -q EDIT_TOKEN ); then
-  echo "NOTE: the inject library has no EDIT_TOKEN secret yet, so its editor page is switched off (the game is unaffected)."
-  echo "      Set one: (cd injects && npx wrangler secret put EDIT_TOKEN --config $injcfg)   then the editor is at $inj/edit/<that value>"
-fi
-echo "OK: $page is build $n, the relay at $relay works, and the inject library at $inj answers."
+curl -fsS "$inj/edit" | grep -q "inject library" || fail "the inject editor page did not load at $inj/edit"
+echo "OK: $page is build $n, the relay at $relay works, and the inject library at $inj answers (editor: $inj/edit)."
 
 if [ "$target" = production ]; then
   git tag -f "build-$n" >/dev/null && git push origin "build-$n" 2>/dev/null || echo "(the build-$n tag was not pushed; harmless)"

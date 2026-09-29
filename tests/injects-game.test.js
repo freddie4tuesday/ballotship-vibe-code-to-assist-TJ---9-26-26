@@ -24,10 +24,10 @@ const clone = o => JSON.parse(JSON.stringify(o));
   const r = reporter("Inject library with the game and the editor page");
   let browser;
   try {
-    await withInjects(async (lib, token) => {
+    await withInjects(async (lib) => {
       await withRelay(async relay => {
         browser = await launch();
-        const E = lib + "/api/edit/" + token + "/";
+        const E = lib + "/api/edit/";
         const getDeck = () => fetch(lib + "/api/deck").then(x => x.json());
         const save = async (mutate, summary) => { const d = await getDeck(); const inj = clone(d.injects); mutate(inj, d); const x = await fetch(E + "save", { method: "POST", body: JSON.stringify({ base: d.version, start: d.start, injects: inj, summary }) }); return x.json(); };
         const openGame = async (url, opts) => {
@@ -102,9 +102,9 @@ const clone = o => JSON.parse(JSON.stringify(o));
         // ---- the editor page ----
         const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
         const ed = await ctx.newPage(); const eerr = []; ed.on("pageerror", e => eerr.push(e.message)); ed.on("dialog", dlg => dlg.accept());
-        const wrong = await ctx.newPage(); const wr = await wrong.goto(lib + "/edit/not-the-secret");
-        r.check("the editor address with a wrong secret is not found", wr.status() === 404);
-        await ed.goto(lib + "/edit/" + token); await ed.waitForSelector("#list li");
+        const old = await ctx.newPage(); const wr = await old.goto(lib + "/edit/some-old-secret");
+        r.check("the old secret-style editor address is not found", wr.status() === 404);
+        await ed.goto(lib + "/edit"); await ed.waitForSelector("#list li");
         const before = await getDeck();
         r.check("the editor lists every inject", (await ed.$$("#list li")).length === before.injects.length, "" + (await ed.$$("#list li")).length);
         r.check("the Ready for Tuesday name is on the page", /Ready for Tuesday/.test(await ed.$eval("header", e => e.textContent)));

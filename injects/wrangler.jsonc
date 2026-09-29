@@ -1,7 +1,6 @@
 // The LIVE inject library: where the injects are listed, edited and reordered, and where the game
 // fetches its deck. Its own Worker and store, so an edit never touches the game's code.
-// Deploy with ../deploy.sh. Needs a secret: `npx wrangler secret put EDIT_TOKEN --config wrangler.jsonc`
-// (a long random string; the editor's address is /edit/<that string>).
+// Deploy with ../deploy.sh. The editor is at /edit, with no secret (build 13; see src/index.js).
 {
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "ballotship-injects",

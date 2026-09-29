@@ -9,7 +9,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- Nothing is waiting on review. Builds 8 to 12 are live.
+- **Build 13 (the inject editor without a key) is on staging, waiting for you to look and say go live.** Builds 8 to 12 are live.
 
 ## Backlog
 
@@ -19,9 +19,11 @@ Each item: a short title, then one or two lines on what and why.
   - **Edits go live immediately** (no draft step). A saved edit is what the next game uses. Because a
     slip would reach real games at once, every save is a numbered version, any version can be restored
     from the page, and the page shows what changed.
-  - **Anyone with the link can edit, to start with.** The link is long and unguessable (a secret in
-    the address), which is not a login, and it can leak through browser history or a forwarded link.
-    **Ask TJ what he prefers** for who may edit (a login by email code is the alternative). The secret link is set with `wrangler secret put EDIT_TOKEN`; changing the value cuts off every old link.
+  - **Anyone with the address can edit, to start with (changed in build 13: no key at all).** Build 12 had a
+    long secret in the address; the owner asked for a plain address instead. Reasons for: nothing to look up or
+    share, and History restores any slip. Reasons against: anyone who finds `/edit` can change the injects real
+    games use, and there is no record of who. **Ask TJ what he prefers** for who may edit (a login by email code, or
+    the secret link again, are the ways back).
   - **Extras wanted:** history with restore; a picture of the squares an inject covers; reordering, and
     choosing which inject comes first (today number 6). Not wanted: importing from the workbook.
   **Design:** its own Worker and store (`injects/`), with a staging copy like everything else (code

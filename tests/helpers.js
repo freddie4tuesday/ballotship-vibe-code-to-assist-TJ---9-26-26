@@ -66,13 +66,13 @@ function launch() {
   });
 }
 
-/* A local inject library (../injects) on its own port, with an empty store in a temporary folder and a known
-   editing secret, so tests never touch a real one. fn(baseUrl, token). */
+/* A local inject library (../injects) on its own port, with an empty store in a temporary folder, so tests never
+   touch a real one. fn(baseUrl). */
 async function withInjects(fn) {
   const port = 8890 + Math.floor(Math.random() * 100);
-  const url = "http://127.0.0.1:" + port, token = "test-secret-" + Math.floor(Math.random() * 1e9);
+  const url = "http://127.0.0.1:" + port;
   const store = fs.mkdtempSync(path.join(require("os").tmpdir(), "ballotship-injects-"));
-  const proc = spawn("npx", ["wrangler", "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", store, "--var", "EDIT_TOKEN:" + token], {
+  const proc = spawn("npx", ["wrangler", "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", store], {
     cwd: path.join(ROOT, "injects"), stdio: ["ignore", "pipe", "pipe"], detached: true,
   });
   let log = "";
@@ -86,7 +86,7 @@ async function withInjects(fn) {
       if (!up) await new Promise(r => setTimeout(r, 1000));
     }
     if (!up) throw new Error("local inject library did not start:\n" + log.slice(-2000));
-    return await fn(url, token);
+    return await fn(url);
   } finally {
     try { process.kill(-proc.pid); } catch (e) { proc.kill(); }
     try { fs.rmSync(store, { recursive: true, force: true }); } catch (e) {}

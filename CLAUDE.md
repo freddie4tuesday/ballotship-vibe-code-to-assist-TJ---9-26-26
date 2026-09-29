@@ -21,9 +21,9 @@ Read `ballotship-SUMMARY.md` first (current build, standing rules, deploy and ro
   belong to other apps (already in each `wrangler*.jsonc`).
 - **Tests:** `npm test` from `tests/` (about 6 minutes) before every deploy, staging included; `deploy.sh`
   refuses code the tests haven't passed on. They use a local relay and a local inject library only.
-- **Inject library:** the deck of injects is edited on its editor page, never by deploying. The editor's
-  address contains a secret (`EDIT_TOKEN`): never print it, commit it or put it in a doc. Changing the
-  fields an inject has means changing `injects/src/validate.js`, `sanitizeDeck` in `index.html` and the editor together.
+- **Inject library:** the deck of injects is edited on its editor page (`/edit`, open to anyone with the address, no
+  key by the owner's choice), never by deploying. Changing the fields an inject has means changing
+  `injects/src/validate.js`, `sanitizeDeck` in `index.html` and the editor together.
 - **Relay:** plain HTTP polling only. Don't switch to always-open WebSockets without
   hibernation (cost). Room auto-delete is deliberately off; see the roadmap.
 - Work on the `staging` branch; merge it into `main` only when going live.

@@ -3,15 +3,18 @@
   edit is one write and every reader sees a whole deck or the previous one, never half of a save.
 
     GET  /api/deck                 the current deck: {version, start, injects}. Public, read by the game.
-    GET  /edit/<token>             the editor page (only with the secret in the address)
-    GET  /api/edit/<token>/history [{version, at, summary}] newest first
-    GET  /api/edit/<token>/version/<n>   one old deck, for the "what changed" view
-    POST /api/edit/<token>/save    {base, start, injects, summary}  -> {version} or 409 if base is stale
-    POST /api/edit/<token>/restore {version}                        -> {version} (a restore is itself a new version)
+    GET  /edit                     the editor page
+    GET  /api/edit/history         [{version, at, summary}] newest first
+    GET  /api/edit/version/<n>     one old deck, for the "what changed" view
+    POST /api/edit/save            {base, start, injects, summary}  -> {version} or 409 if base is stale
+    POST /api/edit/restore         {version}                        -> {version} (a restore is itself a new version)
 
   Edits go live at once (decided with the owner); every save is numbered and can be restored, which is
-  the safety net. The token is a secret in the address, not a login; see ROADMAP.md (who may edit).
-  If the token isn't set, editing is off and the deck is read-only. First read seeds the store from
+  the safety net. Build 13: the editor is OPEN. Build 12 had a secret in the address (/edit/<secret>);
+  the owner asked for a plain address instead, so anyone who finds /edit can change the deck. What limits
+  the damage: every save is a version that can be restored, the page isn't linked from anywhere or
+  indexed, and a browser on another website can't save (see the Origin check). See ROADMAP.md (who may edit).
+  First read seeds the store from
   seed.json, a copy of the deck that was built into index.html at build 12.
 */
 import { DurableObject } from "cloudflare:workers";
@@ -24,12 +27,6 @@ const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods
 
 const json = (body, status = 200, extra = {}) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store", ...CORS, ...extra } });
 
-// Constant-time comparison so a wrong guess doesn't reveal how much of the token was right.
-function same(a, b) {
-  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
-  let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return d === 0;
-}
 
 export default {
   async fetch(request, env) {
@@ -40,24 +37,26 @@ export default {
 
     if (p === "/api/deck") return request.method === "GET" ? stub.getDeck().then((d) => json(d)) : json({ error: "use GET" }, 405);
 
-    let m = p.match(/^\/edit\/([^/]+)\/?$/);
-    if (m) {
-      if (!env.EDIT_TOKEN || !same(m[1], env.EDIT_TOKEN)) return new Response("Not found", { status: 404 });
+    if (p === "/edit" || p === "/edit/") {
       const page = await env.ASSETS.fetch(new Request(new URL("/editor.html", url), request));
       const h = new Headers(page.headers);
-      h.set("cache-control", "no-store"); h.set("referrer-policy", "no-referrer"); h.set("x-robots-tag", "noindex");
+      h.set("cache-control", "no-store"); h.set("x-robots-tag", "noindex");
       return new Response(page.body, { status: page.status, headers: h });
     }
 
-    m = p.match(/^\/api\/edit\/([^/]+)\/(history|version\/(\d+)|save|restore)$/);
+    const m = p.match(/^\/api\/edit\/(history|version\/(\d+)|save|restore)$/);
     if (m) {
-      if (!env.EDIT_TOKEN || !same(m[1], env.EDIT_TOKEN)) return json({ error: "not found" }, 404);
-      if (m[2] === "history") return json(await stub.history());
-      if (m[3]) { const v = await stub.version(Number(m[3])); return v ? json(v) : json({ error: "no such version" }, 404); }
+      if (m[1] === "history") return json(await stub.history());
+      if (m[2]) { const v = await stub.version(Number(m[2])); return v ? json(v) : json({ error: "no such version" }, 404); }
       if (request.method !== "POST") return json({ error: "use POST" }, 405);
+      // Build 13: with no secret, a script on some other website could otherwise save through a visitor's browser
+      // (the CORS header above lets any site READ the deck, which the game needs). A browser always sends Origin on a
+      // POST; refuse one that isn't this site. Anything not from a browser sends none, so this is a speed bump, not a lock.
+      const origin = request.headers.get("origin");
+      if (origin && origin !== url.origin) return json({ error: "Editing is only possible from the editor page." }, 403);
       if (Number(request.headers.get("content-length") || 0) > 500000) return json({ error: "too large" }, 413);
       let body; try { body = await request.json(); } catch (e) { return json({ error: "That wasn't readable. Reload the page and try again." }, 400); }
-      if (m[2] === "save") return stub.save(body).then((r) => json(r.body, r.status));
+      if (m[1] === "save") return stub.save(body).then((r) => json(r.body, r.status));
       return stub.restore(body).then((r) => json(r.body, r.status));
     }
     if (p === "/" || p === "") return json({ ok: true, service: "ballotship-injects" });
