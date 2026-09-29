@@ -9,7 +9,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-**Build 18 is built on the branch and waits for the owner's staging review:** draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; the "Watch a demo" button (it links to the existing video, which predates builds 5 to 17 and needs re-recording, and the demo recorder needs rewriting for join codes first).
+**Build 18 is live:** draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; the "Watch a demo" button (it links to the existing video, which predates builds 5 to 17 and needs re-recording, and the demo recorder needs rewriting for join codes first).
 
 ## Backlog
 
@@ -52,6 +52,8 @@ Each item: a short title, then one or two lines on what and why.
 ---
 
 ## Done
+
+- **Draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; a "Watch a demo" button** - build 18, live.
 
 - **Relay rooms deleted a week after their last message; the AI assignment as an option (off by default, hidden when off); the join box forgiving about the code's shape; the relay always on for two-screen games with a "set up by hand" fallback; updated mode cards; the exercise label in the after-action log** - build 17, live.
 
