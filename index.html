@@ -79,6 +79,23 @@
         screen makes 10 relay checks in 15 s; with the guard removed, 20), and a 1-round game.
         Known, not fixed here: the moderator's own "End the exercise" always scores 0-0 and goes
         to sudden death (it never tracks damage); on the roadmap.
+  build 7  The after-action log, approved as a table first. Two reports from real use: Print
+        printed the whole final screen (both boards and all) instead of the record, and the
+        log only came as a web page. The log is now built once (logHTML), and everything comes
+        from that one function: "Download the log (web page)" saves it, "Download as Word"
+        converts it to a real .docx, and "Print" prints it from a hidden frame, so the three
+        cannot disagree. The Word file needs no library and works offline: it is written
+        directly as the zip of XML files a .docx is (uncompressed, which Word reads fine),
+        walking the log page for headings, bold, links, lists and pictures, and it opens
+        with the log's own look (Georgia, Heading 1/2 styles for the Word navigation pane,
+        shaded "This actually happened" boxes, real hyperlinks, pictures scaled to the page).
+        Verified by tests/log-export.test.js: the .docx has every required part and XML that
+        parses; the picture and link came across; every one of the web page's 101 blocks is in
+        the Word file; Print holds exactly the web page's text with no boards; and python-docx,
+        an independent reader, opens it. Also opened in LibreOffice and looked at page by page.
+        The chat note in the test carries < > & to prove escaping. Catches while building: the
+        first test picture was invalid PNG data I had typed by hand (LibreOffice complained,
+        Word would have too), so the test now generates a real one.
 -->
 <html lang="en">
 <head>
@@ -1212,7 +1229,8 @@ body{padding-bottom:28px}
     <ul class="log" id="logList"></ul>
     <div class="btnrow no-print">
       <button class="btn orange" id="btnResumeGame" hidden>Resume the game</button>
-      <button class="btn orange" id="btnExport">Download the log</button>
+      <button class="btn orange" id="btnExport">Download the log (web page)</button>
+      <button class="btn orange" id="btnExportDoc">Download as Word</button>
       <button class="btn ghost" id="btnPrint">Print</button>
       <button class="btn ghost" id="btnAgain">Run it again</button>
     </div>
@@ -4202,7 +4220,7 @@ function renderOver() {
 /* ============================================================
    EXPORT
    ============================================================ */
-$("btnPrint").addEventListener("click", function () { window.print(); });
+
 /* ============================================================
    END EARLY, AND RESUME (build 6)
    Ending early scores the board as it stands and goes to the final screen,
@@ -4260,7 +4278,11 @@ $("btnResumeGame").addEventListener("click", function () { resumeEarly(false); }
 $("btnAgain").addEventListener("click", function () {
   if (confirm("Start over? The current log will be lost unless you have downloaded it.")) { clearSave(); location.reload(); }
 });
-$("btnExport").addEventListener("click", function () {
+/* build 7 — the after-action log is built once, here, as a web page. "Download the
+   log (web page)" saves it, "Download as Word" converts it to a .docx (docxFromHTML,
+   below), and "Print" prints it from a hidden frame. Print used to print the whole
+   final screen (both boards included), which is not the record. */
+function logHTML() {
   var stamp = new Date().toLocaleString();
   var rows = G.log.map(function (e) {
     return "<article><h3>Round " + e.round + (e.sd ? " (sudden death)" : "") + " &middot; " + esc(e.atk) + " attacking " + esc(e.def) +
@@ -4330,13 +4352,199 @@ $("btnExport").addEventListener("click", function () {
     "<li>Look again at the AI artifacts. Which took the longest to make, which was most convincing, and how long would each take to debunk?</li>" +
     "<li>Everything in this log was produced in an hour by people who are not trying to hurt you. What follows from that?</li>" +
     "</ol></html>";
-  var blob = new Blob([html], {type:"text/html"});
+  return html;
+}
+function saveBlob(blob, ext) {
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "ballotship-after-action-" + new Date().toISOString().slice(0, 10) + ".html";
+  a.download = "ballotship-after-action-" + new Date().toISOString().slice(0, 10) + "." + ext;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+}
+$("btnExport").addEventListener("click", function () { saveBlob(new Blob([logHTML()], {type:"text/html"}), "html"); });
+$("btnExportDoc").addEventListener("click", function () {
+  docxFromHTML(logHTML()).then(function (blob) { saveBlob(blob, "docx"); },
+    function (e) { window.alert("Could not make the Word file (" + (e && e.message ? e.message : e) + "). Use Download the log (web page) instead."); });
 });
+$("btnPrint").addEventListener("click", function () {
+  var old = $("printFrame"); if (old) old.remove();
+  var f = document.createElement("iframe");
+  f.id = "printFrame"; f.className = "no-print"; f.setAttribute("aria-hidden", "true");
+  f.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+  f.onload = function () {
+    try {
+      f.contentWindow.addEventListener("afterprint", function () { f.remove(); });
+      f.contentWindow.focus(); f.contentWindow.print();
+    } catch (e) { window.print(); }
+  };
+  f.srcdoc = logHTML();
+  document.body.appendChild(f);
+});
+
+/* ============================================================
+   WORD (.docx) EXPORT (build 7)
+   No library: a .docx is a zip of a few XML files, so this writes them directly
+   (an uncompressed zip, which Word reads fine) and works offline. The log's web
+   page is walked node by node, so headings, bold, links, lists and pictures come
+   across, and the two downloads can never disagree about what the log says.
+   ============================================================ */
+var CRC_T = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { var c = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files, mime) {
+  var enc = new TextEncoder(), parts = [], central = [], offset = 0, cdSize = 0;
+  files.forEach(function (f) {
+    var name = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+    var lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);   // 0x0800: names are UTF-8
+    lh.setUint16(8, 0, true); lh.setUint16(10, 0, true); lh.setUint16(12, 0x21, true);              // stored, 1980-01-01
+    lh.setUint32(14, crc, true); lh.setUint32(18, size, true); lh.setUint32(22, size, true);
+    lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), name, f.data);
+    var ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint16(10, 0, true); ch.setUint16(12, 0, true); ch.setUint16(14, 0x21, true);
+    ch.setUint32(16, crc, true); ch.setUint32(20, size, true); ch.setUint32(24, size, true);
+    ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), name);
+    offset += 30 + name.length + size; cdSize += 46 + name.length;
+  });
+  var end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]), {type:mime});
+}
+function xmlEsc(t) {
+  return String(t).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function docxFromHTML(html) {
+  var doc = new DOMParser().parseFromString(html, "text/html"), enc = new TextEncoder();
+  var rels = [], media = [], relN = 0, picN = 0, sizes = {};
+  function addRel(type, target, external) { var id = "rId" + (++relN + 1); rels.push({id:id, type:type, target:target, external:external}); return id; }
+  var RT = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/";
+  var IMG_TYPES = {"image/png":"png", "image/jpeg":"jpg", "image/gif":"gif"};
+
+  /* Pictures need their pixel size, and the browser only knows it once loaded. */
+  var imgs = [].slice.call(doc.querySelectorAll("img")), loads = imgs.map(function (im) {
+    return new Promise(function (ok) {
+      var i = new Image();
+      i.onload = function () { sizes[im.getAttribute("src")] = [i.naturalWidth, i.naturalHeight]; ok(); };
+      i.onerror = function () { ok(); };
+      i.src = im.getAttribute("src");
+    });
+  });
+
+  function run(text, o) {
+    o = o || {};
+    var pr = (o.b ? "<w:b/>" : "") + (o.i ? "<w:i/>" : "") + (o.link ? '<w:rStyle w:val="Hyperlink"/>' : "") +
+      (o.color ? '<w:color w:val="' + o.color + '"/>' : "") + (o.caps ? "<w:caps/>" : "") + (o.sz ? '<w:sz w:val="' + o.sz + '"/>' : "");
+    return String(text).split("\n").map(function (line, n) {
+      return "<w:r>" + (pr ? "<w:rPr>" + pr + "</w:rPr>" : "") + (n ? "<w:br/>" : "") +
+        '<w:t xml:space="preserve">' + xmlEsc(line) + "</w:t></w:r>";
+    }).join("");
+  }
+  function picture(im) {
+    var src = im.getAttribute("src") || "", m = /^data:([^;,]+);base64,(.*)$/.exec(src), sz = sizes[src];
+    if (!m || !IMG_TYPES[m[1]] || !sz) return run("[Picture not included: " + (im.getAttribute("alt") || "unsupported type") + "]", {i:true});
+    var bin = atob(m[2]), bytes = new Uint8Array(bin.length);
+    for (var k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
+    var n = ++picN, name = "image" + n + "." + IMG_TYPES[m[1]];
+    media.push({name:"word/media/" + name, data:bytes, ext:IMG_TYPES[m[1]]});
+    var rid = addRel(RT + "image", "media/" + name, false);
+    var cx = sz[0] * 9525, cy = sz[1] * 9525, max = 5486400;                       // 6 inches wide at most
+    if (cx > max) { cy = Math.round(cy * max / cx); cx = max; }
+    return "<w:r><w:drawing><wp:inline distT=\"0\" distB=\"0\" distL=\"0\" distR=\"0\"><wp:extent cx=\"" + cx + "\" cy=\"" + cy + "\"/>" +
+      "<wp:docPr id=\"" + n + "\" name=\"Picture " + n + "\"/><a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" +
+      "<a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"><pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
+      "<pic:nvPicPr><pic:cNvPr id=\"" + n + "\" name=\"" + name + "\"/><pic:cNvPicPr/></pic:nvPicPr>" +
+      "<pic:blipFill><a:blip r:embed=\"" + rid + "\"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>" +
+      "<pic:spPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"" + cx + "\" cy=\"" + cy + "\"/></a:xfrm><a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></pic:spPr>" +
+      "</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>";
+  }
+  function inline(node, o) {
+    var out = "";
+    [].forEach.call(node.childNodes, function (c) {
+      if (c.nodeType === 3) { if (c.nodeValue) out += run(c.nodeValue, o); return; }
+      if (c.nodeType !== 1) return;
+      var tag = c.tagName.toLowerCase(), o2 = {b:o.b, i:o.i, color:o.color, caps:o.caps, sz:o.sz, link:o.link};
+      if (tag === "b" || tag === "strong") o2.b = true;
+      else if (tag === "i" || tag === "em") o2.i = true;
+      else if (tag === "img") { out += picture(c); return; }
+      else if (tag === "br") { out += "<w:r><w:br/></w:r>"; return; }
+      else if (tag === "a" && c.getAttribute("href")) {
+        o2.link = true; o2.color = "0563C1";
+        out += '<w:hyperlink r:id="' + addRel(RT + "hyperlink", c.getAttribute("href"), true) + '">' + inline(c, o2) + "</w:hyperlink>";
+        return;
+      }
+      out += inline(c, o2);
+    });
+    return out;
+  }
+  var body = "";
+  function para(el, style, ppr, o) {
+    body += "<w:p><w:pPr>" + (style ? '<w:pStyle w:val="' + style + '"/>' : "") + (ppr || "") + "</w:pPr>" + inline(el, o || {}) + "</w:p>";
+  }
+  function block(el) {
+    [].forEach.call(el.children, function (c) {
+      var tag = c.tagName.toLowerCase(), cls = c.className || "";
+      if (tag === "h1") para(c, "Title");
+      else if (tag === "h2") para(c, "Heading1");
+      else if (tag === "h3") para(c, "RoundLine");
+      else if (tag === "h4") para(c, "Heading2");
+      else if (tag === "p") {
+        if (/\bcat\b/.test(cls)) para(c, "", '<w:spacing w:after="40"/>', {caps:true, color:"5C6B62", sz:18});
+        else if (/\bmeta\b/.test(cls)) para(c, "", "", {color:"5C6B62", sz:20});
+        else if (/\bprec\b/.test(cls)) para(c, "", '<w:pBdr><w:left w:val="single" w:sz="24" w:space="8" w:color="0E7C7B"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F2F7F5"/><w:ind w:left="200"/>', {sz:21});
+        else para(c, "", "", {});
+      }
+      else if (tag === "ul" || tag === "ol") [].forEach.call(c.children, function (li, n) {
+        var lead = tag === "ul" ? "\u2022\t" : (n + 1) + ".\t";
+        body += '<w:p><w:pPr><w:tabs><w:tab w:val="left" w:pos="420"/></w:tabs><w:ind w:left="420" w:hanging="420"/></w:pPr>' +
+          run(lead.replace("\t", ""), {}) + "<w:r><w:tab/></w:r>" + inline(li, {}) + "</w:p>";
+      });
+      else block(c);                                                                  // article and other wrappers
+    });
+  }
+  var title = (doc.querySelector("h1") || {}).textContent || "After-action log";
+
+  return Promise.all(loads).then(function () {
+    block(doc.body);                                                                   // now that picture sizes are known
+    var NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
+    var documentXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ' + NS + "><w:body>" + body +
+      '<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
+    var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+      '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Georgia" w:hAnsi="Georgia" w:eastAsia="Georgia" w:cs="Georgia"/><w:color w:val="151F1B"/><w:sz w:val="22"/></w:rPr></w:rPrDefault>' +
+      '<w:pPrDefault><w:pPr><w:spacing w:before="0" w:after="100" w:line="300" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+      '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="60"/></w:pPr><w:rPr><w:b/><w:sz w:val="48"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="12" w:space="2" w:color="151F1B"/></w:pBdr><w:spacing w:before="480" w:after="120"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="32"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="40" w:after="100"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="30"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:customStyle="1" w:styleId="RoundLine"><w:name w:val="Round line"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="480" w:after="20"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/></w:rPr></w:style>' +
+      '<w:style w:type="character" w:styleId="Hyperlink"><w:name w:val="Hyperlink"/><w:rPr><w:color w:val="0563C1"/><w:u w:val="single"/></w:rPr></w:style></w:styles>';
+    var made = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+    var core = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
+      "<dc:title>" + xmlEsc(title) + "</dc:title><dc:creator>Ballotship</dc:creator>" +
+      '<dcterms:created xsi:type="dcterms:W3CDTF">' + made + '</dcterms:created></cp:coreProperties>';
+    var exts = {}; media.forEach(function (m) { exts[m.ext] = 1; });
+    var types = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>' +
+      Object.keys(exts).map(function (e) { return '<Default Extension="' + e + '" ContentType="image/' + (e === "jpg" ? "jpeg" : e) + '"/>'; }).join("") +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+      '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>';
+    var rootRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="' + RT + 'officeDocument" Target="word/document.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>';
+    var docRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="' + RT + 'styles" Target="styles.xml"/>' +
+      rels.map(function (r) { return '<Relationship Id="' + r.id + '" Type="' + r.type + '" Target="' + xmlEsc(r.target) + '"' + (r.external ? ' TargetMode="External"' : "") + "/>"; }).join("") + "</Relationships>";
+    var files = [
+      {name:"[Content_Types].xml", data:enc.encode(types)}, {name:"_rels/.rels", data:enc.encode(rootRels)},
+      {name:"docProps/core.xml", data:enc.encode(core)}, {name:"word/document.xml", data:enc.encode(documentXml)},
+      {name:"word/styles.xml", data:enc.encode(styles)}, {name:"word/_rels/document.xml.rels", data:enc.encode(docRels)}
+    ].concat(media.map(function (m) { return {name:m.name, data:m.data}; }));
+    return zipStore(files, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  });
+}
 
 window.addEventListener("beforeunload", function (e) {
   if (G && !G.over && G.log.length) { e.preventDefault(); e.returnValue = ""; }
@@ -4426,8 +4634,8 @@ startClockTick();
 })();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 6</span>
-  <span>end early and resume; asks before replacing a saved game; moderator switches the relay on; a 1-round test game</span>
+  <span class="tag">build 7</span>
+  <span>the log downloads as a Word file too, and Print now prints the log instead of the whole screen</span>
 </div>
 
 </body>

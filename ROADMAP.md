@@ -13,6 +13,14 @@ _(nothing yet)_
 
 ## Backlog
 
+- **Countdown clock for passing the laptop and taking turns.** The clock exists only in
+  simultaneous mode today, as in the original. Reported after a pass-the-laptop session.
+  **Decided: when time runs out, commit what's written**, as simultaneous mode does (with a
+  tone if the tone option is on), and the round moves on. Open details to settle when we
+  build it: the default times (attack and response, 10:00 each in simultaneous mode), where
+  the clock shows when passing the laptop (the top bar, as in simultaneous), whether a
+  facilitator can pause it, and how the "curtain" screen between teams interacts with it.
+  App change, so the wording of any new setup options comes back here as a table first.
 - **Moderator screen's final score is always 0–0 (bug, found in build 6 testing).** The
   moderator never tracks either county's damage, so when it presses "End the exercise" after
   the last round it sees a tie and starts sudden death, which switches it to the taking-turns
@@ -48,10 +56,6 @@ _(nothing yet)_
 
 ## Ideas / maybe
 
-- **A countdown clock when passing the laptop or taking turns.** The clock exists only in
-  simultaneous mode today (by design in the original). Asked about after a pass-the-laptop
-  session. Needs deciding: does time running out just sound the tone, or commit what's written
-  as it does in simultaneous mode?
 - **"Watch a demo" button in the game (Option B).** A self-playing walkthrough built into
   Ballotship, so it never goes out of date. Bigger than the video. Decide after seeing which
   parts of the video people still find confusing.
@@ -85,3 +89,4 @@ _(nothing yet)_
 - **Narrated demo video (4:15, voiceover, subtitles) and the tools to re-record it (`demo/`)** — after build 4 (no app change).
 - **Pop-ups fit the screen; pass-the-laptop shows earlier shots and the written attack** — build 5.
 - **End early and resume; ask before replacing a saved game; moderator switches the relay on; 1-round test game** — build 6.
+- **The log as a Word file, and Print that prints the log instead of the whole screen** — build 7.

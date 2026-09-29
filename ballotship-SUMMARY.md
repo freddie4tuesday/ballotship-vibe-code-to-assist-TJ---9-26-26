@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 6
+**Current version:** build 7
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
@@ -92,6 +92,19 @@ A 4-minute narrated walkthrough of one game, made by `demo/record-demo.js`. The 
 git; re-record it after any change to how the game looks. See `demo/README.md` for how,
 and ROADMAP.md for where it should live.
 
+## The after-action log
+
+Three ways out of the final screen, all made by one function (`logHTML` in `index.html`), so
+they always match:
+
+- **Download the log (web page):** an `.html` file.
+- **Download as Word:** a real `.docx`, made in the browser with no library, so it works
+  offline. It's written directly as the zip of XML files a Word file is (`docxFromHTML`).
+- **Print:** prints the same log from a hidden frame. It no longer prints the whole screen.
+
+To change what the log says, change `logHTML` only; the Word file follows. `tests/log-export.test.js`
+checks that the three agree.
+
 ## Tests (`tests/`)
 
 Run `npm test` from `tests/` before every deploy. The first time, run `npm install` and
@@ -148,7 +161,7 @@ Carried over from Ballot Proofing Workbench:
 
 ## Suggested opening prompt for a Claude chat
 
-> Attached is a single-file browser app (Ballotship, build 6), its summary, and its roadmap.
+> Attached is a single-file browser app (Ballotship, build 7), its summary, and its roadmap.
 > The build log is in the HTML comment at the top of the file — please read it before
 > proposing changes. Each change should get the next build number in the log and the footer.
 > I'd like to work on [X].
