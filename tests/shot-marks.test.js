@@ -53,6 +53,16 @@ async function step(p, mode, fired, results) {
   }
   const s = await screenOn(p);
   const click = sel => p.click(sel).catch(() => {});
+  // The "Inject landed on you" brief opens over the defense screen; read it and close it.
+  if (await p.isVisible("#briefSheet")) {
+    if (s === "screen-defense" || s === "screen-sim-defense") {
+      const words = await p.$eval("#briefWhat .briefq:first-child", e => e.textContent).catch(() => "");   // the attack block, not the AI one
+      const key = (await p.evaluate(() => G.round)) + "-" + (await p.evaluate(m => m === "pass" ? G.pending.defKey : G.me, mode));
+      results.brief = results.brief || {};
+      if (!(key in results.brief)) results.brief[key] = words.includes(TEXT);
+    }
+    return click("#btnBriefX");
+  }
   if (s === "screen-gate") return click("#btnGate");
   if (s === "screen-offense") {
     const need = await p.evaluate(() => !G.pending.card.crisis && G.pending.origin == null);
@@ -120,6 +130,9 @@ async function play(browser, mode, relay, r) {
   const words = results.words || {}, missing = Object.keys(words).filter(k => !words[k]);
   r.check(mode + ": the defending team sees the attack as written (" + Object.keys(words).length + " defenses)",
     Object.keys(words).length >= 2 && missing.length === 0, "not shown for round-team " + missing.join(", "));
+  const brief = results.brief || {}, bmiss = Object.keys(brief).filter(k => !brief[k]);
+  r.check(mode + ": the \"inject landed on you\" brief shows the attack as written (" + Object.keys(brief).length + ")",
+    bmiss.length === 0, "not shown for round-team " + bmiss.join(", "));
   const errs = screens.flatMap(s => s.errors);
   r.check(mode + ": no JavaScript errors", errs.length === 0, errs.join("; "));
   for (const { p } of screens) await p.context().close();
@@ -136,5 +149,6 @@ async function play(browser, mode, relay, r) {
     });
   } catch (e) { r.fail("test crashed", e.message); }
   finally { if (browser) await browser.close(); }
+  console.log(r.failures ? r.failures + " check(s) failed." : "All checks passed.");
   process.exit(r.failures ? 1 : 0);
 })();

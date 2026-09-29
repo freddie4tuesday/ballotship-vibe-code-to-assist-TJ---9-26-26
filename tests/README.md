@@ -18,8 +18,8 @@ Then, every time:
 npm test
 ```
 
-Each check prints PASS or FAIL. The run ends with "All 4 test files passed" or names the files
-that failed. It takes about two minutes. To run one file on its own: `node full-game.test.js`.
+Each check prints PASS or FAIL. The run ends with "All 5 test files passed" or names the files
+that failed. It takes about ten minutes. To run one file on its own: `node full-game.test.js`. To run the tests against another copy of the page (for example the previous build, to show a bug before its fix), set `BALLOTSHIP_PAGE=/path/to/copy.html`.
 
 ## What's covered
 
@@ -28,13 +28,13 @@ that failed. It takes about two minutes. To run one file on its own: `node full-
 | `build-number.test.js` | The build number agrees across the build log, the footer, and the summary. The page loads with no errors. The Ready for Tuesday branding is present. |
 | `full-game.test.js` | Team 1, team 2 and a moderator play a whole 4-round game through the relay, including crisis injects. Every screen reaches the end, both teams agree on the winner and the damage, and polling stops at game over. |
 | `relay-api.test.js` | The relay's rules: message order, each team seeing only the other's messages, the moderator seeing everything, bad input refused, CORS, the size cap, and the per-room flood limit. |
+| `shot-marks.test.js` | Plays 4 rounds in all three ways of playing: one screen passed, two screens taking turns, and two screens simultaneous. Every "Pick your target" must mark all of that team's earlier hits and misses, and every defense must show the attack as written. `MODES=pass` runs just one way. |
 | `relay-three-screens.test.js` | One round in detail: attacks crossing, chat reaching the other team and the moderator, and the 30-minute idle pause catching up after a click. |
 
 `helpers.js` holds the shared setup, and `run-all.js` runs every `*.test.js` file here.
 
 ## Not covered yet
 
-- **Turn-taking mode** (two screens that take turns) and **one screen, passed**.
 - **Reading codes aloud:** typing a code by hand instead of using the relay.
 - **Resuming** an exercise after closing the tab.
 - **The AI-artifact requirement,** the precedent reveal, sounds, and timed auto-commit when a

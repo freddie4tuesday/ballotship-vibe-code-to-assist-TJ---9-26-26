@@ -35,7 +35,8 @@ _(nothing yet)_
   exists that "run[s] a whole game in under a second", but it wasn't in the uploaded file. Ask
   TJ for it. We now have our own suite in `tests/`. If TJ's turns up, merge the two and keep
   the best of both, following the steps in `tests/README.md`.
-- **Widen test coverage.** Not tested yet: turn-taking and one-screen modes, codes typed by
+- **Widen test coverage.** Turn-taking and one-screen modes are now played end to end by
+  `shot-marks.test.js` (build 5). Still not tested: codes typed by
   hand, resuming after closing the tab, the AI-artifact requirement, the precedent reveal,
   timed auto-commit, and sudden death. Add these over time, or take them from TJ's suite.
 
@@ -72,3 +73,4 @@ _(nothing yet)_
 - **Our own automated test suite (`tests/`, 4 files, 50 checks, including a full game through the relay)** — after build 3 (tests only, no app change).
 - **Plain-language additions: purpose line, "New to Ballotship?" explainer, "inject" definition, glossary** — build 4.
 - **Narrated demo video (4:15, voiceover, subtitles) and the tools to re-record it (`demo/`)** — after build 4 (no app change).
+- **Pop-ups fit the screen; pass-the-laptop shows earlier shots and the written attack** — build 5.

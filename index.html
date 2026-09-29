@@ -46,6 +46,22 @@
         descriptively. The precedent entry says it is a setup option, matching optPrec.
         Ready for Tuesday branding untouched. Verified with the full test suite and a visual
         check of each screen.
+  build 5  Three fixes, all reported from a real pass-the-laptop session. (1) Pop-ups: the
+        whole sheet scrolled inside the overlay while its header stayed stuck to the top of
+        the window, so on a laptop screen the content slid behind the header and peeked out
+        above it, and "Lock it in" started below the fold. Sheets now fit the window, the
+        header stays in the box and only the body scrolls, the target grid shrinks with the
+        window's height, and "Lock it in" stays pinned. Measured at 600, 700, 760, 900 and
+        1080 px tall: the picker fits with no scrolling at 700 and up. (2) Passing the laptop
+        never recorded shots, so from round 2 on "Pick your target" showed none of a team's
+        earlier hits and misses (the two-screen modes record them when the result code
+        arrives; a passed laptop has no result code). (3) Passing the laptop showed "Nothing
+        came across in writing" on the defense screen, because the attack's words were only
+        treated as present once they had arrived over the relay. New test
+        tests/shot-marks.test.js plays 4 rounds in all three ways of playing and checks
+        every picker and every defense: on build 4, pass mode marked 0 of 2 to 0 of 7 earlier
+        shots and showed no attack text in 8 of 8 defenses; on build 5 all pass, and the two
+        two-screen modes pass on both (they were never affected).
 -->
 <html lang="en">
 <head>
@@ -4277,8 +4293,8 @@ startClockTick();
 })();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 4</span>
-  <span>plain-language additions: purpose line on the title screen, a "New to Ballotship?" explainer, a definition of "inject", and a glossary in the rules</span>
+  <span class="tag">build 5</span>
+  <span>pop-ups fit the screen and scroll inside; passing the laptop now shows earlier hits and misses and the attack as written</span>
 </div>
 
 </body>
