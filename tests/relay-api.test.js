@@ -24,7 +24,10 @@ const { reporter, withRelay } = require("./helpers");
       r.check("notes arrive unchanged", t2.messages[0].note === "attack" && t2.messages[0].note2 === "ai");
       r.check("'since' skips what a screen already has", (await poll("mod", 2)).messages.length === 0);
 
-      r.check("the moderator cannot send", (await send({ from: "mod", code: "X" })).status === 400);
+      r.check("the moderator cannot send moves", (await send({ from: "mod", code: "X" })).status === 400);
+      const modRoom = relay + "/room/mod-" + Date.now() + "/send";
+      const modSend = code => fetch(modRoom, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: "mod", code }) });
+      r.check("the moderator can send end early and resume", (await modSend("R2-END")).status === 200 && (await modSend("R2-RESUME")).status === 200);
       r.check("an unknown side cannot send", (await send({ from: "zz", code: "X" })).status === 400);
       r.check("a message needs a code", (await send({ from: "t1", code: "" })).status === 400);
       r.check("a bad room name is refused", (await fetch(relay + "/room/BAD/poll?as=t1")).status === 400);

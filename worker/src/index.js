@@ -93,8 +93,11 @@ export class Room extends DurableObject {
     let b;
     try { b = JSON.parse(text); } catch (e) { return json({ error: "body must be JSON" }, 400); }
     const side = String(b.from || "");
-    if (!SIDES.includes(side) || side === "mod") return json({ error: "from must be t1 or t2" }, 400);
     const code = String(b.code || "");
+    // The moderator only watches, except that it may end the exercise early or
+    // resume it (build 6), which both team screens need to hear about.
+    const modControl = /-(END|RESUME)$/.test(code);
+    if (!SIDES.includes(side) || (side === "mod" && !modControl)) return json({ error: "from must be t1 or t2" }, 400);
     const note = String(b.note || "");
     const note2 = String(b.note2 || "");
     if (!code || code.length > 200) return json({ error: "missing or oversized code" }, 400);

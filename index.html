@@ -552,6 +552,11 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--orange);border-c
 .glossary dt{display:inline;font-weight:600}
 .glossary dd{display:inline;margin:0}
 
+/* ---- build 6: end early ---- */
+.endctl{margin-left:6px}
+.endsheet .sheet-in{max-width:560px}
+.endsheet .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
 /* ---- build footer (build number + change summary) ---- */
 .build-footer{position:fixed;left:0;right:0;bottom:0;height:28px;background:var(--evergreen-deep);color:#A9C2B3;font-family:var(--code);font-size:11.5px;padding:0 16px;z-index:55;display:flex;gap:10px;align-items:center;white-space:nowrap;overflow-x:auto}
 .build-footer .tag{color:#fff;background:var(--orange);border-radius:3px;padding:1px 6px;font-weight:600;flex-shrink:0}
@@ -580,6 +585,7 @@ body{padding-bottom:28px}
       <button type="button" id="btnClkReset">Reset</button>
     </div>
     <div class="score" id="score" hidden></div>
+    <div class="modctl endctl"><button type="button" id="btnEndEarly" hidden>End early</button></div>
   </div>
 </header>
 
@@ -1178,6 +1184,7 @@ body{padding-bottom:28px}
     <div class="eyebrow" style="color:#8FAA9C">Exercise complete</div>
     <div class="w" id="overW">–</div>
     <div class="why" id="overWhy"></div>
+    <div class="why" id="overEarly" hidden></div>
   </div>
   <div class="finals" id="finals"></div>
   <div class="panel">
@@ -1185,6 +1192,7 @@ body{padding-bottom:28px}
     <p class="lede" style="margin-bottom:14px">Every inject, every stated method and every stated response, in order. This is the exercise. The board was only the thing that made it happen in a particular order.</p>
     <ul class="log" id="logList"></ul>
     <div class="btnrow no-print">
+      <button class="btn orange" id="btnResumeGame" hidden>Resume the game</button>
       <button class="btn orange" id="btnExport">Download the log</button>
       <button class="btn ghost" id="btnPrint">Print</button>
       <button class="btn ghost" id="btnAgain">Run it again</button>
@@ -1212,6 +1220,19 @@ body{padding-bottom:28px}
 </div>
 
 <!-- ============ TARGET PICKER ============ -->
+<div class="sheet endsheet no-print" id="endSheet" hidden>
+  <div class="sheet-in">
+    <div class="sheet-h"><h2>End the exercise now?</h2></div>
+    <div class="sheet-b">
+      <p id="endLede"></p>
+      <p id="endNote" hidden><b>Press End early on the other screen too.</b> Without the automatic relay, this screen can't tell the other one.</p>
+      <div class="btnrow">
+        <button class="btn big orange" id="btnEndNow">End it now</button>
+        <button class="btn big ghost" id="btnEndKeep">Keep playing</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="sheet aimsheet no-print" id="aimSheet" hidden>
   <div class="sheet-in">
     <div class="sheet-h"><div style="flex:1"><h2 id="aimH">Take your shot</h2><span class="sub">Ballotship &middot; the board half</span></div><button type="button" id="btnAimCancel">Cancel</button></div>
@@ -1635,6 +1656,7 @@ function snapshot() {
     revealPrec:G.revealPrec, over:G.over, suddenDeath:G.suddenDeath,
     phase:G.phase, gateTeam:G.gateTeam, gateRole:G.gateRole, gateNext:G.gateNext,
     winner:G.winner, why:G.why,
+    endedEarly:G.endedEarly || null, resumeFrom:G.resumeFrom || null, heldMoves:G.heldMoves || [],
     relay:G.relay || null, requireAI:G.requireAI,
     thread:liteThread(), inbox:G.inbox || [],
     teams:{t1:liteTeam(G.teams.t1), t2:liteTeam(G.teams.t2)},
@@ -1673,6 +1695,7 @@ function restore(d) {
     over:d.over, suddenDeath:d.suddenDeath, expect:null,
     phase:d.phase, gateTeam:d.gateTeam, gateRole:d.gateRole, gateNext:d.gateNext,
     winner:d.winner, why:d.why, relay:d.relay || null,
+    endedEarly:d.endedEarly || null, resumeFrom:d.resumeFrom || null, heldMoves:d.heldMoves || [],
     requireAI:d.requireAI !== false, thread:d.thread || [], inbox:d.inbox || [],
     sim:!!d.sim, simPhase:d.simPhase || null, durA:d.durA || 600, durD:d.durD || 600,
     chime:d.chime !== false, sfx:d.sfx !== false, clock:d.clock || null, R:null
@@ -2012,6 +2035,7 @@ function cardEl(card) {
 }
 
 function updateChrome() {
+  $("btnEndEarly").hidden = !G || G.over || !G.phase || G.phase === "place";
   if (!G) { $("roundchip").textContent = "Setup"; $("score").hidden = true; return; }
   $("roundchip").textContent = G.over ? "Complete" : "Round " + G.round + " of " + G.maxRounds;
   var s = $("score"); s.hidden = false;
@@ -2062,6 +2086,11 @@ $("sideT2").addEventListener("click", function () { pickSide("t2"); });
 $("sideMod").addEventListener("click", function () { pickSide("mod"); });
 
 $("btnStart").addEventListener("click", function () {
+  /* build 6 — starting used to replace a saved exercise on this laptop without asking. */
+  var saved = readSave();
+  if (saved && !window.confirm("Starting a new exercise replaces the saved one on this laptop (" +
+      saved.teams.t1.name + " against " + saved.teams.t2.name + ", " + (saved.over ? "finished" : "round " + saved.round) +
+      "). It can't be brought back. Start a new one anyway?")) return;
   var n1 = $("rn1").value.trim() || "Team 1";
   var n2 = $("rn2").value.trim() || "Team 2";
   var sim = setupMode === "sim";
@@ -2339,7 +2368,7 @@ var POLL_FAST = 1500, POLL_IDLE = 15000, POLL_MOD = 6000;
 function pollMs() {
   var v = window.BALLOTSHIP_POLL_MS;
   if (typeof v === "number" && v > 0) return v;
-  if (!G) return POLL_IDLE;
+  if (!G || G.over) return POLL_IDLE;
   if (document.hidden) return POLL_IDLE;                           /* build 3: nobody is looking */
   if (G.expect) return POLL_FAST;                                  /* turn-taking: waiting on a code */
   if (G.simPhase === "waitAttack" || G.simPhase === "waitResult") return POLL_FAST;
@@ -2349,15 +2378,27 @@ function pollMs() {
 }
 /* A commit or a dock open should not wait out an idle interval. */
 function pollNow() {
-  if (!relayOn() || !G || G.over) return;
+  if (!relayLive()) return;
   stopPolling();
   pollTimer = window.setTimeout(relayLoop, 50);
 }
 var pollTimer = null;
 
 function relayOn() { return !!(G && G.relay && G.relay.url && G.relay.room); }
+/* build 6 — polling used to stop for good at the end of the game. After an early
+   end it carries on at the idle rate, so the other screen can say "resume". */
+function relayLive() { return relayOn() && !!G && (!G.over || !!G.resumeFrom); }
 function relayBase() { return G.relay.url.replace(/\/+$/, "") + "/room/" + encodeURIComponent(G.relay.room); }
-function stopPolling() { if (pollTimer) { window.clearTimeout(pollTimer); pollTimer = null; } }
+/* build 6 — stopping only cleared the waiting timer. A check already on its way to
+   the relay came back afterwards and scheduled the next one, so every restart
+   (pollNow after each send, or an end and resume) could leave a second loop
+   running beside the new one. Found when an END arriving mid-loop left two
+   loops per screen, and three screens hit the relay's 400-a-minute room limit.
+   For pollNow after a send it needs a check to be mid-flight at that moment, so
+   it is rarer, but possible. Each loop now carries a generation number, and a
+   loop from an older generation stops instead of scheduling another. */
+var pollGen = 0;
+function stopPolling() { pollGen++; if (pollTimer) { window.clearTimeout(pollTimer); pollTimer = null; } }
 
 function relaySend(code, notes, onOk, onErr) {
   var url = relayBase() + "/send";
@@ -2389,7 +2430,7 @@ function relaySend(code, notes, onOk, onErr) {
    ------------------------------------------------------------------ */
 function startRelay() {
   stopPolling();
-  if (!relayOn() || !G || G.over) return;
+  if (!relayLive()) return;
   relayLoop();
 }
 /* build 3 — a tab left open mid-game used to poll every 15 seconds forever,
@@ -2404,19 +2445,20 @@ function noteActivity() {
 ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, noteActivity, true); });
 document.addEventListener("visibilitychange", function () { if (!document.hidden) noteActivity(); });
 function relayLoop() {
-  if (!relayOn() || !G || G.over) return;
+  if (!relayLive()) return;
   if (Date.now() - lastActivity > IDLE_PAUSE_MS) {
     pollPaused = true;
     relayStatus("Relay paused after 30 minutes with no activity on this screen. Click anywhere to catch up.", false);
     return;
   }
-  var url = relayBase() + "/poll?since=" + (G.relay.cursor || 0) + "&as=" + G.me;
+  var url = relayBase() + "/poll?since=" + (G.relay.cursor || 0) + "&as=" + G.me, gen = pollGen;
   window.fetch(url).then(function (r) {
     return r.json().then(function (b) {
       if (!r.ok) throw new Error(b && b.error ? b.error : "relay returned " + r.status);
       return b;
     });
   }).then(function (b) {
+    if (gen !== pollGen) return;      // superseded: a newer loop is already running
     var msgs = b.messages || [], moved = false;
     relayStatus(null, false);
     for (var i = 0; i < msgs.length; i++) {
@@ -2424,8 +2466,10 @@ function relayLoop() {
       if (routeIncoming(msgs[i].code, msgs[i].note || "", msgs[i].note2 || "")) { moved = true; break; }
     }
     save();
+    if (gen !== pollGen) return;      // routing a message restarted polling (an end or resume)
     if (!moved) pollTimer = window.setTimeout(relayLoop, pollMs());
   }, function (e) {
+    if (gen !== pollGen) return;
     relayStatus("Cannot reach the relay: " + (e && e.message ? e.message : e) + ". Read the code out instead.", true);
     pollTimer = window.setTimeout(relayLoop, pollMs() * 3);
   });
@@ -2433,6 +2477,12 @@ function relayLoop() {
 /* Returns true when the screen has moved on, which ends this poll pass. */
 function routeIncoming(code, note, note2) {
   var parts = normalize(code).split("-");
+  /* build 6 — the other screen ended early, or resumed after ending early. */
+  if (parts.indexOf("END") >= 0) { if (!G.over) endEarly(true); return false; }
+  if (parts.indexOf("RESUME") >= 0) { if (G.over && G.resumeFrom) { resumeEarly(true); return true; } return false; }
+  /* A move can still be on its way when the game ends early. Keep it, and play it
+     in after a resume, or both screens would wait on it forever. */
+  if (G.over) { if (G.resumeFrom) (G.heldMoves = G.heldMoves || []).push({code:code, note:note, note2:note2}); return false; }
   if (parts.indexOf("MSG") >= 0) { addIncomingMessage(note); return false; }
   if (parts.indexOf("TIME") >= 0) return false;   /* from an older build; the clock is local now */
   if (G.me === "mod") {           /* a moderator watches; it never plays */
@@ -4102,7 +4152,11 @@ function renderOver() {
     cells: (w && l) ? "Both jurisdictions finished with " + offlineCount(w) + " of seven sites offline. " + w.name + " took less damage underneath, " + w.cellsDown + " cells down against " + l.cellsDown + "." : "",
     tie: "Level on sites offline and level on cells down, through sudden death. Two jurisdictions that placed well and got hit about the same. Go straight to the debrief."
   };
+  if (why === "earlytie") reasons.earlytie = "Level on sites offline and level on cells down when the exercise ended. Go straight to the debrief.";
   $("overWhy").textContent = reasons[why] || "";
+  $("overEarly").hidden = !G.endedEarly;
+  if (G.endedEarly) $("overEarly").textContent = "Ended early in round " + G.endedEarly.round + " of " + G.endedEarly.max + ".";
+  $("btnResumeGame").hidden = !G.resumeFrom;
   $("finals").innerHTML = ["t1","t2"].map(function (k) {
     var t = teamOf(k), mine = k === G.me;
     return '<div class="panel" style="margin:0"><div class="panel-h"><h2>' + esc(t.name) + (mine ? " (you)" : "") +
@@ -4127,6 +4181,60 @@ function renderOver() {
    EXPORT
    ============================================================ */
 $("btnPrint").addEventListener("click", function () { window.print(); });
+/* ============================================================
+   END EARLY, AND RESUME (build 6)
+   Ending early scores the board as it stands and goes to the final screen,
+   so the log can be downloaded or printed. The whole game is snapshotted
+   first, so "Resume the game" puts back exactly what was there, down to a
+   half-typed box. With the relay on, both actions reach the other screen.
+   The moderator can send them too (the relay accepts END and RESUME from it).
+   ============================================================ */
+function openEndSheet() {
+  if (!G || G.over) return;
+  $("endLede").textContent = "The board is scored as it stands in round " + G.round + " of " + G.maxRounds +
+    ". Everything already written stays in the log. You can resume from the final screen if this was a mistake.";
+  $("endNote").hidden = !(G.mode !== "pass" && !relayOn());
+  $("endSheet").hidden = false;
+}
+function endEarly(fromRemote) {
+  if (!G || G.over) return;
+  $("endSheet").hidden = true;
+  closeAim();
+  if ($("briefSheet")) $("briefSheet").hidden = true;
+  if (G.clock) G.clock.running = false;        // a clock running out would commit a form after the end
+  G.resumeFrom = snapshot();
+  G.endedEarly = {round:G.round, max:G.maxRounds};
+  if (!fromRemote && relayOn()) relaySend("R" + G.round + "-END", {}, function () {}, function () {});
+  var a = G.teams.t1, b = G.teams.t2, oa = offlineCount(a), ob = offlineCount(b);
+  if (oa !== ob) endGame(oa < ob ? "t1" : "t2", "sites");
+  else if (a.cellsDown !== b.cellsDown) endGame(a.cellsDown < b.cellsDown ? "t1" : "t2", "cells");
+  else endGame(null, "earlytie");               // no sudden death after an early end
+  updateChrome();
+  startRelay();                                 // keep listening for a resume
+}
+function resumeEarly(fromRemote) {
+  if (!G || !G.resumeFrom) return;
+  var d = G.resumeFrom, held = G.heldMoves || [];
+  stopPolling();
+  // Carry the relay position forward first, so the restored game doesn't re-read
+  // the END (and end again) when it starts listening.
+  if (d.relay && G.relay) d.relay = {url:d.relay.url, room:d.relay.room, cursor:Math.max(G.relay.cursor || 0, d.relay.cursor || 0)};
+  restore(d);                                   // also starts listening again
+  G.endedEarly = null; G.resumeFrom = null; G.heldMoves = [];
+  save();
+  if (!fromRemote && relayOn()) relaySend("R" + G.round + "-RESUME", {}, function () {}, function () {});
+  resume();
+  updateChrome();
+  held.forEach(function (m) { if (!G.over) routeIncoming(m.code, m.note, m.note2); });
+  save();
+  if (!fromRemote && G.mode !== "pass" && !relayOn())
+    window.alert("Resumed. Press Resume the game on the other screen too.");
+}
+$("btnEndEarly").addEventListener("click", openEndSheet);
+$("btnEndNow").addEventListener("click", function () { endEarly(false); });
+$("btnEndKeep").addEventListener("click", function () { $("endSheet").hidden = true; });
+$("btnResumeGame").addEventListener("click", function () { resumeEarly(false); });
+
 $("btnAgain").addEventListener("click", function () {
   if (confirm("Start over? The current log will be lost unless you have downloaded it.")) { clearSave(); location.reload(); }
 });
@@ -4287,6 +4395,9 @@ startClockTick();
     resume();
   });
   $("btnDiscard").addEventListener("click", function () {
+    /* build 6 — this used to discard without asking. */
+    if (!window.confirm("Discard the saved exercise, " + d.teams.t1.name + " against " + d.teams.t2.name +
+        "? It can't be brought back.")) return;
     clearSave();
     $("resumePanel").hidden = true;
   });
