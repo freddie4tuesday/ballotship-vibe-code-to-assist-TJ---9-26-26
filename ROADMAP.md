@@ -17,15 +17,16 @@ Each item: a short title, then one or two lines on what and why.
   editor of build 13. Anyone with an email at **readyfortuesday.com or decaro.net** can get in; nobody else. **Plan:**
   the editor asks for an email address; if its domain is exactly one of those two (subdomains and look-alikes such as
   `readyfortuesday.com.evil.com` don't count), the library emails a one-time link that expires in about 15 minutes
-  and can be used once; opening it signs that browser in for a set time (say 30 days) with a signed cookie; saving
+  and can be used once; opening it signs that browser in for **1 day** (decided) with a signed cookie; saving
   and restoring need the cookie; the page gives the same answer whether or not the address is allowed, and limits
   requests per address and per visitor. The deck stays readable by the game with no sign-in. Bonus: History can say
   WHO made each change (the address is recorded). Reasons against or costs: it needs a way to send email (see the
   question below), a list of allowed domains to keep current, and a person who leaves the organisation keeps access
-  until their session ends unless we can revoke it. **Open before building:** which email service sends the
-  links (Cloudflare's own email sending, if it can reach any address, needs the sending domain set up; otherwise a
-  service such as Resend or Postmark, which needs an account and an API key), how long a sign-in lasts, and whether
-  the game's own new-game setup ever needs the same protection (today it doesn't).
+  until their session ends unless we can revoke it. **Decided:** links are sent with **Resend**. A `RESEND_API_KEY` secret already exists on the
+  `poll-worker-system` Workers (live and staging) but a secret can't be read back, so the inject library needs its
+  own copy set on each of its two Workers (`wrangler secret put RESEND_API_KEY`). **Open before building:** the
+  address the links are sent FROM (it must be one Resend has verified), and whether the game's own new-game setup
+  ever needs the same protection (today it doesn't).
 
 - **The AI assignment becomes a feature flag: decided, not built.** "We don't need the AI in every game." Today the
   setup option "Require an AI-made artifact with every attack" is on by default, and turning it off only makes the AI
