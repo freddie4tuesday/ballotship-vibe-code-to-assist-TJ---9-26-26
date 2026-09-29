@@ -2,11 +2,11 @@
   Ballotship inject library (build 12). One deck of injects, kept in one Durable Object (SQLite), so an
   edit is one write and every reader sees a whole deck or the previous one, never half of a save.
 
-    GET  /api/deck                 the current deck: {version, start, injects}. Public, read by the game.
+    GET  /api/deck                 the current deck: {version, injects} (the order is the play order; the first inject starts the game). Public, read by the game.
     GET  /edit                     the editor page
     GET  /api/edit/history         [{version, at, summary}] newest first
     GET  /api/edit/version/<n>     one old deck, for the "what changed" view
-    POST /api/edit/save            {base, start, injects, summary}  -> {version} or 409 if base is stale
+    POST /api/edit/save            {base, injects, summary}  -> {version} or 409 if base is stale
     POST /api/edit/restore         {version}                        -> {version} (a restore is itself a new version)
 
   Edits go live at once (decided with the owner); every save is numbered and can be restored, which is
@@ -70,17 +70,20 @@ export class Deck extends DurableObject {
     this.sql = ctx.storage.sql;
     this.sql.exec("CREATE TABLE IF NOT EXISTS versions (version INTEGER PRIMARY KEY, at INTEGER NOT NULL, summary TEXT NOT NULL, deck TEXT NOT NULL)");
     if (this.sql.exec("SELECT COUNT(*) AS n FROM versions").one().n === 0) {
-      const seed = { start: SEED.start, injects: SEED.injects };
+      const seed = { injects: SEED.injects };
       this.sql.exec("INSERT INTO versions (version, at, summary, deck) VALUES (1, ?, ?, ?)", Date.now(), "Starting deck (the 16 injects that were built into the game)", JSON.stringify(seed));
     }
   }
-  _latest() { const r = this.sql.exec("SELECT version, at, summary, deck FROM versions ORDER BY version DESC LIMIT 1").one(); return { version: r.version, at: r.at, summary: r.summary, ...JSON.parse(r.deck) }; }
+  // Build 14: a deck no longer has a starting inject (the first one starts). Versions saved before that still carry
+  // one in their stored JSON; it is dropped when read so it can't reach the game or the editor.
+  _open(r) { const d = JSON.parse(r.deck); return { version: r.version, at: r.at, summary: r.summary, injects: d.injects }; }
+  _latest() { return this._open(this.sql.exec("SELECT version, at, summary, deck FROM versions ORDER BY version DESC LIMIT 1").one()); }
   getDeck() { return this._latest(); }
   history() { return [...this.sql.exec("SELECT version, at, summary FROM versions ORDER BY version DESC")].map((r) => ({ version: r.version, at: r.at, summary: r.summary })); }
-  version(n) { const r = [...this.sql.exec("SELECT version, at, summary, deck FROM versions WHERE version = ?", n)][0]; return r ? { version: r.version, at: r.at, summary: r.summary, ...JSON.parse(r.deck) } : null; }
+  version(n) { const r = [...this.sql.exec("SELECT version, at, summary, deck FROM versions WHERE version = ?", n)][0]; return r ? this._open(r) : null; }
   _write(deck, summary) {
     const next = this._latest().version + 1;
-    this.sql.exec("INSERT INTO versions (version, at, summary, deck) VALUES (?, ?, ?, ?)", next, Date.now(), summary, JSON.stringify({ start: deck.start, injects: deck.injects }));
+    this.sql.exec("INSERT INTO versions (version, at, summary, deck) VALUES (?, ?, ?, ?)", next, Date.now(), summary, JSON.stringify({ injects: deck.injects }));
     this.sql.exec("DELETE FROM versions WHERE version <= ?", next - MAX_VERSIONS);
     return next;
   }

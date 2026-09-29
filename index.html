@@ -217,6 +217,20 @@
         works, the old one is not found, a save from another site is refused, a save from the
         editor's own site is accepted) and tests/injects-game.test.js (the editor end to end at
         /edit).
+  build 14 The game starts with the FIRST inject, not number 6. Asked for: "the game should start with the
+        first inject, not #6. The injects can be re-ordered in the inject library." The 16 injects
+        came from a workbook sheet that began at 6 (DECK_START = 6), and build 12 added a "make this the
+        starting inject" button to the library. Both are gone: a game now plays the deck in order from
+        its first inject, and the order is set by reordering in the library, so the library's
+        list is exactly the play order (the first row is marked "Starts"). A deck has no start position any
+        more; the library ignores the one its first stored version carried, and the game ignores one
+        from the library. A game SAVED before this build keeps the start it began with (inject 6),
+        or its rounds would change injects mid-game. What this changes for a game: the first inject
+        is now number 1 (Last-minute polling place relocation) and the crisis injects fall in
+        different rounds than before. No on-screen wording changed (the setup line "starting at
+        inject N" still reads correctly). Verified by tests/injects-game.test.js (round 1 is the
+        first inject of the library's deck; moving an inject to the top makes it start; a game saved
+        with a start of 6 keeps it) and tests/injects-api.test.js (a deck comes back with no start).
 -->
 <html lang="en">
 <head>
@@ -1781,7 +1795,7 @@ DECK.forEach(function (c, i) { c.no = i + 1; CARD_BY_NO[c.no] = c; });
    Any failure means "use the built-in deck", never a half-used one.
    ------------------------------------------------------------------ */
 var DECK_LIMITS = {title:120, scene:400, where:300, what:300, when:300, goal:300, op:400, comms:500, prec:700, src:120, task:400, prompt:800, sname:40, sfull:120, url:300};
-var BUILTIN = {version:0, start:6, injects:DECK.slice()};
+var BUILTIN = {version:0, start:1, injects:DECK.slice()};
 var DECK_VERSION = 0;      // 0 = the built-in deck
 var FETCHED = null;        // the latest deck from the library, checked, waiting for the next game to use it
 var FETCH_STATE = "";      // "" not tried yet, "ok", "failed", "off"
@@ -1792,7 +1806,11 @@ function deckUrl() {
 function sanitizeDeck(d) {
   try {
     if (!d || !Array.isArray(d.injects) || d.injects.length < 4 || d.injects.length > 99) return null;
-    if (typeof d.start !== "number" || d.start % 1 !== 0 || d.start < 1 || d.start > d.injects.length) return null;
+    /* build 14 - a game now always starts at the first inject of the deck; the order is set in the library. A start
+       position only comes from a game SAVED before build 14 (its rounds are already mapped to injects from 6), so it is
+       kept for that and ignored for anything fetched (see prefetchDeck). */
+    var start = d.start === undefined ? 1 : d.start;
+    if (typeof start !== "number" || start % 1 !== 0 || start < 1 || start > d.injects.length) return null;
     var L = DECK_LIMITS, out = [], ids = {}, i;
     function txt(v, max, optional) {
       if (typeof v !== "string" || v.length > max || (!optional && !v.trim()) || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v)) throw new Error("text");
@@ -1813,7 +1831,7 @@ function sanitizeDeck(d) {
       if (c.sponsor) o.sponsor = {name:txt(c.sponsor.name, L.sname), full:txt(c.sponsor.full, L.sfull), url:https(c.sponsor.url), logo:https(c.sponsor.logo)};
       out.push(o);
     }
-    return {version:Math.max(0, parseInt(d.version, 10) || 0), start:d.start, injects:out};
+    return {version:Math.max(0, parseInt(d.version, 10) || 0), start:start, injects:out};
   } catch (e) { return null; }
 }
 /* Make this deck the one the game uses. The array is refilled in place, so everything that already
@@ -1838,6 +1856,7 @@ function prefetchDeck() {
     window.clearTimeout(timer);
     var d = sanitizeDeck(j);
     if (!d) throw new Error("the library's deck didn't pass the game's checks");
+    d.start = 1;      // build 14: the library's order is the order; whatever start an older stored deck carries is ignored
     FETCHED = d; FETCH_STATE = "ok"; paintDeckNote();
   }).catch(function () { window.clearTimeout(timer); FETCH_STATE = "failed"; paintDeckNote(); });
 }
@@ -2074,7 +2093,7 @@ function newTeam(name, full) {
 function halfIndex() { return (G.round - 1) * 2 + (G.attacker === "t1" ? 0 : 1); }
 /* The deck can start partway in, so an afternoon restart picks up where the
    morning left off. Inject numbers stay as the workbook has them. */
-var DECK_START = 6;
+var DECK_START = 1;   /* build 14: was 6 (the workbook's sheet started there). Order is now set in the inject library. */
 function drawCard() { return DECK[((G.sim ? (G.round - 1) : halfIndex()) + DECK_START - 1) % DECK.length]; }
 function footprint(origin, shape) {
   var r = Math.floor(origin / N), c = origin % N, out = [];
@@ -5068,8 +5087,8 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 </script>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 13</span>
-  <span>the inject editor is a plain address, no secret; the injects come from the inject library and a game keeps the deck it started with</span>
+  <span class="tag">build 14</span>
+  <span>a game starts with the first inject; the order is set in the inject library</span>
 </div>
 
 </body>

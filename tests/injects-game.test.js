@@ -10,7 +10,7 @@
     - two screens with different decks each say so; two with the same deck say nothing
   The editor page:
     - lists the injects, edits one, saves it, and the game's deck changes
-    - reorders and chooses the starting inject; adds and deletes; shows a footprint picture
+    - reorders (the first inject starts the game); adds and deletes; shows a footprint picture
     - shows History, says what changed, and restores an old version
     - says what is wrong when a save is refused, and when someone else saved first
 */
@@ -39,27 +39,32 @@ const clone = o => JSON.parse(JSON.stringify(o));
         };
         const startPass = async p => { if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto"); await p.click("#btnStart"); await p.waitForTimeout(300); };
         const note = p => p.$eval("#deckNote", e => e.textContent);
-        const deckNow = p => p.evaluate(() => ({ v: DECK_VERSION, n: DECK.length, start: DECK_START, t6: DECK[5].title, t1: DECK[0].title }));
+        const deckNow = p => p.evaluate(() => ({ v: DECK_VERSION, n: DECK.length, start: DECK_START, t6: DECK[5].title, t1: DECK[0].title, first: drawCard().title }));
 
         // ---- the game reads the library ----
-        const s1 = await save(x => { x[0].title = "Edited first inject"; x[5].title = "<img src=x onerror=window.__pwned=1> Sixth"; }, "test edit");
+        const s1 = await save(x => { x[0].title = "<img src=x onerror=window.__pwned=1> First"; x[5].title = "Edited sixth"; }, "test edit");
         r.check("(setup) a test edit saved as version 2", s1.version === 2, JSON.stringify(s1));
         let p = await openGame(lib + "/api/deck");
         await until(async () => /library version/.test(await note(p)), 5000);
         r.check("the setup screen says which library version it will use", /library version 2 \(16 injects\)/.test(await note(p)), await note(p));
         await startPass(p);
         let d = await deckNow(p);
-        r.check("a new game uses the library's deck (version 2, edited title)", d.v === 2 && d.t1 === "Edited first inject" && d.n === 16 && d.start === 6, JSON.stringify(d));
+        r.check("a new game uses the library's deck (version 2), and round 1 is the FIRST inject", d.v === 2 && d.t1 === "<img src=x onerror=window.__pwned=1> First" && d.t6 === "Edited sixth" && d.n === 16 && d.start === 1 && d.first === d.t1, JSON.stringify(d));
         await p.click("#btnGate"); await p.waitForTimeout(300);
         const shown = await p.evaluate(() => { const t = document.querySelector("#screen-offense .card-title"); return { text: t && t.textContent, img: !!document.querySelector("#screen-offense .card-title img"), pwned: window.__pwned }; });
-        r.check("markup typed into an inject is shown as text and doesn't run", shown.text === "<img src=x onerror=window.__pwned=1> Sixth" && !shown.img && !shown.pwned, JSON.stringify(shown));
+        r.check("markup typed into an inject is shown as text and doesn't run", shown.text === "<img src=x onerror=window.__pwned=1> First" && !shown.img && !shown.pwned, JSON.stringify(shown));
 
         // ---- the game keeps its deck ----
         await save(x => { x[0].title = "Edited AGAIN"; }, "second edit");
         await p.reload(); await p.waitForTimeout(300);
         await p.click("#btnTitleGo"); await p.click("#btnResume"); await p.waitForTimeout(300);
         d = await deckNow(p);
-        r.check("an edit made during a game doesn't change it, even after a reload (still version 2)", d.v === 2 && d.t1 === "Edited first inject", JSON.stringify(d));
+        r.check("an edit made during a game doesn't change it, even after a reload (still version 2)", d.v === 2 && d.t1 === "<img src=x onerror=window.__pwned=1> First", JSON.stringify(d));
+        // a game saved before build 14 began at inject 6 and must keep doing so, or its rounds would change injects
+        await p.evaluate(() => { const k = "ballotship:save", o = JSON.parse(localStorage.getItem(k)); o.deck.start = 6; localStorage.setItem(k, JSON.stringify(o)); });
+        await p.reload(); await p.waitForTimeout(300); await p.click("#btnTitleGo"); await p.click("#btnResume"); await p.waitForTimeout(300);
+        d = await deckNow(p);
+        r.check("a game saved with a starting position of 6 (before build 14) keeps it", d.start === 6 && d.first === d.t6, JSON.stringify(d));
         r.check("no JavaScript errors", p.errs.length === 0, p.errs.join("; "));
 
         // ---- the library can't be reached ----
@@ -108,7 +113,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
         const before = await getDeck();
         r.check("the editor lists every inject", (await ed.$$("#list li")).length === before.injects.length, "" + (await ed.$$("#list li")).length);
         r.check("the Ready for Tuesday name is on the page", /Ready for Tuesday/.test(await ed.$eval("header", e => e.textContent)));
-        r.check("the starting inject is marked", (await ed.$$eval("#list li", els => els.findIndex(e => /Start/.test(e.querySelector(".badge") ? e.querySelector(".badge").textContent : "")))) === before.start - 1);
+        r.check("the first inject on the list is marked as the one that starts the game", (await ed.$eval("#list li:nth-child(1) .badge", e => e.textContent)) === "Starts" && (await ed.$$("#list .badge")).length >= 1);
         r.check("Save is off until something changes", await ed.$eval("#btnSave", b => b.disabled));
 
         await ed.click("#list li:nth-child(2)");
@@ -135,11 +140,11 @@ const clone = o => JSON.parse(JSON.stringify(o));
         // reorder + start
         await ed.click("#list li:nth-child(2) [data-a=dn]");
         r.check("moving an inject down changes its place in the list", (await ed.$eval("#list li:nth-child(3) .t", e => e.textContent)).startsWith("Second inject, retitled"));
-        await ed.click("[data-a=start]");
-        r.check("'make this the starting inject' moves the Start mark", (await ed.$eval("#list li:nth-child(3) .badge", e => e.textContent)) === "Start");
+        await ed.click("#list li:nth-child(3) [data-a=up]"); await ed.click("#list li:nth-child(2) [data-a=up]");
+        r.check("moving it up to the top puts it first, with the Starts mark", (await ed.$eval("#list li:nth-child(1) .t", e => e.textContent)).startsWith("Second inject, retitled") && (await ed.$eval("#list li:nth-child(1) .badge", e => e.textContent)) === "Starts");
         await ed.click("#btnSave"); await ed.waitForFunction(() => /^Saved/.test(document.getElementById("status").textContent));
         now = await getDeck();
-        r.check("the order and the starting inject are saved (start = 3, moved inject at 3)", now.start === 3 && now.injects[2].title.startsWith("Second inject, retitled"), JSON.stringify([now.start, now.injects[2].title]));
+        r.check("the new order is saved (moved inject first) and the game will begin with it", now.injects[0].title.startsWith("Second inject, retitled") && now.start === undefined, JSON.stringify([now.start, now.injects[0].title]));
 
         // add and delete
         await ed.click("#btnAdd");
@@ -167,7 +172,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
         const listBefore = await getDeck();
         await ed.click("#hist [data-a=rest][data-v='1']"); await ed.waitForFunction(() => /^Restored/.test(document.getElementById("status").textContent));
         now = await getDeck();
-        r.check("Restore makes version 1 live again as a new version", now.version === listBefore.version + 1 && now.injects[0].title === "Last-minute polling place relocation" && now.start === 6 && now.injects.length === 16, JSON.stringify([now.version, now.injects[0].title, now.start]));
+        r.check("Restore makes version 1 live again as a new version", now.version === listBefore.version + 1 && now.injects[0].title === "Last-minute polling place relocation" && now.injects.length === 16, JSON.stringify([now.version, now.injects[0].title]));
         r.check("no JavaScript errors on the editor page", eerr.length === 0, eerr.join("; "));
       });
     });

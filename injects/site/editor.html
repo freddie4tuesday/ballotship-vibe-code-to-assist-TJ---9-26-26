@@ -73,7 +73,7 @@ legend{font:700 14px var(--disp);letter-spacing:.06em;text-transform:uppercase;c
     An <b>inject</b> is a surprise handed to a team during the exercise. This page lists them all. <b>Saving changes the
     deck immediately:</b> the next game that starts uses it (games already under way keep the deck they began with).
     Every save is kept as a numbered version under <b>History</b>, and any version can be restored.
-    Injects are played in this order, starting from the one marked <b>Start</b>.
+    Injects are played in this order, so <b>the first one on the list starts the game</b>; use the arrows to reorder.
   </div>
   <section class="panel" aria-label="Injects">
     <div class="bar"><button id="btnAdd" type="button">+ Add an inject</button></div>
@@ -99,14 +99,14 @@ function api(path, body){
     .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});})
     .catch(function(){return {ok:false,status:0,j:{error:"Couldn't reach the server. Check your connection, then try again. Your changes here are still on this page."}};});
 }
-function snap(){return JSON.stringify({start:deck.start,injects:deck.injects});}
+function snap(){return JSON.stringify({injects:deck.injects});}
 function dirty(){return snap()!==saved;}
 function refreshSave(){$("btnSave").disabled=!dirty();if(dirty())status("Unsaved changes.");else if(base)status("Live deck is version "+base+".");}
 window.addEventListener("beforeunload",function(e){if(dirty()){e.preventDefault();e.returnValue="";}});
 
 function load(){
   return fetch("/api/deck",{cache:"no-store"}).then(function(r){return r.json();}).then(function(d){
-    deck={start:d.start,injects:d.injects};base=d.version;saved=snap();sel=Math.min(sel,deck.injects.length-1);draw();refreshSave();
+    deck={injects:d.injects};base=d.version;saved=snap();sel=Math.min(sel,deck.injects.length-1);draw();refreshSave();
   }).catch(function(){status("Couldn't load the deck. Reload the page.",true);});
 }
 function draw(){drawList();drawForm();}
@@ -115,7 +115,7 @@ function drawList(){
   deck.injects.forEach(function(c,i){
     var li=document.createElement("li");if(i===sel)li.className="sel";
     li.innerHTML='<span class="no">'+(i+1)+'</span><span class="t">'+esc(c.title||"(untitled)")+'<small>'+esc(M.cats[c.cat]||"")+' · '+esc(c.type||"")+'</small></span>'
-      +(deck.start===i+1?'<span class="badge">Start</span>':'')+(c.crisis?'<span class="badge c">Crisis</span>':'')
+      +(i===0?'<span class="badge">Starts</span>':'')+(c.crisis?'<span class="badge c">Crisis</span>':'')
       +'<button type="button" data-a="up" aria-label="Move up"'+(i===0?" disabled":"")+'>↑</button><button type="button" data-a="dn" aria-label="Move down"'+(i===deck.injects.length-1?" disabled":"")+'>↓</button>';
     li.onclick=function(e){var a=e.target.getAttribute&&e.target.getAttribute("data-a");if(a==="up")move(i,-1);else if(a==="dn")move(i,1);else{sel=i;$("hist").hidden=true;draw();}};
     ol.appendChild(li);
@@ -124,7 +124,6 @@ function drawList(){
 function move(i,d){
   var j=i+d;if(j<0||j>=deck.injects.length)return;
   var t=deck.injects[i];deck.injects[i]=deck.injects[j];deck.injects[j]=t;
-  if(deck.start===i+1)deck.start=j+1;else if(deck.start===j+1)deck.start=i+1;
   sel=j;draw();refreshSave();
 }
 function newId(){var m=0;deck.injects.forEach(function(c){m=Math.max(m,parseInt(c.id.slice(1),10)||0);});return "i"+String(m+1).padStart(2,"0");}
@@ -165,7 +164,7 @@ function drawForm(){
     +'<fieldset><legend>AI assignment</legend>'+field("Task",c.ai.task,L.task,"ai.task",{rows:2})+field("Prompt to paste into an AI tool",c.ai.prompt,L.prompt,"ai.prompt",{rows:4})+'</fieldset>'
     +'<fieldset><legend>Sponsor credit (optional)</legend><label><span><input type="checkbox" data-k="sponsor" style="width:auto"'+(sp?" checked":"")+'> This inject has a sponsor</span></label>'
     +(sp?'<div class="row">'+field("Short name",sp.name,L.sname,"sponsor.name")+field("Full name",sp.full,L.sfull,"sponsor.full")+'</div>'+field("Link",sp.url,L.url,"sponsor.url",{hint:"must start with https://"})+field("Logo image address",sp.logo,L.url,"sponsor.logo",{hint:"must start with https://"}):'')+'</fieldset>'
-    +'<div class="bar" style="padding:0"><button type="button" data-a="start"'+(deck.start===sel+1?" disabled":"")+'>'+(deck.start===sel+1?"This is the starting inject":"Make this the starting inject")+'</button>'
+    +'<div class="bar" style="padding:0">'
     +'<button type="button" class="warn" data-a="del">Delete this inject</button></div><div id="errs"></div>';
   drawGrid();counts();
 }
@@ -197,13 +196,11 @@ $("f").addEventListener("change",function(e){
 });
 $("f").addEventListener("click",function(e){
   var a=e.target.getAttribute&&e.target.getAttribute("data-a");
-  if(a==="start"){deck.start=sel+1;draw();refreshSave();}
   if(a==="del"){
     var c=deck.injects[sel];
     if(deck.injects.length<=4){status("A deck needs at least 4 injects.",true);return;}
     if(!confirm('Delete "'+c.title+'"? It comes off the deck when you Save, and you can bring it back from History.'))return;
     deck.injects.splice(sel,1);
-    if(deck.start>deck.injects.length)deck.start=1;else if(deck.start>sel+1)deck.start--;else if(deck.start===sel+1)deck.start=Math.min(deck.start,deck.injects.length);
     sel=Math.max(0,Math.min(sel,deck.injects.length-1));draw();refreshSave();
   }
 });
@@ -211,7 +208,7 @@ $("f").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.tagNa
 
 $("btnSave").onclick=function(){
   var b=$("btnSave");b.disabled=true;status("Saving...");
-  api("save",{base:base,start:deck.start,injects:deck.injects,summary:$("summary").value.trim()||"Edited"}).then(function(r){
+  api("save",{base:base,injects:deck.injects,summary:$("summary").value.trim()||"Edited"}).then(function(r){
     if(r.ok){$("summary").value="";return load().then(function(){status("Saved. The live deck is now version "+r.j.version+".");});}
     var box=$("errs");if(box&&r.j.errors)box.innerHTML='<div class="errs"><b>Not saved.</b><ul>'+r.j.errors.slice(0,8).map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ul></div>";
     status(r.j.error||"Not saved. Try again.",true);b.disabled=false;
@@ -233,7 +230,6 @@ function diffText(a,b){
   a.injects.forEach(function(c){if(!bi[c.id])out.push("<b>− removed</b> "+esc(c.title));});
   var oa=a.injects.map(function(c){return c.id;}).join(),ob=b.injects.map(function(c){return c.id;}).join();
   if(oa!==ob&&a.injects.length===b.injects.length)out.push("<b>~ order changed</b>");
-  if(a.start!==b.start)out.push("<b>~ starting inject</b> changed to position "+b.start);
   return out.length?out.join("\n"):"No differences.";
 }
 $("btnHist").onclick=function(){
@@ -252,7 +248,7 @@ $("hist").addEventListener("click",function(e){
     var row=e.target.closest("tr").nextElementSibling;
     if(!row.hidden){row.hidden=true;return;}
     Promise.all([api("version/"+v),api("version/"+(v-1))]).then(function(rs){
-      var cur=rs[0].j,prev=rs[1].ok?rs[1].j:{injects:[],start:0};
+      var cur=rs[0].j,prev=rs[1].ok?rs[1].j:{injects:[]};
       row.querySelector(".diff").innerHTML=v===1?"The starting deck.":"Compared with version "+(v-1)+":\n"+diffText(prev,cur);row.hidden=false;
     });
   }

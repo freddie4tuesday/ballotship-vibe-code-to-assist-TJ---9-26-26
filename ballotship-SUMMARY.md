@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 13 (live; builds 8 to 12 went live together, then 13)
+**Current version:** build 14 (on staging; live is build 13)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address, open to anyone who has it; see The inject library)
@@ -91,8 +91,8 @@ the browser, and if the relay is unreachable the page says so and teams read cod
 
 ## The inject library (`injects/`)
 
-The 16 injects are kept in their own service, with a page to list, edit, add, delete and reorder them and
-to choose which one starts (it was number 6). It has its own address and its own store, and a staging copy.
+The 16 injects are kept in their own service, with a page to list, edit, add, delete and reorder them. The
+list is the play order and a game starts with the first inject (build 14; it used to start at number 6). It has its own address and its own store, and a staging copy.
 
 - **The deck:** `GET /api/deck` returns it (public, read by the game). `injects/seed.json` is the copy
   the store starts from, made from `index.html` by `node injects/tools/extract.js` (the tests check it

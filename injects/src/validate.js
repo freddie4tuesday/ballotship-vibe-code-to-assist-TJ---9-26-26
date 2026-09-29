@@ -3,7 +3,7 @@
   whatever it fetches (sanitizeDeck in index.html), so a bad deck can't get in through either door.
   Text is stored as typed and always escaped when shown; nothing here is HTML.
 
-  A deck is { start, injects: [ ... ] }. Each inject: id, cat, title, type, shape (not for a crisis
+  A deck is { injects: [ ... ] }; the first inject starts the game (build 14: there used to be a start position, 6). Each inject: id, cat, title, type, shape (not for a crisis
   inject), crisis (optional), scene, atk {where what when goal}, op, comms, prec, src, ai {task prompt},
   sponsor (optional) {name full url logo}.
 
@@ -71,7 +71,6 @@ export function validateDeck(d) {
   const n = d.injects.length;
   if (n < MIN_INJECTS) errs.push("A deck needs at least " + MIN_INJECTS + " injects; this one has " + n + ".");
   if (n > MAX_INJECTS) errs.push("A deck holds at most " + MAX_INJECTS + " injects; this one has " + n + ".");
-  if (!Number.isInteger(d.start) || d.start < 1 || d.start > Math.max(n, 1)) errs.push("The starting inject must be a position from 1 to " + n + ".");
   const ids = new Set();
   d.injects.forEach((c, i) => {
     const label = "Inject " + (i + 1) + (c && isStr(c.title) && c.title ? " (" + c.title.slice(0, 40) + ")" : "");

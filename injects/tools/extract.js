@@ -1,7 +1,7 @@
 /*
   Copies the inject library out of index.html, so the store starts from exactly what the game has:
 
-    injects/seed.json      the 16 injects, with an id each, and which one starts (DECK_START)
+    injects/seed.json      the 16 injects, with an id each, in play order
     injects/src/meta.json  the categories, types and footprint shapes (checked against on every save)
     injects/site/meta.js   the same, for the editor page
 
@@ -15,15 +15,15 @@ const fs = require("fs"), path = require("path");
 const root = path.join(__dirname, "..", "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const slice = (a, b) => { const i = html.indexOf(a); if (i < 0) throw new Error("index.html no longer has: " + a); const j = html.indexOf(b, i); if (j < 0) throw new Error("index.html no longer has: " + b); return html.slice(i, j); };
-const code = [slice("var SHAPES = {", "/* Type is context"), slice("var TYPES = {", "var CATS"), slice("var CATS = {", "var CRISIS_CELLS"), slice("var DECK = [", "DECK.forEach"), slice("var DECK_START =", "\n")].join("\n");
-const { SHAPES, TYPES, CATS, DECK, DECK_START } = new Function(code + "; return { SHAPES, TYPES, CATS, DECK, DECK_START };")();
+const code = [slice("var SHAPES = {", "/* Type is context"), slice("var TYPES = {", "var CATS"), slice("var CATS = {", "var CRISIS_CELLS"), slice("var DECK = [", "DECK.forEach")].join("\n");
+const { SHAPES, TYPES, CATS, DECK } = new Function(code + "; return { SHAPES, TYPES, CATS, DECK };")();
 
 const meta = {
   types: TYPES,
   cats: Object.fromEntries(Object.entries(CATS).map(([k, v]) => [k, v.label])),
   shapes: SHAPES,
 };
-const seed = { start: DECK_START, injects: DECK.map((c, i) => ({ id: "i" + String(i + 1).padStart(2, "0"), ...JSON.parse(JSON.stringify(c)) })) };
+const seed = { injects: DECK.map((c, i) => ({ id: "i" + String(i + 1).padStart(2, "0"), ...JSON.parse(JSON.stringify(c)) })) };
 
 const out = {
   "injects/seed.json": JSON.stringify(seed, null, 1) + "\n",
@@ -36,5 +36,5 @@ if (process.argv.includes("--check")) {
   console.log("seed.json, meta.json and meta.js match index.html");
 } else {
   for (const [f, text] of Object.entries(out)) fs.writeFileSync(path.join(root, f), text);
-  console.log("wrote " + Object.keys(out).join(", ") + " (" + seed.injects.length + " injects, starting at " + seed.start + ")");
+  console.log("wrote " + Object.keys(out).join(", ") + " (" + seed.injects.length + " injects)");
 }

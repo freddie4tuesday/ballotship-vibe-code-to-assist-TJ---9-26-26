@@ -9,7 +9,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- Nothing is waiting on review. Builds 8 to 13 are live.
+- **Build 14 (the game starts with the first inject) is on the branch, waiting for staging review.** Builds 8 to 13 are live.
 
 ## Backlog
 
@@ -59,8 +59,8 @@ Each item: a short title, then one or two lines on what and why.
     share, and History restores any slip. Reasons against: anyone who finds `/edit` can change the injects real
     games use, and there is no record of who. **Ask TJ what he prefers** for who may edit (a login by email code, or
     the secret link again, are the ways back).
-  - **Extras wanted:** history with restore; a picture of the squares an inject covers; reordering, and
-    choosing which inject comes first (today number 6). Not wanted: importing from the workbook.
+  - **Extras wanted:** history with restore; a picture of the squares an inject covers; reordering (build 14: the first inject in the list starts the game; the separate "choose the
+    starting inject" button from build 12 was dropped at the owner's request). Not wanted: importing from the workbook.
   **Design:** its own Worker and store (`injects/`), with a staging copy like everything else (code
   changes go staging first; the deck content itself is edited on the live page). The game fetches the
   deck when a game starts, keeps that deck for the whole game (a game already under way is never
