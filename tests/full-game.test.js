@@ -13,10 +13,29 @@ async function fillForm(p, formSel) {
   for (const f of fields) if (await f.isVisible()) await f.fill("Automated test entry, written by the full-game test.");
 }
 
+/* Shots are scripted, not random: team 1 always aims where the other county has a site
+   (a hit) and team 2 always aims at empty water (a miss). Random shots tie now and then,
+   and a tied simultaneous game goes into sudden death on the taking-turns screens (a
+   question for TJ, on the roadmap), which this test isn't about and can't drive. */
+let PAGES = null;
+async function aimLabel(p) {
+  const me = await p.evaluate(() => G.me), other = me === "t1" ? "t2" : "t1";
+  const board = await PAGES[other].evaluate(o => G.teams[o].board, other);
+  return p.evaluate(([board, wantHit]) => {
+    const shape = G.R.card.shape, need = SHAPES[shape].cells.length;
+    for (let o = 0; o < 36; o++) {
+      const cells = footprint(o, shape);
+      if (cells.length < need) continue;                       // would run off the grid
+      if (cells.some(c => board[c]) === wantHit) return cellLabel(o);
+    }
+    return null;
+  }, [board, me === "t1"]);
+}
 async function pickAim(p) {
   if (!(await p.isVisible("#aimSheet"))) return false;
-  const cells = await p.$$("#aimGrid button.cell.pick");
-  await cells[Math.floor(Math.random() * cells.length)].click();
+  const label = await aimLabel(p);
+  if (label) await p.click('#aimGrid button[aria-label="' + label + '"]');
+  else { const cells = await p.$$("#aimGrid button.cell.pick"); await cells[0].click(); }
   await p.click("#btnAimOk");
   return true;
 }
@@ -57,7 +76,8 @@ async function step(p) {
   try {
     await withRelay(async relay => {
       browser = await launch();
-      const { pages, errors } = await setupScreens(browser, relay, ["t1", "t2", "mod"], { rounds: 4, pollMs: 150 });
+      const { pages, errors } = await setupScreens(browser, relay, ["t1", "t2", "mod"], { rounds: 4, pollMs: 600 });
+      PAGES = pages;
       const end = Date.now() + 180000;
       const seen = { t1: new Set(), t2: new Set() };
       while (Date.now() < end) {

@@ -3,3 +3,4 @@ node_modules/
 demo/out/
 demo/site/*.mp4
 demo/site/*.vtt
+tests/.last-pass

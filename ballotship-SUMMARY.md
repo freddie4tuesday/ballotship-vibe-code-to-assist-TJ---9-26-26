@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 8
+**Current version:** build 9 (build 7 is what's live until 8 and 9 are released; see Releasing)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
@@ -50,7 +50,9 @@ Every change gets a **build number**, recorded in three places that always agree
 2. **The build footer** — the fixed dark bar at the bottom of every screen shows the current
    build number and a one-line summary, so anyone can tell which version they're looking at.
 3. **Git and Cloudflare** — each build is one git commit, titled `Build N: ...`, and each deploy
-   is sent to Cloudflare with the message `build N`. Cloudflare keeps every deployed version.
+   is sent to Cloudflare with the message `build N` (`build N (staging)` on staging). Cloudflare
+   keeps every deployed version. A build's number is set when it first goes on staging; fixes
+   made during review are logged under that same number.
 
 **To undo a change**, either:
 
@@ -113,24 +115,49 @@ screens through a local copy of the relay, checks the relay's rules, and checks 
 number agrees across the log, footer and summary. See `tests/README.md` for what's covered and
 what isn't yet, and how to merge in TJ's test suite if it turns up.
 
-## Deploying
+## Releasing: staging first, then live
 
-From the repo root, with a Cloudflare API token in `CLOUDFLARE_API_TOKEN`:
+Nothing goes live without being looked at on a staging copy first.
 
-```
-npx wrangler deploy --message "build N"
-```
+| | Live game | Staging copy |
+|---|---|---|
+| Page | https://ballotship.electionadminsuite.com | https://ballotship-staging.electionadminsuite.com |
+| Relay | https://ballotship-relay.electionadminsuite.com | https://ballotship-relay-staging.electionadminsuite.com |
+| Git branch | `main` | `staging` |
+| Config | `wrangler.jsonc`, `worker/wrangler.jsonc` | `wrangler.staging.jsonc`, `worker/wrangler.staging.jsonc` |
+
+The staging page labels itself: `[STAGING]` in the browser tab, a magenta STAGING tag in the
+footer, and "STAGING" on the title screen. It uses the staging relay, and a browser keeps saved
+games per address, so staging games and live games can't mix or overwrite each other.
+
+**The path of a change:**
+
+1. Agree the change (wording changes come as a table for approval first).
+2. Build it on the `staging` branch, and run the tests: `cd tests && npm test` (about 30 minutes).
+3. `./deploy.sh staging` puts it on the staging address.
+4. Someone looks at it there and says whether it's good.
+5. Only after that: merge `staging` into `main`, and run `./deploy.sh production`.
+
+**`deploy.sh` enforces the order.** It deploys staging only from the `staging` branch and live
+only from `main`; it refuses uncommitted changes; it refuses code the tests haven't passed on
+(`npm test` leaves a fingerprint of `index.html` and the relay in `tests/.last-pass`, and the
+script checks it matches); and for live it refuses anything other than the exact page that is on
+staging right now. It needs a Cloudflare API token in `CLOUDFLARE_API_TOKEN`.
+
+The relay needs no separate step: both environments deploy the page and the relay together.
 
 `wrangler.jsonc` holds the account, the custom domain, and the routes. `.assetsignore` keeps the
-markdown files, config and `worker/` off the live site, so only `index.html` is served. The
-relay deploys separately, from `worker/` (see above).
+markdown files, config, `deploy.sh`, `worker/`, `tests/` and `demo/` off the site, so only
+`index.html` is served.
 
 **Routing gotcha:** `electionadminsuite.com` has a wildcard route,
 `*.electionadminsuite.com/*`, that sends every subdomain to `poll-worker-system`. Ballotship
 needs its own specific route, `ballotship.electionadminsuite.com/*`, or the poll-worker app
 answers with "Unknown jurisdiction". Ballot Proofing Workbench uses the same fix. The route is
-declared in `wrangler.jsonc`, so a normal deploy keeps it in place. The relay,
-`ballotship-relay.electionadminsuite.com`, has its own specific route for the same reason.
+declared in `wrangler.jsonc`, so a normal deploy keeps it in place. The relay, and both staging
+addresses, have their own specific routes for the same reason. (The staging addresses end in
+`-staging`, a pattern that the wildcard `*-staging.electionadminsuite.com/*` sends to
+`poll-worker-system-staging`; the specific routes override it.)
 
 ---
 

@@ -1,0 +1,19 @@
+// The STAGING copy of the game: the same index.html, deployed as its own Worker at its own
+// address, so a change can be looked at before it goes live. Deploy with ./deploy.sh staging.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ballotship-staging",
+  "account_id": "907c63834a38c160f1294cfc347a059a",
+  "compatibility_date": "2026-09-25",
+  "assets": {
+    "directory": "."
+  },
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "ballotship-staging.electionadminsuite.com", "custom_domain": true },
+    // Needed: *-staging.electionadminsuite.com/* is routed to poll-worker-system-staging, and
+    // *.electionadminsuite.com/* to poll-worker-system. This more specific route sends this
+    // address here instead (same reason as the live game's).
+    { "pattern": "ballotship-staging.electionadminsuite.com/*", "zone_name": "electionadminsuite.com" }
+  ]
+}

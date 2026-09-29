@@ -9,32 +9,38 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Moderator screen's final score was always 0–0 — fixed as build 8, waiting to go live.** The
-  moderator never tracked damage, so it called a tie and started sudden death. It now reads each
-  county's damage from the result codes. Tested (fails on build 7, passes on build 8). Sits on the
-  branch `fix-moderator-score`, not yet merged to `main` or deployed; waiting on how you want
-  changes released (see the staging proposal).
+- **Builds 8 and 9 are waiting on staging review.** Build 8 fixes the moderator screen's final
+  score (it was always 0–0 and started sudden death; it now reads each county's damage from the
+  result codes). Build 9 adds staging itself. Both are on the `staging` branch, on the staging
+  address for review. They go live when you say so after looking.
 
 ## Backlog
 
 - **Moderator's clock buttons should reach the team screens (decided: yes).** Each screen runs
-  its own clock today; a pause, +1:00 or reset on the moderator's clock changes only the
-  moderator's. The original code notes it used to send the clock over the relay and heartbeat
-  every ten seconds, and stopped because that put hundreds of extra messages through the Worker.
-  Now that the relay handles moderator commands (end early, resume), a pause can carry the same
-  way. Speed is the catch: during writing phases team screens check the relay only every 15 s,
-  so they'd check every few seconds while a clock is running in a game with a moderator (a
-  two-hour, three-screen session makes roughly 14,000 requests at 1.5 s, inside Cloudflare's
-  free 100,000 a day; a few seconds slower cuts that a lot). To do: moderator sends
-  pause/resume/+1:00/-1:00/reset as relay commands; team screens apply them; the room-limit
-  and idle-pause guardrails stay; a test covers it.
+  its own clock, which is fine; the change is that a pause, resume, +1:00, -1:00 or reset made on
+  any clock should reach the others. Design, chosen to cost the least:
+  - **Send only when someone acts**, one small relay message per press, and nothing in between (no
+    heartbeat; the original's ten-second heartbeat is what got it removed).
+  - **The message carries the clock's absolute state** (phase, time left, running or paused), not
+    "pause now", so a late or repeated message can't leave a screen wrong: whenever it lands, the
+    screen ends up right. Messages apply in the relay's own order, so two presses at once settle
+    the same way everywhere.
+  - **Delivery uses the checks screens already make.** The catch is speed: in writing phases they
+    check only every 15 s, so a pause could land up to 15 s late. Proposed: check every 5 s while a
+    clock is running in a game with a moderator (about 4,300 requests for a 2-hour, 3-screen
+    session, against 100,000 a day free), otherwise as now. Average delay 2.5 s. Going faster than
+    5 s costs more and buys little, since the corrected time makes up the difference.
+  - Only simultaneous games need it; a passed laptop has one screen, and in taking-turns only the
+    writing team's clock runs.
+  - Tests: a pause from the moderator reaches both team screens within 8 s and they show the same
+    time; a late message still leaves the right time; nothing is sent while nobody acts.
 - **Fix the wording: "The clock is advisory either way" contradicts itself.** On a team screen,
   time running out commits what's written and moves the round on, so it isn't advisory; only
   the moderator's own clock is (it commits nothing). Proposed replacement for the moderator
   panel: "Any screen can pause its clock or add a minute. If a team's clock runs out, what it
   has written is committed as it stands and the round moves on. Nobody is cut off mid-sentence,
   but the round does not wait." Ready for Tuesday's text, so it needs approval as a table first.
-- **Question for TJ: sudden death in simultaneous mode.** When a simultaneous game ends in a
+- **Question for TJ: sudden death in simultaneous mode.** (Also why the full-game test now scripts its shots: random ones tie now and then.) When a simultaneous game ends in a
   tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
   *taking-turns* screens instead of another simultaneous round. Found while recording the demo.
   It may be intentional, but it looks like a bug. Ask TJ before changing it, and add a test

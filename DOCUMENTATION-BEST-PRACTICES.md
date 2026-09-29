@@ -235,6 +235,24 @@ Most users will never open a separate document. The app has to explain itself.
 - Record **costs and guardrails** for anything that runs up usage, such as a server,
   a relay or an API, with real numbers.
 
+### Staging: look at it before it goes live
+
+Tests catch what someone thought to test for. A person looking at the running change catches the
+rest (wording, layout, a document that opens oddly). So changes go to a **staging copy** first.
+
+- Give staging its **own address and its own backend** (its own relay, database or storage), so
+  trying something can never touch real data or real users.
+- **Make staging label itself** in the browser tab, in the footer and on the first screen, so nobody
+  mistakes it for the live site.
+- Use a **`staging` branch** for work in progress and keep `main` as "what is live".
+- Write a **deploy script that enforces the order** rather than relying on memory: it deploys staging
+  only from `staging` and live only from `main`, refuses code the tests haven't passed on, and refuses
+  to go live with anything other than the exact build that is on staging. (Ballotship's is `deploy.sh`.)
+- **A live release needs a clear go-ahead given after the change was seen on staging.** An approval of
+  the idea or the wording, given earlier, isn't one.
+- Check whether your host already uses **naming patterns** for staging (Ballotship's domain routes
+  `*-staging` to another app) and add the specific routes that override them.
+
 ---
 
 ## Before every deploy
@@ -244,7 +262,7 @@ Most users will never open a separate document. The app has to explain itself.
 - [ ] New or changed code has "why" comments tagged with the build number
 - [ ] Tests pass (`npm test`)
 - [ ] Roadmap updated: shipped items moved to Done with the build number
-- [ ] Deployed with the message `build N`, and the live site checked
+- [ ] Deployed to staging, looked at, and approved; then deployed live with the message `build N`, and the live site checked
 - [ ] Committed as `Build N: …` and pushed
 
 ## Adding this to an existing project
@@ -280,6 +298,7 @@ Full standard: DOCUMENTATION-BEST-PRACTICES.md in this project.
   move shipped items to Done with their build number; record decisions not to do something,
   and the reasons for and against undecided items.
 - Run the tests before every deploy. Never touch the live site or live data from a test.
+- Deploy to a staging copy first and give the user the link. Go live only after the user has seen the change on staging and clearly says to; an earlier approval of the wording or design doesn't count.
 - In the app: plain-language purpose on the first screen, define jargon at first use,
   error messages that say what to do. Keep the owner's branding unless told otherwise.
 - Ask before changing standing rules listed at the top of the summary file.

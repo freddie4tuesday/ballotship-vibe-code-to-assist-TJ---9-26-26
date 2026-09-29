@@ -110,6 +110,23 @@
         fail (the moderator shows down [0,0] against the teams' [4,1] and sits in sudden
         death); on build 8 both pass. The tie-break itself (does sudden death in simultaneous
         mode belong on the taking-turns screens?) is still a question for TJ, on the roadmap.
+  build 9  Staging, the review step before anything goes live. Asked for after every change had
+        been going straight to the live site: "should there be a staging branch where things
+        can be reviewed at a staging URL before being pushed live?" The game file itself only
+        gains this: opened at an address with "staging" in it, the page labels itself STAGING
+        (browser tab title, a magenta tag in the footer, the title screen) and defaults the
+        relay to the staging relay, so staging rooms can't mix with real games; anywhere else it
+        is the live game, exactly as before. The rest is process, in the repo: a staging copy
+        of the page (ballotship-staging.electionadminsuite.com) and of the relay
+        (ballotship-relay-staging...), each its own Worker with its own routes (the
+        *-staging wildcard on this domain belongs to another app); a `staging` branch; and
+        deploy.sh, which enforces the order: it deploys staging only from the staging branch,
+        live only from main, refuses anything the tests haven't passed on (npm test leaves a
+        fingerprint of index.html and the relay), and refuses to go live with anything other
+        than the exact page that is on staging right now. Builds 8 and 9 travel together,
+        staging first. Verified by tests/release-process.test.js (the page at a staging address,
+        at the live address, and as a file; staging and live saved games kept apart; the
+        deploy script's refusals) and the full suite.
 -->
 <html lang="en">
 <head>
@@ -609,6 +626,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--orange);border-c
 /* ---- build footer (build number + change summary) ---- */
 .build-footer{position:fixed;left:0;right:0;bottom:0;height:28px;background:var(--evergreen-deep);color:#A9C2B3;font-family:var(--code);font-size:11.5px;padding:0 16px;z-index:55;display:flex;gap:10px;align-items:center;white-space:nowrap;overflow-x:auto}
 .build-footer .tag{color:#fff;background:var(--orange);border-radius:3px;padding:1px 6px;font-weight:600;flex-shrink:0}
+.build-footer .tag.staging{background:var(--magenta)}
 body{padding-bottom:28px}
 @media print{.build-footer{display:none}body{padding-bottom:0}}
 </style>
@@ -4667,10 +4685,30 @@ startClockTick();
     $("resumePanel").hidden = true;
   });
 })();
+
+/* build 9 — which address is this page running at? A page on a "staging" address says so
+   everywhere it might be mistaken for the live game (browser tab, footer, title screen) and
+   uses the staging relay, so its rooms never mix with real games. Anywhere else, including
+   the live address and a saved copy of the file, it is the live game, exactly as before.
+   (A browser keeps saved games per address, so staging and live games can't overwrite
+   each other either.) */
+var IS_STAGING = /staging/i.test(window.location.hostname);
+(function () {
+  var relay = IS_STAGING ? "https://ballotship-relay-staging.electionadminsuite.com" : "https://ballotship-relay.electionadminsuite.com";
+  $("relayUrl").value = relay; $("relayUrl").placeholder = relay;
+  if (!IS_STAGING) return;
+  document.title = "[STAGING] " + document.title;
+  $("titleFoot").textContent += " \u00b7 STAGING";
+  /* the footer sits after this script in the page, so it isn't there yet */
+  document.addEventListener("DOMContentLoaded", function () {
+    var tag = document.querySelector(".build-footer .tag");
+    if (tag) tag.insertAdjacentHTML("beforebegin", '<span class="tag staging">STAGING</span>');
+  });
+})();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 8</span>
-  <span>the moderator screen now shows both counties' real damage and scores the game correctly</span>
+  <span class="tag">build 9</span>
+  <span>the moderator screen shows both counties' real damage and scores correctly; a staging copy for review before changes go live</span>
 </div>
 
 </body>

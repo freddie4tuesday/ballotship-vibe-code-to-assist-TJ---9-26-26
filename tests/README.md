@@ -18,8 +18,8 @@ Then, every time (`npm install` also fetches `jszip`, which reads the .docx in t
 npm test
 ```
 
-Each check prints PASS or FAIL. The run ends with "All 8 test files passed" or names the files
-that failed. It takes about 30 minutes. To run one file on its own: `node full-game.test.js`. To run the tests against another copy of the page (for example the previous build, to show a bug before its fix), set `BALLOTSHIP_PAGE=/path/to/copy.html`.
+Each check prints PASS or FAIL. The run ends with "All 9 test files passed" or names the files
+that failed. It takes about 35 minutes, and a passing run leaves `tests/.last-pass`, which `deploy.sh` checks. To run one file on its own: `node full-game.test.js`. To run the tests against another copy of the page (for example the previous build, to show a bug before its fix), set `BALLOTSHIP_PAGE=/path/to/copy.html`.
 
 ## What's covered
 
@@ -31,6 +31,7 @@ that failed. It takes about 30 minutes. To run one file on its own: `node full-g
 | `shot-marks.test.js` | Plays 4 rounds in all three ways of playing: one screen passed, two screens taking turns, and two screens simultaneous. Every "Pick your target" must mark all of that team's earlier hits and misses, and every defense must show the attack as written. `MODES=pass` runs just one way. |
 | `end-early.test.js` | Ends a game early in every way of playing (and from the moderator screen), checks the final screen, a reload, and that Resume puts every screen back exactly; then plays on to the end. Also: starting over or discarding asks first, and a 1-round game plays through. |
 | `log-export.test.js` | The after-action log three ways: web page, Word (.docx) and Print. The Word file has every required part and well-formed XML, carries the picture and link, and contains every block of the web page; Print holds exactly the web page's text with no boards. Uses python-docx as a second reader if it's installed. |
+| `release-process.test.js` | Staging awareness: the page at a staging address says STAGING and uses the staging relay, at the live address it doesn't, staging and live saved games stay apart. And `deploy.sh` refuses to skip the order (wrong branch, no token). |
 | `poll-loops.test.js` | After a burst of sends and an end-and-resume, one screen still checks the relay at the normal rate (one polling loop, not two). |
 | `relay-three-screens.test.js` | One round in detail: attacks crossing, chat reaching the other team and the moderator, and the 30-minute idle pause catching up after a click. |
 

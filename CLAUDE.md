@@ -10,13 +10,20 @@ Read `ballotship-SUMMARY.md` first (current build, standing rules, deploy and ro
   readyfortuesday.com board art, or the colors and fonts.
 - **On-screen wording is Ready for Tuesday's content.** Propose text changes in a table for
   approval before building them.
-- **Deploying:** from the repo root, `npx wrangler deploy --message "build N"`; for the relay,
-  the same from `worker/`. Both need their own specific route because `*.electionadminsuite.com/*`
-  goes to poll-worker-system (already in each `wrangler.jsonc`).
-- **Tests:** `npm test` from `tests/` before every deploy. They use a local relay only.
+- **Releasing: staging first, live second.** Work on the `staging` branch; `main` is only what
+  is live. Run `./deploy.sh staging`, give the user the staging link and what to look at, and stop.
+  **Go live (`./deploy.sh production`, from `main`) only after the user has seen the change on
+  staging and clearly says to go live.** An approval given earlier, for the wording or the design,
+  does not count. Never deploy to production any other way, and never push work-in-progress to
+  `main`. See "Releasing" in `ballotship-SUMMARY.md`.
+- **Addresses:** the page and the relay each have a live and a staging Worker. Every hostname needs
+  its own specific route because `*.electionadminsuite.com/*` and `*-staging.electionadminsuite.com/*`
+  belong to other apps (already in each `wrangler*.jsonc`).
+- **Tests:** `npm test` from `tests/` before every deploy, staging included; `deploy.sh` refuses
+  code the tests haven't passed on. They use a local relay only.
 - **Relay:** plain HTTP polling only. Don't switch to always-open WebSockets without
   hibernation (cost). Room auto-delete is deliberately off; see the roadmap.
-- Work on `main`.
+- Work on the `staging` branch; merge it into `main` only when going live.
 
 ## Documentation rules
 

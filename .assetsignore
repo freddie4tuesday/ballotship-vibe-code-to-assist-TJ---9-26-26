@@ -7,3 +7,5 @@ wrangler.jsonc
 worker
 tests
 demo
+wrangler.staging.jsonc
+deploy.sh

@@ -16,5 +16,12 @@ const files = fs.readdirSync(__dirname).filter(f => f.endsWith(".test.js")).sort
     }
   });
   console.log("\n" + (failed.length ? "FAILED: " + failed.join(", ") : "All " + files.length + " test files passed."));
+  // Leave a fingerprint of the code that just passed, so ../deploy.sh can refuse to
+  // release anything the tests haven't seen. Same format as `sha256sum index.html worker/src/index.js`.
+  if (!failed.length) {
+    const crypto = require("crypto"), root = path.join(__dirname, "..");
+    fs.writeFileSync(path.join(__dirname, ".last-pass"), ["index.html", "worker/src/index.js"].map(f =>
+      crypto.createHash("sha256").update(fs.readFileSync(path.join(root, f))).digest("hex") + "  " + f + "\n").join(""));
+  }
   process.exit(failed.length ? 1 : 0);
 })();
