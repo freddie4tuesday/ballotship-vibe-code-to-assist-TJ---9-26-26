@@ -18,13 +18,25 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Backlog
 
-- **An inject library page (asked for): a page at its own address where the injects are listed and can be
-  added or edited.** Today the 16 injects are code inside `index.html` (`DECK`, from "the scenario
-  workbook", which we haven't seen). Open design questions, to settle before building: where edits are
-  saved and how they reach games (a draft and publish step that mirrors staging and live is my
-  suggestion); who may edit (a login is my suggestion); a game must keep the deck it started with, and
-  both screens of a two-screen game must have the same one; what the page needs (all fields, a footprint
-  preview, add and reorder, history with rollback, import from the workbook).
+- **Inject library page: in progress (build 12).** A page at its own address where the injects are
+  listed and can be added, edited, reordered and deleted. Today the 16 injects are code inside
+  `index.html` (`DECK`, from "the scenario workbook", which we haven't seen). **Decided:**
+  - **Edits go live immediately** (no draft step). A saved edit is what the next game uses. Because a
+    slip would reach real games at once, every save is a numbered version, any version can be restored
+    from the page, and the page shows what changed.
+  - **Anyone with the link can edit, to start with.** The link is long and unguessable (a secret in
+    the address), which is not a login, and it can leak through browser history or a forwarded link.
+    **Ask TJ what he prefers** for who may edit (a login by email code is the alternative).
+  - **Extras wanted:** history with restore; a picture of the squares an inject covers; reordering, and
+    choosing which inject comes first (today number 6). Not wanted: importing from the workbook.
+  **Design:** its own Worker and store (`injects/`), with a staging copy like everything else (code
+  changes go staging first; the deck content itself is edited on the live page). The game fetches the
+  deck when a game starts, keeps that deck for the whole game (a game already under way is never
+  changed by an edit), and falls back to the deck built into `index.html` if it can't reach it, so
+  it still works offline. The two screens of a two-screen game must use the same deck, so each
+  announces its deck version and warns if they differ. The server and the game both check a deck
+  before using it. Also: one inject has a sponsor credit (name, logo, link) and there is a third type,
+  "External"; the editor covers both.
 - **Question for TJ: sudden death in simultaneous mode.** (Also why the full-game test now scripts its shots: random ones tie now and then.) When a simultaneous game ends in a
   tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
   *taking-turns* screens instead of another simultaneous round. Found while recording the demo.
