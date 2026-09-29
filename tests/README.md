@@ -42,8 +42,12 @@ There is no "quick" mode: one was built, then removed, because with the suite at
 | `clock-sync.test.js` | Simultaneous game, two teams and a moderator: every clock button syncs to the other screens, a screen that hears late ends within 1.5 s of the sender, two presses at once converge, one message per press and none while idle, a clock at zero takes a last look (and doesn't commit if a pause is waiting), a change for a later phase is kept. |
 | `turn-clock.test.js` | The clock option for one laptop and for two screens taking turns: setup choices, hidden during the hand-over, time-out commits for the attack, response and crisis (logged once), Pause, a reload keeps the time left, and the taking-turns response clock starting only when the attack arrives. |
 | `release-process.test.js` | Staging awareness: the page at a staging address says STAGING and uses the staging relay, at the live address it doesn't, staging and live saved games stay apart. And `deploy.sh` refuses to skip the order (wrong branch, no token). |
+| `injects-api.test.js` | The inject library's server, run locally with an empty store: starts from the 16 built-in injects (and checks they still match `index.html`), editing needs the secret, a good save is numbered and kept, an out-of-date save is refused, a dozen kinds of bad deck are refused and change nothing, restore. |
+| `injects-game.test.js` | The game and the editor page against a local library: the game uses the library's deck and keeps it after an edit and a reload, falls back to the built-in deck when the library is down or sends something the game refuses, shows typed markup as text; two screens warn only when their decks differ; the editor lists, edits, reorders, adds, deletes, shows History and restores. |
 | `poll-loops.test.js` | After a burst of sends and an end-and-resume, one screen still checks the relay at the normal rate (one polling loop, not two). |
 | `relay-three-screens.test.js` | One round in detail: attacks crossing, chat reaching the other team and the moderator, and the 30-minute idle pause catching up after a click. |
+
+Every test opens the game with the inject library switched off (the built-in deck), so a test never reaches the real library; `injects-*.test.js` point it at a local one (`withInjects` in `helpers.js`).
 
 `helpers.js` holds the shared setup, `driver.js` plays any way of playing one step at a time, and `run-all.js` runs every `*.test.js` file here.
 

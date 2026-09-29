@@ -9,16 +9,16 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Builds 8 to 11 are waiting on staging review.** Build 8 fixes the moderator screen's final
+- **Builds 8 to 12 are waiting on staging review.** Build 8 fixes the moderator screen's final
   score (it was always 0–0 and started sudden death; it now reads each county's damage from the
   result codes). Build 9 adds staging itself. Build 10 fixes the clock note on the moderator
-  screen that contradicted itself (approved wording). Build 11 is the clock work (below). All are on the
+  screen that contradicted itself (approved wording). Build 11 is the clock work (below). Build 12 is the inject library (below). All are on the
   `staging` branch; 8 to 10 are on the staging address now, and 11 goes there once its wording is
   approved. They go live when you say so after looking.
 
 ## Backlog
 
-- **Inject library page: in progress (build 12).** A page at its own address where the injects are
+- **Inject library page: built (build 12), waiting on wording approval and staging review.** A page at its own address where the injects are
   listed and can be added, edited, reordered and deleted. Today the 16 injects are code inside
   `index.html` (`DECK`, from "the scenario workbook", which we haven't seen). **Decided:**
   - **Edits go live immediately** (no draft step). A saved edit is what the next game uses. Because a
@@ -26,7 +26,7 @@ Each item: a short title, then one or two lines on what and why.
     from the page, and the page shows what changed.
   - **Anyone with the link can edit, to start with.** The link is long and unguessable (a secret in
     the address), which is not a login, and it can leak through browser history or a forwarded link.
-    **Ask TJ what he prefers** for who may edit (a login by email code is the alternative).
+    **Ask TJ what he prefers** for who may edit (a login by email code is the alternative). The secret link is set with `wrangler secret put EDIT_TOKEN`; changing the value cuts off every old link.
   - **Extras wanted:** history with restore; a picture of the squares an inject covers; reordering, and
     choosing which inject comes first (today number 6). Not wanted: importing from the workbook.
   **Design:** its own Worker and store (`injects/`), with a staging copy like everything else (code
@@ -37,6 +37,7 @@ Each item: a short title, then one or two lines on what and why.
   announces its deck version and warns if they differ. The server and the game both check a deck
   before using it. Also: one inject has a sponsor credit (name, logo, link) and there is a third type,
   "External"; the editor covers both.
+- **Inject library: things it doesn't do yet.** Only whole-deck saves (two people editing at once: the second is told to reload, and redo their edit); no per-inject comments or who-changed-what (the link isn't a login, so there is no "who"); a game shows which deck version it uses on the setup screen only, not in the after-action log. Add when asked. Also decide whether the built-in copy in `index.html` should ever be refreshed from the library (it is only the offline fallback, and goes stale as the library is edited).
 - **Question for TJ: sudden death in simultaneous mode.** (Also why the full-game test now scripts its shots: random ones tie now and then.) When a simultaneous game ends in a
   tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
   *taking-turns* screens instead of another simultaneous round. Found while recording the demo.

@@ -1,7 +1,7 @@
 /*
-  Runs every Ballotship test, sharing one local relay. `npm test` (about 4 minutes).
+  Runs every Ballotship test, sharing one local relay. `npm test` (about 6 minutes).
 
-  A passing run leaves tests/.last-pass, a fingerprint of index.html and the relay, so that
+  A passing run leaves tests/.last-pass, a fingerprint of the page, the relay and the inject library's code, so that
   ../deploy.sh can refuse to release code the tests haven't passed on.
 */
 const fs = require("fs");
@@ -12,8 +12,9 @@ const { withRelay } = require("./helpers");
 
 const ROOT = path.join(__dirname, "..");
 const files = fs.readdirSync(__dirname).filter(f => f.endsWith(".test.js")).sort();
-const fingerprint = () => ["index.html", "worker/src/index.js"].map(f =>
-  crypto.createHash("sha256").update(fs.readFileSync(path.join(ROOT, f))).digest("hex") + "  " + f + "\n").join("");   // same as `sha256sum index.html worker/src/index.js`
+const FINGERPRINTED = ["index.html", "worker/src/index.js", "injects/src/index.js", "injects/src/validate.js", "injects/src/meta.json", "injects/seed.json", "injects/site/editor.html", "injects/site/meta.js"];
+const fingerprint = () => FINGERPRINTED.map(f =>
+  crypto.createHash("sha256").update(fs.readFileSync(path.join(ROOT, f))).digest("hex") + "  " + f + "\n").join("");   // same as `sha256sum` of the same files, in the same order, which is what ../deploy.sh runs
 
 (async () => {
   const failed = [], times = [], t0 = Date.now();

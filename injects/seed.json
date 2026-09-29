@@ -1,0 +1,363 @@
+{
+ "start": 6,
+ "injects": [
+  {
+   "id": "i01",
+   "cat": "A",
+   "title": "Last-minute polling place relocation",
+   "type": "Operational",
+   "shape": "pairH",
+   "scene": "It is 7:20 a.m. The building you were going to open at has been shut to the public, and the site has to move. Voters are already in the parking lot.",
+   "atk": {
+    "where": "Which site, what kind of building it is, how many voters normally go there",
+    "what": "What forces the move, and what the county is left holding",
+    "when": "Before doors open, or mid-day with a line already out front?",
+    "goal": "Turnout at that site? Trust in the county's own notice? The call center?"
+   },
+   "op": "Secure a new site, move equipment and supplies, staff it, sign the old door, maintain chain of custody in transit.",
+   "comms": "Voters, poll workers and the call center all need the new address within minutes. Mapping tools and AI assistants will keep serving the old address for hours no matter what you post.",
+   "prec": "Routine nationally. In Ridgewood, N.J., a threat closed a school on Election Day 2025 and voters had to be redirected mid-day.",
+   "src": "CBS New York, Nov. 2025",
+   "ai": {
+    "task": "Build the rumor that beats the county's notice. Use a chatbot to write three versions of the post that says the move was deliberate.",
+    "prompt": "Write three social media posts, under 40 words each, from a resident of a fictional county who believes their polling place was moved at the last minute to hold down turnout. Angry, specific, plausible, no profanity. Put EXERCISE MATERIAL at the top of each one."
+   }
+  },
+  {
+   "id": "i02",
+   "cat": "A",
+   "title": "Evacuation from a threat or device",
+   "type": "Mixed",
+   "shape": "elbow",
+   "scene": "Police have cleared the building. Poll workers are on the sidewalk, voters are being turned away at the door, and nobody can say yet how long it will be.",
+   "atk": {
+    "where": "Which site, and what is around it",
+    "what": "What is found or reported, and who makes the call to clear the building",
+    "when": "How far into the day, and how long the building stays closed",
+    "goal": "Votes not cast? Or the belief that the whole election was stopped?"
+   },
+   "op": "Keep voting going somewhere. Chain of custody for equipment left behind. Possible court-ordered hours extension.",
+   "comms": "Two facts on separate tracks: safety status and voting continuity. Voters need to know their ballot still counts.",
+   "prec": "An unknown explosive device was thrown from a vehicle near a Catasauqua, Pa., polling place during the May 2026 primary. No injuries, voting was not interrupted, and a nearby election director described keeping materials staged to deploy a pop-up site under a tent if needed.",
+   "src": "Votebeat, May 2026",
+   "ai": {
+    "task": "Write the alert that did not come from the election office. Use a chatbot to draft the forwarded text message that shuts the county down.",
+    "prompt": "Draft a two-sentence emergency text alert, written to sound official, telling recipients that voting has been suspended countywide after a police incident and that they should go home. Use a fictional county and a fictional agency. Put EXERCISE MATERIAL at the top."
+   }
+  },
+  {
+   "id": "i03",
+   "cat": "A",
+   "title": "Weather or natural hazard closes or damages voting sites",
+   "type": "Mixed",
+   "crisis": true,
+   "sponsor": {
+    "name": "PEER",
+    "full": "Partnership for Elections and Emergency Response",
+    "url": "https://electionreadiness.org",
+    "logo": "https://electionreadiness.org/PEER%20Logo_Full%20Color%20(1).png"
+   },
+   "scene": "The storm came through overnight. Some of your sites have water in them, some have no road access, and your staff are calling in about their own homes.",
+   "atk": {
+    "where": "Which part of the jurisdiction takes the worst of it",
+    "what": "Flood, wind, fire or ice. What it does to buildings, roads and power",
+    "when": "Days out, the night before, or Election Day morning?",
+    "goal": "Access for displaced voters? Staff who cannot get to work?"
+   },
+   "op": "Damage assessment, relocation or consolidation, generators, road access for staff and equipment, resupply.",
+   "comms": "Voters need the new site and the reason in one message. Displaced voters may no longer be at the address on file, so the channels you normally rely on will not reach them.",
+   "prec": "Hurricanes Helene and Milton destroyed or closed polling sites across Florida and North Carolina before the 2024 general election. One Sarasota County voter was sent to three locations before finding the right one. Florida supervisors describe hurricane planning as a standing part of the 2026 cycle.",
+   "src": "",
+   "ai": {
+    "task": "Generate the image that arrives before your damage assessment does, then write the caption that travels with it.",
+    "prompt": "Generate a photo-realistic image of a small-town community center with flood water at the entrance and a half-submerged vote-here sign. Then write a 25-word caption claiming the county is hiding how many sites are underwater. Watermark the image EXERCISE MATERIAL."
+   }
+  },
+  {
+   "id": "i04",
+   "cat": "A",
+   "title": "Power outage at a voting location",
+   "type": "Operational",
+   "shape": "single",
+   "scene": "The lights go out at a busy site mid-morning. Tabulators are on battery, the line is not moving, and phones are already coming out.",
+   "atk": {
+    "where": "Which site, and what else on that block goes dark",
+    "what": "What causes it and how long it lasts",
+    "when": "Opening, the midday rush, or the last hour?",
+    "goal": "The line? The count? Or the story about what happened to the machines?"
+   },
+   "op": "Battery backup on tabulators, generator, emergency ballot procedures, decision on whether to relocate.",
+   "comms": "Say the site is open and ballots are being counted. An outage reads as a closure unless you say otherwise.",
+   "prec": "A power outage affected two Maricopa County voting centers during the July 2026 primary and power was restored by noon. Glendale, Wis., City Hall lost power in April 2026 and ran on a generator with tabulator battery backup, delaying voters about 10 minutes.",
+   "src": "",
+   "ai": {
+    "task": "Use a chatbot to turn a 20-minute outage into a fraud claim.",
+    "prompt": "Write a 50-word social post from someone who was standing in line when the lights went out at a polling place, implying that something was done to the machines while it was dark. Fictional county. Put EXERCISE MATERIAL at the top."
+   }
+  },
+  {
+   "id": "i05",
+   "cat": "B",
+   "title": "Wrong ballot style issued",
+   "type": "Operational",
+   "shape": "single",
+   "scene": "A voter says the ballot they were handed has races they should not be voting on. The poll worker who handed it out is not sure how many went out before anyone noticed.",
+   "atk": {
+    "where": "Which precinct or split, and how the styles got crossed",
+    "what": "How many wrong ballots go out before anybody notices",
+    "when": "Early voting, or Election Day with no time left to fix it?",
+    "goal": "A contested margin? Or a story that the county cannot run an election?"
+   },
+   "op": "Identify scope quickly, correct at the counter, determine whether any wrong ballot was cast.",
+   "comms": "Acknowledge with scale and remedy attached in the same breath. An error confirmed without a remedy becomes an integrity story.",
+   "prec": "A city councilor called for an investigation after a wrong-ballot report in South Boston during the 2026 primary. City officials responded that the affected voters were immediately provided proper ballots. Clean remedy, but the story still ran as a probe demand.",
+   "src": "Boston Herald, Aug. 2026",
+   "ai": {
+    "task": "Fabricate the evidence. Use an AI image tool to produce the photo of a ballot with the wrong races on it.",
+    "prompt": "Create an image that looks like a phone photo of a paper ballot lying on a table, headed with a fictional county name and a district that does not match the voter's address. All candidate names invented. Label the image EXERCISE MATERIAL."
+   }
+  },
+  {
+   "id": "i06",
+   "cat": "B",
+   "title": "Pollbook error or wrong pollbook delivered",
+   "type": "Operational",
+   "shape": "pairH",
+   "scene": "Voters are being told they are not on the list. The pollbook at the site does not match what the office has, and provisional ballots are stacking up.",
+   "atk": {
+    "where": "Which sites got the wrong books",
+    "what": "Who is missing from them, and whether the missing names have a pattern",
+    "when": "Found at 6 a.m. by staff, or at 11 by a voter?",
+    "goal": "Provisional rejections? Or a claim that a group was deliberately purged?"
+   },
+   "op": "Print and deliver supplemental pollbooks, provisional procedures, reconcile at close.",
+   "comms": "Explain why a voter is being offered a provisional ballot before the voter concludes they were purged.",
+   "prec": "Chester County, Pa., misprinted paper pollbooks in fall 2025, leaving out independent and third party voters. The county rushed supplemental pollbooks out on Election Day and thousands of voters cast provisional ballots, which carry a higher rejection risk.",
+   "src": "",
+   "ai": {
+    "task": "Use a chatbot to write the purge thread that spreads before your supplemental books arrive.",
+    "prompt": "Write a four-post social thread from an independent voter who was told they are not in the pollbook and who concludes that independents were removed on purpose. Under 60 words per post. Fictional county. Put EXERCISE MATERIAL at the top."
+   }
+  },
+  {
+   "id": "i07",
+   "cat": "C",
+   "title": "Voter lookup tool or website outage",
+   "type": "Operational",
+   "shape": "single",
+   "scene": "Your voter lookup page is down. Nobody knows yet whether it is the page, the data behind it, or something worse, and the calls have started.",
+   "atk": {
+    "where": "The county page, the state page, or both",
+    "what": "Down, wrong, or quietly serving stale addresses?",
+    "when": "The week before, or the morning of?",
+    "goal": "Voters at the wrong site? Or the vacuum that something else fills?"
+   },
+   "op": "Restore, verify data integrity, stand up an alternate.",
+   "comms": "Where voters get accurate information while the tool is down.",
+   "prec": "The Idaho secretary of state's office updated its voter lookup tool after the public reported a website glitch.",
+   "src": "Coeur d'Alene Press, Aug. 2026",
+   "ai": {
+    "task": "Build nothing. Ask three different AI assistants where to vote in a real county none of you work in, and capture what they say. That is what voters get while your lookup tool is down.",
+    "prompt": "Where do I vote in [pick a small county none of you administer]? What are the hours, and what do I need to bring? Run the same question in three assistants and write down every detail each one got wrong or invented."
+   }
+  },
+  {
+   "id": "i08",
+   "cat": "C",
+   "title": "City or county IT compromise reaching the election office",
+   "type": "Mixed",
+   "shape": "lineV3",
+   "scene": "The county reports an intrusion on its network. Nobody can tell you yet whether it reached anything election-related, and the question is already public.",
+   "atk": {
+    "where": "Which county system, and what it touches on the way",
+    "what": "What is taken or locked, and what nobody can rule out yet",
+    "when": "When it happens, and how much later the county finds out",
+    "goal": "Confidence in the voter file? Or time and attention the office does not have?"
+   },
+   "op": "Determine whether election systems are segmented, sever connections, restore from backup, run on paper, preserve forensics.",
+   "comms": "Say what was affected and what was not, in that order, and keep repeating it.",
+   "prec": "Coffee County, Ga., severed its connection to the state voter registration system after a suspected ransomware attack in April 2024. Hall County, Ga., was hit in 2020 including a voter signature database, and county officials reported voting was not disrupted.",
+   "src": "",
+   "ai": {
+    "task": "Write the claim, not the intrusion. Use a chatbot to produce the post saying the voter file is already for sale.",
+    "prompt": "Write a 60-word post from an anonymous account claiming a county election office was breached and that voter records are being sold, citing no evidence but sounding certain. Fictional county. Put EXERCISE MATERIAL at the top. Do not include any technical instructions."
+   }
+  },
+  {
+   "id": "i09",
+   "cat": "C",
+   "title": "Facility inaccessible for safety reasons",
+   "type": "Mixed",
+   "shape": "lineH3",
+   "scene": "The building holding ballots and equipment has been cordoned off and your staff cannot get in. Counting was supposed to start this morning.",
+   "atk": {
+    "where": "Which building, and what is inside it right now",
+    "what": "What closes it, and who controls the perimeter",
+    "when": "Before the count starts, or in the middle of it?",
+    "goal": "The count clock? Chain of custody? Or the story that ballots are gone?"
+   },
+   "op": "Chain of custody, count timing, cost, physical safety of workers, potential destruction of ballots or equipment.",
+   "comms": "Counting will be delayed. Plainly state the procedures for securing ballots and maintaining chain of custody, and work through emergency management and law enforcement.",
+   "prec": "Exercise scenario, but natural disasters, fires, floods and active threats against a counting facility could easily render it inaccessible.",
+   "src": "",
+   "ai": {
+    "task": "Generate the image of the cordon, then the caption that says the ballots are gone.",
+    "prompt": "Generate an image of a nondescript warehouse behind police tape at night, no identifying signage. Then write a 30-word caption claiming the ballots inside were destroyed and the county has not admitted it. Fictional county. Watermark the image EXERCISE MATERIAL."
+   }
+  },
+  {
+   "id": "i10",
+   "cat": "D",
+   "title": "Unauthorized access to equipment, including by an insider",
+   "type": "Mixed",
+   "shape": "pairV",
+   "scene": "A seal does not match the log. Someone was in the room with the equipment when they should not have been, and one of the names on the access list is your own staff.",
+   "atk": {
+    "where": "Which room, which equipment, whose access badge",
+    "what": "What was done, and what cannot be proven either way afterward",
+    "when": "Before logic and accuracy testing, or after ballots were loaded?",
+    "goal": "Decertified equipment? An insider story? Or the office's trust in its own staff?"
+   },
+   "op": "Preserve logs and seals, decommission or decertify affected equipment, notify the state, refer for investigation.",
+   "comms": "Facts and equipment status only. This is a chain of custody matter and a law enforcement matter, not a debate to win.",
+   "prec": "A temporary election worker inserted a personal flash drive into an electronic pollbook holding protected voter data, and the equipment was decommissioned. In Michigan, several local clerks allegedly gave outsiders access to tabulators, and the state warned clerks and required monthly confirmations.",
+   "src": "",
+   "ai": {
+    "task": "Produce the grainy still that names no one and accuses everyone.",
+    "prompt": "Generate a low-resolution security-camera style image of a person standing beside an unidentified piece of office equipment at night, face not visible, no logos. Then write a 25-word caption implying insider tampering. Invented setting. Watermark the image EXERCISE MATERIAL."
+   }
+  },
+  {
+   "id": "i11",
+   "cat": "D",
+   "title": "Person falsely claiming federal authority",
+   "type": "Mixed",
+   "shape": "single",
+   "scene": "Someone is at the door with a badge and a letter, saying they are here on federal authority and want access to the tabulation room. Your staff are waiting on an answer.",
+   "atk": {
+    "where": "Which door, and who is standing at it",
+    "what": "What they claim, what they are carrying, what they want to get near",
+    "when": "The day before, or during counting?",
+    "goal": "Access to equipment? A staff member who freezes? Or just the photo?"
+   },
+   "op": "Verify credentials, control the guard rail, do not let anyone past on assumption.",
+   "comms": "Say nothing publicly until verified. The referral is a law enforcement statement.",
+   "prec": "Exercise scenario, but the verification problem is real. In Syracuse the Republican commissioner initially suspected a hoax and had to confirm through Homeland Security contacts that the agents were genuine.",
+   "src": "NPR, June 2026",
+   "ai": {
+    "task": "Draft the advance email the impostor sends the day before. Invented agency only.",
+    "prompt": "Write a short, officious email from an inspector at the fictional Federal Office of Election Compliance announcing an unannounced site visit tomorrow and instructing staff to provide access to tabulation equipment. Invented names throughout. Put EXERCISE MATERIAL at the top. Do not name any real agency, office or person."
+   }
+  },
+  {
+   "id": "i12",
+   "cat": "D",
+   "title": "Verified federal monitors or observers",
+   "type": "Mixed",
+   "shape": "pairH",
+   "scene": "Federal monitors are in the building, lawfully and with notice. Within the hour, the room is being described online as having been taken over.",
+   "atk": {
+    "where": "Which building they are in, and what they can see from there",
+    "what": "What is lawful and announced here, and what gets said about it anyway",
+    "when": "Announced a week out, or first thing on Election Day?",
+    "goal": "The narrative outside the building. The monitors themselves are not the problem."
+   },
+   "op": "Confirm authority, define access, assign an escort.",
+   "comms": "An explainer published before election day, not improvised at the door.",
+   "prec": "The federal government sent election monitors to Massachusetts for the 2026 cycle. The Justice Department previously sent observers to five California counties, including Los Angeles, during a 2025 special election.",
+   "src": "MassLive, Aug. 2026 and AP via U.S. News, June 2026",
+   "ai": {
+    "task": "Use a chatbot to turn lawful observers into an occupation.",
+    "prompt": "Write a 50-word post claiming federal agents have taken control of a county election office, based on nothing more than monitors being seen in the building. Fictional county. Put EXERCISE MATERIAL at the top."
+   }
+  },
+  {
+   "id": "i13",
+   "cat": "D",
+   "title": "Subpoena, warrant or seizure demand",
+   "type": "External",
+   "shape": "lineV3",
+   "scene": "A legal demand has just been served on the office. It names records, it names equipment, and the deadline in it is short.",
+   "atk": {
+    "where": "Which records and which equipment are named in it",
+    "what": "Who serves it, how broad it is, and how short the deadline is",
+    "when": "Mid-count, or during the canvass?",
+    "goal": "Equipment you cannot run without? Staff hours? Or a deadline you cannot meet?"
+   },
+   "op": "Verify identity and scope, preserve records, suspend auto-delete, do not obstruct, document everything.",
+   "comms": "Minimal and legal-cleared only. Silence is a defensible position here.",
+   "prec": "The California Supreme Court is weighing whether a sheriff's seizure of 650,000 ballots was legal.",
+   "src": "Sacramento Bee, Aug. 2026",
+   "ai": {
+    "task": "Point the AI at yourselves. Paste a real, public records demand or subpoena into a chatbot, ask it what you have to hand over, then list every place its answer would have gotten you in trouble.",
+    "prompt": "Here is a legal demand addressed to a county election office. Tell me what it requires, by when, and exactly what we are obligated to produce. [paste a public document]"
+   }
+  },
+  {
+   "id": "i14",
+   "cat": "D",
+   "title": "Content creator at polling site posting false or misleading information",
+   "type": "Mixed",
+   "shape": "pairH",
+   "scene": "Someone is livestreaming outside a polling site. What they are narrating is not what is happening, and the clip is moving faster than anything you can put out.",
+   "atk": {
+    "where": "Which site, and how close they manage to get",
+    "what": "What they say on camera, next to what is actually happening",
+    "when": "The opening rush, or the last hour before close?",
+    "goal": "A confrontation on camera? Or a clip that outruns every correction?"
+   },
+   "op": "Keep voting going, work with law enforcement, de-escalate any tensions.",
+   "comms": "Counter the claim plainly and quickly, and refer anything criminal to law enforcement.",
+   "prec": "Exercise scenario. Individuals may also be working an angle in prediction markets rather than a political one.",
+   "src": "",
+   "ai": {
+    "task": "Build the post, not the video. Write the creator's script with a chatbot, then make the thumbnail and the caption that carry it.",
+    "prompt": "Write a 30-second first-person script for a livestreamer outside a polling place who claims they were just denied entry as an observer and implies the county is hiding something. Then write the caption and generate a thumbnail image of a person filming outside a nondescript public building. Fictional county. Label the image EXERCISE MATERIAL."
+   }
+  },
+  {
+   "id": "i15",
+   "cat": "F",
+   "title": "Leadership departure or turnover mid-cycle",
+   "type": "Operational",
+   "shape": "pairV",
+   "scene": "Your director is gone, effective immediately. The election is not moving, and half of what that person knew was never written down.",
+   "atk": {
+    "where": "Which role, and what only that person knew",
+    "what": "Resignation, illness or removal, and how it becomes public",
+    "when": "How many days out?",
+    "goal": "Decisions nobody is authorized to make? Or a vacuum the rumor fills first?"
+   },
+   "op": "Continuity, succession, institutional knowledge.",
+   "comms": "Continuity message first, personnel message second.",
+   "prec": "Exercise scenario. Turnover mid-cycle is the most common continuity event in the field and the least exercised.",
+   "src": "",
+   "ai": {
+    "task": "Use a chatbot to write the resignation rumor, the version that supplies a reason.",
+    "prompt": "Write a 60-word post claiming a county election director resigned suddenly and that the timing points to a cover-up. Fictional county, fictional name. Put EXERCISE MATERIAL at the top."
+   }
+  },
+  {
+   "id": "i16",
+   "cat": "B",
+   "title": "Mail delivery disruption or federal mail rule change",
+   "type": "External",
+   "crisis": true,
+   "scene": "Mail ballot delivery has broken down and the rules just changed under you. Ballots already in the mail may not arrive in time, and voters are asking what to do.",
+   "atk": {
+    "where": "Which facility or route, and which voters depend on it",
+    "what": "A delay, a rule change, or both at once",
+    "when": "Before ballots go out, or after they are already in the mail?",
+    "goal": "Ballots that arrive too late? Or voters who give up and do nothing?"
+   },
+   "op": "Alternate return options, drop box capacity, cure processing.",
+   "comms": "Tell voters what to do differently now. The policy fight is somebody else's.",
+   "prec": "The Postal Service moved in August 2026 to finalize regulations giving the federal government broad control over mail ballots, ahead of a Supreme Court ruling. Separately, Vermont's congressional delegation complained to the postmaster general about delivery problems.",
+   "src": "CyberScoop, Aug. 2026 and VTDigger, Aug. 2026",
+   "ai": {
+    "task": "Generate the mailed notice that did not come from the Postal Service.",
+    "prompt": "Create an image of a mailed notice from the fictional National Mail Ballot Authority telling voters their mail ballot will not count unless they re-request it online by a deadline. Fictional county and fictional web address. Watermark it EXERCISE MATERIAL."
+   }
+  }
+ ]
+}

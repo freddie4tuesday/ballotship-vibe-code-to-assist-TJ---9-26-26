@@ -1,0 +1,20 @@
+// The STAGING inject library: a separate store from the live one, so code changes and test edits
+// never touch the live deck. Deploy with ../deploy.sh staging.
+// Deploy with ../deploy.sh. Needs a secret: `npx wrangler secret put EDIT_TOKEN --config wrangler.staging.jsonc`
+// (a long random string; the editor's address is /edit/<that string>).
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "ballotship-injects-staging",
+  "account_id": "907c63834a38c160f1294cfc347a059a",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-25",
+  "workers_dev": true,
+  "assets": { "directory": "site", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none" },
+  "durable_objects": { "bindings": [{ "name": "DECK", "class_name": "Deck" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Deck"] }],
+  "routes": [
+    { "pattern": "ballotship-injects-staging.electionadminsuite.com", "custom_domain": true },
+    // Needed for the same reason as the game's route: *.electionadminsuite.com/* goes to poll-worker-system.
+    { "pattern": "ballotship-injects-staging.electionadminsuite.com/*", "zone_name": "electionadminsuite.com" }
+  ]
+}

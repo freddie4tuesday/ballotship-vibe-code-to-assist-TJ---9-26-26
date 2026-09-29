@@ -1,0 +1,103 @@
+{
+ "types": {
+  "Operational": "Yours to fix",
+  "Mixed": "Shared",
+  "External": "Somebody else's fight"
+ },
+ "cats": {
+  "A": "A. Voter access is disrupted",
+  "B": "B. Ballots and materials",
+  "C": "C. Systems, tabulation and results",
+  "D": "D. Presence and authority at the site",
+  "E": "E. Information environment",
+  "F": "F. Institutional and policy pressure"
+ },
+ "shapes": {
+  "single": {
+   "cells": [
+    [
+     0,
+     0
+    ]
+   ],
+   "desc": "1 cell"
+  },
+  "pairH": {
+   "cells": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ]
+   ],
+   "desc": "2 cells, across"
+  },
+  "pairV": {
+   "cells": [
+    [
+     0,
+     0
+    ],
+    [
+     1,
+     0
+    ]
+   ],
+   "desc": "2 cells, down"
+  },
+  "lineH3": {
+   "cells": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     2
+    ]
+   ],
+   "desc": "3 cells, across"
+  },
+  "lineV3": {
+   "cells": [
+    [
+     0,
+     0
+    ],
+    [
+     1,
+     0
+    ],
+    [
+     2,
+     0
+    ]
+   ],
+   "desc": "3 cells, down"
+  },
+  "elbow": {
+   "cells": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     0
+    ]
+   ],
+   "desc": "3 cells, corner"
+  }
+ }
+}

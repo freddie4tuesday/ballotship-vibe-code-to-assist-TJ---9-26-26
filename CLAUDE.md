@@ -16,11 +16,14 @@ Read `ballotship-SUMMARY.md` first (current build, standing rules, deploy and ro
   staging and clearly says to go live.** An approval given earlier, for the wording or the design,
   does not count. Never deploy to production any other way, and never push work-in-progress to
   `main`. See "Releasing" in `ballotship-SUMMARY.md`.
-- **Addresses:** the page and the relay each have a live and a staging Worker. Every hostname needs
+- **Addresses:** the page, the relay and the inject library (`injects/`) each have a live and a staging Worker. Every hostname needs
   its own specific route because `*.electionadminsuite.com/*` and `*-staging.electionadminsuite.com/*`
   belong to other apps (already in each `wrangler*.jsonc`).
-- **Tests:** `npm test` from `tests/` (about 4 minutes) before every deploy, staging included; `deploy.sh`
-  refuses code the tests haven't passed on. They use a local relay only.
+- **Tests:** `npm test` from `tests/` (about 6 minutes) before every deploy, staging included; `deploy.sh`
+  refuses code the tests haven't passed on. They use a local relay and a local inject library only.
+- **Inject library:** the deck of injects is edited on its editor page, never by deploying. The editor's
+  address contains a secret (`EDIT_TOKEN`): never print it, commit it or put it in a doc. Changing the
+  fields an inject has means changing `injects/src/validate.js`, `sanitizeDeck` in `index.html` and the editor together.
 - **Relay:** plain HTTP polling only. Don't switch to always-open WebSockets without
   hibernation (cost). Room auto-delete is deliberately off; see the roadmap.
 - Work on the `staging` branch; merge it into `main` only when going live.

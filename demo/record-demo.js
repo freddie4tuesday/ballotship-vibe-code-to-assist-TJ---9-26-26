@@ -167,7 +167,7 @@ const CRISIS_STATEMENT = "Severe weather has closed two voting sites. All other 
       const ctx = await browser.newContext(Object.assign({ viewport: { width: 1920, height: 1080 } },
         DRY ? {} : { recordVideo: { dir: OUT, size: { width: 1920, height: 1080 } } }));
       // Fast enough to feel live, well under the relay's 400-a-minute room limit.
-      await ctx.addInitScript(() => { window.BALLOTSHIP_POLL_MS = 700; });
+      await ctx.addInitScript(() => { window.BALLOTSHIP_POLL_MS = 700; window.BALLOTSHIP_DECK_URL = ""; });   // build 12: the demo always uses the built-in injects, so it is the same every time
       await routeAssets(ctx);
       const page = await ctx.newPage();
       const consoleErrors = [];

@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Ballotship inject library</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="/meta.js"></script>
+<style>
+:root{--ink:#0E1F1A;--evergreen:#1B4D3E;--evergreen-deep:#0F3329;--sage:#E6EAE4;--sage-dim:#D6DDD3;--paper:#fff;--line:#BFCBBC;--orange:#E4572E;--magenta:#C6006F;--muted:#5C6B62;--disp:"Barlow Condensed",sans-serif;--body:"IBM Plex Sans",sans-serif;--mono:"IBM Plex Mono",monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sage);color:var(--ink);font:15px/1.45 var(--body)}
+header{background:var(--evergreen-deep);color:#fff;padding:12px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;position:sticky;top:0;z-index:5}
+header h1{font:700 22px var(--disp);letter-spacing:.06em;text-transform:uppercase;margin:0}
+header .rft{font:500 12px var(--mono);opacity:.75;letter-spacing:.08em;text-transform:uppercase}
+header .sp{flex:1}
+button{font:600 14px var(--body);border:1px solid var(--evergreen);background:var(--paper);color:var(--evergreen);border-radius:4px;padding:7px 12px;cursor:pointer}
+button.pri{background:var(--evergreen);color:#fff}
+button.warn{border-color:var(--magenta);color:var(--magenta)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--orange);outline-offset:1px}
+#status{font-size:13px;min-height:1.4em}
+#status.err{color:#ffd7cc;font-weight:600}
+main{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:16px;padding:16px 20px;max-width:1300px;margin:0 auto}
+@media(max-width:800px){main{grid-template-columns:1fr}}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:6px}
+.intro{grid-column:1/-1;padding:12px 16px;font-size:14px}
+ol#list{list-style:none;margin:0;padding:0}
+#list li{display:flex;gap:6px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--sage);cursor:pointer}
+#list li.sel{background:var(--sage)}
+#list .no{font:600 13px var(--mono);width:26px;color:var(--muted)}
+#list .t{flex:1;font-weight:600;font-size:14px}
+#list .t small{display:block;font-weight:400;color:var(--muted)}
+#list .badge{font:600 11px var(--disp);letter-spacing:.08em;text-transform:uppercase;background:var(--orange);color:#fff;padding:1px 6px;border-radius:3px}
+#list .badge.c{background:var(--magenta)}
+#list button{padding:2px 7px;font-size:13px}
+.bar{padding:10px;display:flex;gap:8px;flex-wrap:wrap}
+form#f{padding:16px;display:grid;gap:12px}
+label{display:grid;gap:3px;font-weight:600;font-size:13px}
+label .hint{font-weight:400;color:var(--muted)}
+label .count{font:400 12px var(--mono);color:var(--muted);text-align:right}
+label .count.over{color:var(--magenta);font-weight:600}
+input,select,textarea{font:400 15px var(--body);border:1px solid var(--line);border-radius:4px;padding:7px 9px;width:100%;background:#fff;color:var(--ink)}
+textarea{min-height:64px;resize:vertical}
+fieldset{border:1px solid var(--line);border-radius:6px;margin:0;padding:10px 12px;display:grid;gap:10px}
+legend{font:700 14px var(--disp);letter-spacing:.06em;text-transform:uppercase;color:var(--evergreen);padding:0 6px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.row{grid-template-columns:1fr}}
+.grid6{display:grid;grid-template-columns:repeat(6,22px);gap:2px;margin-top:4px}
+.grid6 i{width:22px;height:22px;background:var(--sage);border:1px solid var(--line);display:block}
+.grid6 i.on{background:var(--orange);border-color:var(--orange)}
+.errs{background:#FCEEF4;border:1px solid var(--magenta);color:#6b0040;padding:8px 12px;border-radius:4px;font-size:14px}
+#hist{padding:12px 16px}
+#hist table{border-collapse:collapse;width:100%;font-size:14px}
+#hist td,#hist th{border-bottom:1px solid var(--sage);padding:6px 8px;text-align:left;vertical-align:top}
+.diff{font:400 13px var(--mono);white-space:pre-wrap;background:var(--sage);padding:8px;border-radius:4px;margin-top:6px}
+.diff b{color:var(--magenta)} .diff u{color:var(--evergreen);text-decoration:none;font-weight:600}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="rft">Ready for Tuesday</div><h1>Ballotship inject library</h1></div>
+  <div class="sp"></div>
+  <span id="status" role="status"></span>
+  <button id="btnHist" type="button">History</button>
+  <label style="color:#fff;min-width:220px"><span class="hint" style="color:#cfe0d6">What did you change? (optional)</span><input id="summary" maxlength="200" placeholder="e.g. Reworded inject 4"></label>
+  <button id="btnSave" type="button" class="pri" disabled>Save to live deck</button>
+</header>
+<main>
+  <div class="panel intro" id="intro">
+    An <b>inject</b> is a surprise handed to a team during the exercise. This page lists them all. <b>Saving changes the
+    deck immediately:</b> the next game that starts uses it (games already under way keep the deck they began with).
+    Every save is kept as a numbered version under <b>History</b>, and any version can be restored.
+    Injects are played in this order, starting from the one marked <b>Start</b>.
+  </div>
+  <section class="panel" aria-label="Injects">
+    <div class="bar"><button id="btnAdd" type="button">+ Add an inject</button></div>
+    <ol id="list"></ol>
+  </section>
+  <section class="panel" aria-label="Edit inject">
+    <div id="hist" hidden></div>
+    <form id="f" autocomplete="off" hidden></form>
+    <div id="empty" style="padding:16px" hidden>Choose an inject on the left, or add one.</div>
+  </section>
+</main>
+<script>
+(function(){
+"use strict";
+var TOKEN = location.pathname.split("/")[2] || "";
+var API = "/api/edit/" + encodeURIComponent(TOKEN) + "/";
+var M = window.META, L = {title:120,scene:400,where:300,what:300,when:300,goal:300,op:400,comms:500,prec:700,src:120,task:400,prompt:800,sname:40,sfull:120,url:300};
+var deck = null, base = 0, saved = "", sel = 0, N = 6;
+var $ = function(id){return document.getElementById(id);};
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function status(t, bad){var s=$("status");s.textContent=t||"";s.className=bad?"err":"";}
+function api(path, body){
+  return fetch(API+path, body===undefined?{}:{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)})
+    .then(function(r){return r.json().then(function(j){return {ok:r.ok,status:r.status,j:j};});})
+    .catch(function(){return {ok:false,status:0,j:{error:"Couldn't reach the server. Check your connection, then try again. Your changes here are still on this page."}};});
+}
+function snap(){return JSON.stringify({start:deck.start,injects:deck.injects});}
+function dirty(){return snap()!==saved;}
+function refreshSave(){$("btnSave").disabled=!dirty();if(dirty())status("Unsaved changes.");else if(base)status("Live deck is version "+base+".");}
+window.addEventListener("beforeunload",function(e){if(dirty()){e.preventDefault();e.returnValue="";}});
+
+function load(){
+  return fetch("/api/deck",{cache:"no-store"}).then(function(r){return r.json();}).then(function(d){
+    deck={start:d.start,injects:d.injects};base=d.version;saved=snap();sel=Math.min(sel,deck.injects.length-1);draw();refreshSave();
+  }).catch(function(){status("Couldn't load the deck. Reload the page.",true);});
+}
+function draw(){drawList();drawForm();}
+function drawList(){
+  var ol=$("list");ol.innerHTML="";
+  deck.injects.forEach(function(c,i){
+    var li=document.createElement("li");if(i===sel)li.className="sel";
+    li.innerHTML='<span class="no">'+(i+1)+'</span><span class="t">'+esc(c.title||"(untitled)")+'<small>'+esc(M.cats[c.cat]||"")+' · '+esc(c.type||"")+'</small></span>'
+      +(deck.start===i+1?'<span class="badge">Start</span>':'')+(c.crisis?'<span class="badge c">Crisis</span>':'')
+      +'<button type="button" data-a="up" aria-label="Move up"'+(i===0?" disabled":"")+'>↑</button><button type="button" data-a="dn" aria-label="Move down"'+(i===deck.injects.length-1?" disabled":"")+'>↓</button>';
+    li.onclick=function(e){var a=e.target.getAttribute&&e.target.getAttribute("data-a");if(a==="up")move(i,-1);else if(a==="dn")move(i,1);else{sel=i;$("hist").hidden=true;draw();}};
+    ol.appendChild(li);
+  });
+}
+function move(i,d){
+  var j=i+d;if(j<0||j>=deck.injects.length)return;
+  var t=deck.injects[i];deck.injects[i]=deck.injects[j];deck.injects[j]=t;
+  if(deck.start===i+1)deck.start=j+1;else if(deck.start===j+1)deck.start=i+1;
+  sel=j;draw();refreshSave();
+}
+function newId(){var m=0;deck.injects.forEach(function(c){m=Math.max(m,parseInt(c.id.slice(1),10)||0);});return "i"+String(m+1).padStart(2,"0");}
+$("btnAdd").onclick=function(){
+  if(deck.injects.length>=99){status("A deck holds at most 99 injects.",true);return;}
+  deck.injects.push({id:newId(),cat:"A",title:"New inject",type:"Operational",shape:"single",scene:"",atk:{where:"",what:"",when:"",goal:""},op:"",comms:"",prec:"",src:"",ai:{task:"",prompt:""}});
+  sel=deck.injects.length-1;$("hist").hidden=true;draw();refreshSave();status("Added at the end. Fill it in, then Save.");
+};
+
+function field(label,val,max,key,opts){
+  opts=opts||{};var id="fld_"+key.replace(/\W/g,"_");
+  return '<label>'+esc(label)+(opts.hint?' <span class="hint">'+esc(opts.hint)+'</span>':'')
+    +(opts.rows?'<textarea id="'+id+'" data-k="'+key+'" data-max="'+max+'" rows="'+opts.rows+'">'+esc(val||"")+'</textarea>':'<input id="'+id+'" data-k="'+key+'" data-max="'+max+'" value="'+esc(val||"")+'">')
+    +'<span class="count" id="cnt_'+id+'"></span></label>';
+}
+function opt(map,cur){return Object.keys(map).map(function(k){return '<option value="'+esc(k)+'"'+(k===cur?" selected":"")+'>'+esc(map[k])+'</option>';}).join("");}
+function drawForm(){
+  var f=$("f");
+  if(!deck.injects.length){f.hidden=true;$("empty").hidden=false;return;}
+  $("empty").hidden=true;f.hidden=$("hist").hidden===false;
+  var c=deck.injects[sel];c.atk=c.atk||{};c.ai=c.ai||{};
+  var shapeOpts={};Object.keys(M.shapes).forEach(function(k){shapeOpts[k]=M.shapes[k].desc+" ("+k+")";});
+  var sp=c.sponsor;
+  f.innerHTML=
+    '<div class="row"><label>Category<select data-k="cat">'+opt(M.cats,c.cat)+'</select></label>'
+    +'<label>Type <span class="hint">who has to fix it</span><select data-k="type">'+opt(M.types,c.type)+'</select></label></div>'
+    +field("Title",c.title,L.title,"title")
+    +'<div class="row"><label>Footprint <span class="hint">the squares it takes offline</span><select data-k="shape"'+(c.crisis?" disabled":"")+'>'+opt(shapeOpts,c.shape)+'</select><span id="grid"></span></label>'
+    +'<label style="align-content:start"><span><input type="checkbox" data-k="crisis" style="width:auto"'+(c.crisis?" checked":"")+'> Crisis inject <span class="hint">hits the whole jurisdiction; the defender chooses which 2 squares go offline</span></span></label></div>'
+    +field("Scene",c.scene,L.scene,"scene",{rows:3,hint:"what the team is told is happening"})
+    +'<fieldset><legend>Questions the attacking team answers</legend>'
+    +field("Where",c.atk.where,L.where,"atk.where",{rows:2})+field("What",c.atk.what,L.what,"atk.what",{rows:2})
+    +field("When",c.atk.when,L.when,"atk.when",{rows:2})+field("Goal",c.atk.goal,L.goal,"atk.goal",{rows:2})+'</fieldset>'
+    +field("Operations",c.op,L.op,"op",{rows:2,hint:"what the office has to do"})
+    +field("Communications",c.comms,L.comms,"comms",{rows:3})
+    +field("Real-world precedent",c.prec,L.prec,"prec",{rows:4})
+    +field("Precedent source",c.src,L.src,"src",{hint:"optional"})
+    +'<fieldset><legend>AI assignment</legend>'+field("Task",c.ai.task,L.task,"ai.task",{rows:2})+field("Prompt to paste into an AI tool",c.ai.prompt,L.prompt,"ai.prompt",{rows:4})+'</fieldset>'
+    +'<fieldset><legend>Sponsor credit (optional)</legend><label><span><input type="checkbox" data-k="sponsor" style="width:auto"'+(sp?" checked":"")+'> This inject has a sponsor</span></label>'
+    +(sp?'<div class="row">'+field("Short name",sp.name,L.sname,"sponsor.name")+field("Full name",sp.full,L.sfull,"sponsor.full")+'</div>'+field("Link",sp.url,L.url,"sponsor.url",{hint:"must start with https://"})+field("Logo image address",sp.logo,L.url,"sponsor.logo",{hint:"must start with https://"}):'')+'</fieldset>'
+    +'<div class="bar" style="padding:0"><button type="button" data-a="start"'+(deck.start===sel+1?" disabled":"")+'>'+(deck.start===sel+1?"This is the starting inject":"Make this the starting inject")+'</button>'
+    +'<button type="button" class="warn" data-a="del">Delete this inject</button></div><div id="errs"></div>';
+  drawGrid();counts();
+}
+function get(c,key){return key.split(".").reduce(function(o,k){return o&&o[k];},c);}
+function put(c,key,v){var p=key.split(".");while(p.length>1){var k=p.shift();c=c[k]=c[k]||{};}c[p[0]]=v;}
+function counts(){
+  var els=$("f").querySelectorAll("[data-max]");
+  Array.prototype.forEach.call(els,function(e){var n=e.value.length,m=+e.getAttribute("data-max"),c=$("cnt_"+e.id);if(c){c.textContent=n+" / "+m;c.className="count"+(n>m?" over":"");}});
+}
+function drawGrid(){
+  var c=deck.injects[sel],g=$("grid");if(!g)return;
+  if(c.crisis){g.innerHTML='<div class="hint" style="margin-top:6px">Whole jurisdiction</div>';return;}
+  var on={};((M.shapes[c.shape]||{cells:[]}).cells).forEach(function(d){on[d[0]*N+d[1]]=1;});
+  var h='<div class="grid6" role="img" aria-label="Squares covered, shown from the top-left corner of the target">';
+  for(var i=0;i<N*N;i++)h+='<i class="'+(on[i]?"on":"")+'"></i>';
+  g.innerHTML=h+'</div><div class="hint" style="font-weight:400;color:var(--muted);font-size:12px">Drawn with the target in the top-left square. The shape extends right and down from the chosen square.</div>';
+}
+$("f").addEventListener("input",function(e){
+  var k=e.target.getAttribute("data-k");if(!k||e.target.type==="checkbox")return;
+  put(deck.injects[sel],k,e.target.value);counts();if(k==="title")drawList();
+  if(k==="shape")drawGrid();refreshSave();
+});
+$("f").addEventListener("change",function(e){
+  var k=e.target.getAttribute("data-k"),c=deck.injects[sel];if(!k)return;
+  if(k==="crisis"){if(e.target.checked){c.crisis=true;delete c.shape;}else{delete c.crisis;c.shape=c.shape||"single";}draw();}
+  else if(k==="sponsor"){if(e.target.checked)c.sponsor={name:"",full:"",url:"https://",logo:"https://"};else delete c.sponsor;drawForm();}
+  else if(k==="cat"||k==="type"||k==="shape"){put(c,k,e.target.value);draw();}
+  refreshSave();
+});
+$("f").addEventListener("click",function(e){
+  var a=e.target.getAttribute&&e.target.getAttribute("data-a");
+  if(a==="start"){deck.start=sel+1;draw();refreshSave();}
+  if(a==="del"){
+    var c=deck.injects[sel];
+    if(deck.injects.length<=4){status("A deck needs at least 4 injects.",true);return;}
+    if(!confirm('Delete "'+c.title+'"? It comes off the deck when you Save, and you can bring it back from History.'))return;
+    deck.injects.splice(sel,1);
+    if(deck.start>deck.injects.length)deck.start=1;else if(deck.start>sel+1)deck.start--;else if(deck.start===sel+1)deck.start=Math.min(deck.start,deck.injects.length);
+    sel=Math.max(0,Math.min(sel,deck.injects.length-1));draw();refreshSave();
+  }
+});
+$("f").addEventListener("keydown",function(e){if(e.key==="Enter"&&e.target.tagName==="INPUT")e.preventDefault();});
+
+$("btnSave").onclick=function(){
+  var b=$("btnSave");b.disabled=true;status("Saving...");
+  api("save",{base:base,start:deck.start,injects:deck.injects,summary:$("summary").value.trim()||"Edited"}).then(function(r){
+    if(r.ok){$("summary").value="";return load().then(function(){status("Saved. The live deck is now version "+r.j.version+".");});}
+    var box=$("errs");if(box&&r.j.errors)box.innerHTML='<div class="errs"><b>Not saved.</b><ul>'+r.j.errors.slice(0,8).map(function(x){return "<li>"+esc(x)+"</li>";}).join("")+"</ul></div>";
+    status(r.j.error||"Not saved. Try again.",true);b.disabled=false;
+  });
+};
+
+/* ---- history ---- */
+function when(t){return new Date(t).toLocaleString();}
+function lines(d){return d.injects.map(function(c,i){return (i+1)+". "+c.title;});}
+function diffText(a,b){
+  var out=[],ai={},bi={};
+  a.injects.forEach(function(c){ai[c.id]=c;});b.injects.forEach(function(c){bi[c.id]=c;});
+  b.injects.forEach(function(c){
+    var o=ai[c.id];if(!o){out.push("<u>+ added</u> "+esc(c.title));return;}
+    var ch=[];function walk(x,y,p){Object.keys(Object.assign({},x,y)).forEach(function(k){var u=x[k],v=y[k];if(u&&typeof u==="object"||v&&typeof v==="object")walk(u||{},v||{},p+k+".");else if(u!==v)ch.push(p+k);});}
+    walk(o,c,"");
+    if(ch.length)out.push("<b>~ changed</b> "+esc(c.title)+": "+esc(ch.join(", ")));
+  });
+  a.injects.forEach(function(c){if(!bi[c.id])out.push("<b>− removed</b> "+esc(c.title));});
+  var oa=a.injects.map(function(c){return c.id;}).join(),ob=b.injects.map(function(c){return c.id;}).join();
+  if(oa!==ob&&a.injects.length===b.injects.length)out.push("<b>~ order changed</b>");
+  if(a.start!==b.start)out.push("<b>~ starting inject</b> changed to position "+b.start);
+  return out.length?out.join("\n"):"No differences.";
+}
+$("btnHist").onclick=function(){
+  var h=$("hist");if(!h.hidden){h.hidden=true;drawForm();return;}
+  if(dirty()&&!confirm("You have unsaved changes. Restoring a version replaces the live deck, and these changes stay here unsaved. Continue?"))return;
+  api("history").then(function(r){
+    if(!r.ok){status("Couldn't load history.",true);return;}
+    h.hidden=false;$("f").hidden=true;$("empty").hidden=true;
+    h.innerHTML="<h2 style=\"font:700 20px var(--disp);text-transform:uppercase;margin:0 0 8px\">History</h2><table><tr><th>Version</th><th>When</th><th>What</th><th></th></tr>"
+      +r.j.map(function(v){return "<tr><td>"+v.version+(v.version===base?" (live)":"")+"</td><td>"+esc(when(v.at))+"</td><td>"+esc(v.summary)+"</td><td><button type=\"button\" data-v=\""+v.version+"\" data-a=\"chg\">What changed</button> "+(v.version===base?"":"<button type=\"button\" data-v=\""+v.version+"\" data-a=\"rest\">Restore</button>")+"</td></tr><tr hidden><td colspan=\"4\"><div class=\"diff\"></div></td></tr>";}).join("")+"</table>";
+  });
+};
+$("hist").addEventListener("click",function(e){
+  var a=e.target.getAttribute("data-a"),v=+e.target.getAttribute("data-v");if(!a)return;
+  if(a==="chg"){
+    var row=e.target.closest("tr").nextElementSibling;
+    if(!row.hidden){row.hidden=true;return;}
+    Promise.all([api("version/"+v),api("version/"+(v-1))]).then(function(rs){
+      var cur=rs[0].j,prev=rs[1].ok?rs[1].j:{injects:[],start:0};
+      row.querySelector(".diff").innerHTML=v===1?"The starting deck.":"Compared with version "+(v-1)+":\n"+diffText(prev,cur);row.hidden=false;
+    });
+  }
+  if(a==="rest"){
+    if(!confirm("Restore version "+v+"? It becomes the live deck right away, as a new version. Nothing is lost; the current deck stays in History."))return;
+    api("restore",{version:v}).then(function(r){if(r.ok){$("hist").hidden=true;load().then(function(){status("Restored. The live deck is now version "+r.j.version+".");});}else status(r.j.error||"Couldn't restore.",true);});
+  }
+});
+load();
+})();
+</script>
+</body>
+</html>

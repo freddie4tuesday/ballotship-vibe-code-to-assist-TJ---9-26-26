@@ -174,6 +174,35 @@
         and crisis, pause, reload, two screens taking turns), and by breaking the page on
         purpose: without the late-message correction a screen ends 4 s behind, and without the
         last look the clock commits with a pause waiting; the tests fail on exactly those.
+  build 12 The inject library. Asked for: "a page where the injects are listed out and we can
+        add or edit them. Its own URL." The 16 injects were code inside this file, so changing one
+        meant editing the page and releasing a build. They now live in a separate service (the
+        inject library, folder injects/, its own Worker and store, with a staging copy) that has
+        an editor page: list, edit, add, delete, reorder, choose the starting inject (was number
+        6), a picture of the squares an inject covers, and History with "what changed" and
+        restore. Decided with the owner: an edit goes live at once (no draft step), so every save
+        is a numbered version that can be restored; anyone with the secret link can edit, to
+        start with (ROADMAP: ask TJ who should); no import from the scenario workbook. The game
+        (this file) reads the library's deck when a game starts and keeps that deck for the whole
+        game, saved with the game, so an edit never changes a game under way. The array in this
+        file is now only the built-in copy, used when the library can't be reached (offline or
+        down), so the game never needs the network to play. Everything the game fetches is
+        checked again here (sanitizeDeck: known category, type and shape; text length limits;
+        links must be https) and any failure means "use the built-in deck". Two screens of a
+        two-screen game send each other their deck version at the start and warn if they differ,
+        since a code carries only the inject NUMBER. Also fixed on the way: an inject's type and a
+        sponsor link were not checked (a link beginning javascript: would have run when
+        clicked); both are now refused by the library and by the game. New on-screen wording
+        (a line on the setup screen saying which inject set will be used, and the two-screen
+        warning) is Ready for Tuesday's, so it awaits approval. The release script deploys the
+        library with each build (the deck itself is never touched by a deploy). Verified by
+        tests/injects-api.test.js (the server: starting deck matches this file, editing needs the
+        secret, stale and invalid saves refused and change nothing, restore), tests/injects-game.test.js
+        (the game uses the library's deck, keeps it after an edit and a reload, falls back to the
+        built-in deck when the library is down or sends something bad, shows typed markup as text;
+        two screens warn only when their decks differ; the editor page end to end), and by breaking
+        the page on purpose: with the https check removed the game accepts a javascript: link and
+        the test fails on exactly that.
 -->
 <html lang="en">
 <head>
@@ -671,6 +700,8 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--orange);border-c
 .endsheet .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 
 /* ---- build footer (build number + change summary) ---- */
+.deck-note{font-size:13px;color:var(--muted);margin:10px 0 0}
+.deck-warn{position:fixed;left:0;right:0;bottom:28px;z-index:56;background:var(--magenta);color:#fff;padding:10px 16px;font-weight:600;font-size:14px}
 .build-footer{position:fixed;left:0;right:0;bottom:0;height:28px;background:var(--evergreen-deep);color:#A9C2B3;font-family:var(--code);font-size:11.5px;padding:0 16px;z-index:55;display:flex;gap:10px;align-items:center;white-space:nowrap;overflow-x:auto}
 .build-footer .tag{color:#fff;background:var(--orange);border-radius:3px;padding:1px 6px;font-weight:600;flex-shrink:0}
 .build-footer .tag.staging{background:var(--magenta)}
@@ -828,6 +859,7 @@ body{padding-bottom:28px}
         </div>
       </div>
     </div>
+    <p class="deck-note" id="deckNote" aria-live="polite"></p>
     <div class="btnrow">
       <button class="btn big orange" id="btnStart">Start the exercise</button>
       <button class="btn ghost sm" id="btnRules">Read the rules</button>
@@ -1720,6 +1752,106 @@ var DECK = [
 var CARD_BY_NO = {};
 DECK.forEach(function (c, i) { c.no = i + 1; CARD_BY_NO[c.no] = c; });
 
+/* ------------------------------------------------------------------
+   THE INJECT LIBRARY (build 12)
+   The injects used to be only the array above. They now live in the inject library (its own
+   address, with an editor page), and the game fetches the current deck. The array above stays as the
+   built-in copy: it is what a game uses if the library can't be reached (offline, or the library is
+   down), so the game never depends on the network to play.
+   A game keeps the deck it started with, saved with it, so an edit in the library never changes a
+   game already under way. The two screens of a two-screen game send each other their deck version at
+   the start and warn if they differ, because a code carries only the inject NUMBER and a different
+   deck would make the two screens show different injects under the same number.
+   Everything fetched is checked here (sanitizeDeck) before use, whatever the library's own checks
+   were: text is length-limited, category, type and shape must be known ones, and links must be https.
+   Any failure means "use the built-in deck", never a half-used one.
+   ------------------------------------------------------------------ */
+var DECK_LIMITS = {title:120, scene:400, where:300, what:300, when:300, goal:300, op:400, comms:500, prec:700, src:120, task:400, prompt:800, sname:40, sfull:120, url:300};
+var BUILTIN = {version:0, start:6, injects:DECK.slice()};
+var DECK_VERSION = 0;      // 0 = the built-in deck
+var FETCHED = null;        // the latest deck from the library, checked, waiting for the next game to use it
+var FETCH_STATE = "";      // "" not tried yet, "ok", "failed", "off"
+function deckUrl() {
+  if (typeof window.BALLOTSHIP_DECK_URL === "string") return window.BALLOTSHIP_DECK_URL;   // tests and demos set this ("" turns the library off)
+  return (/staging/i.test(window.location.hostname) ? "https://ballotship-injects-staging.electionadminsuite.com" : "https://ballotship-injects.electionadminsuite.com") + "/api/deck";
+}
+function sanitizeDeck(d) {
+  try {
+    if (!d || !Array.isArray(d.injects) || d.injects.length < 4 || d.injects.length > 99) return null;
+    if (typeof d.start !== "number" || d.start % 1 !== 0 || d.start < 1 || d.start > d.injects.length) return null;
+    var L = DECK_LIMITS, out = [], ids = {}, i;
+    function txt(v, max, optional) {
+      if (typeof v !== "string" || v.length > max || (!optional && !v.trim()) || /[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v)) throw new Error("text");
+      return v;
+    }
+    function https(v) { var u = new URL(v); if (u.protocol !== "https:" || u.username || u.password || v.length > L.url) throw new Error("link"); return v; }
+    for (i = 0; i < d.injects.length; i++) {
+      var c = d.injects[i], a = c.atk || {}, ai = c.ai || {}, id = c.id === undefined ? "i" + (i + 1) : String(c.id);   // the built-in deck has no ids
+      if (!CATS[c.cat] || !TYPES.hasOwnProperty(c.type) || ids[id]) return null;
+      ids[id] = 1;
+      var o = {id:id.slice(0, 8), cat:c.cat, title:txt(c.title, L.title), type:c.type,
+        scene:txt(c.scene, L.scene),
+        atk:{where:txt(a.where, L.where), what:txt(a.what, L.what), when:txt(a.when, L.when), goal:txt(a.goal, L.goal)},
+        op:txt(c.op, L.op), comms:txt(c.comms, L.comms), prec:txt(c.prec, L.prec), src:txt(c.src, L.src, true),
+        ai:{task:txt(ai.task, L.task), prompt:txt(ai.prompt, L.prompt)}};
+      if (c.crisis === true) o.crisis = true;
+      else { if (!SHAPES.hasOwnProperty(c.shape)) return null; o.shape = c.shape; }
+      if (c.sponsor) o.sponsor = {name:txt(c.sponsor.name, L.sname), full:txt(c.sponsor.full, L.sfull), url:https(c.sponsor.url), logo:https(c.sponsor.logo)};
+      out.push(o);
+    }
+    return {version:Math.max(0, parseInt(d.version, 10) || 0), start:d.start, injects:out};
+  } catch (e) { return null; }
+}
+/* Make this deck the one the game uses. The array is refilled in place, so everything that already
+   points at DECK and CARD_BY_NO sees the new cards. */
+function useDeck(d) {
+  DECK.length = 0;
+  Object.keys(CARD_BY_NO).forEach(function (k) { delete CARD_BY_NO[k]; });
+  d.injects.forEach(function (c, i) { c.no = i + 1; DECK.push(c); CARD_BY_NO[c.no] = c; });
+  DECK_START = d.start; DECK_VERSION = d.version || 0;
+}
+/* Fetch the library's deck ahead of the next game. Nothing waits on this: starting a game uses whatever has
+   arrived (3 seconds is plenty; the deck is about 20 KB), else the built-in deck. */
+function prefetchDeck() {
+  var url = deckUrl();
+  if (!url) { FETCH_STATE = "off"; paintDeckNote(); return; }
+  var ctl = typeof AbortController === "function" ? new AbortController() : null;
+  var timer = window.setTimeout(function () { if (ctl) ctl.abort(); }, 5000);
+  window.fetch(url, {cache:"no-store", signal: ctl ? ctl.signal : undefined}).then(function (r) {
+    if (!r.ok) throw new Error("library returned " + r.status);
+    return r.json();
+  }).then(function (j) {
+    window.clearTimeout(timer);
+    var d = sanitizeDeck(j);
+    if (!d) throw new Error("the library's deck didn't pass the game's checks");
+    FETCHED = d; FETCH_STATE = "ok"; paintDeckNote();
+  }).catch(function () { window.clearTimeout(timer); FETCH_STATE = "failed"; paintDeckNote(); });
+}
+function paintDeckNote() {
+  var el = document.getElementById("deckNote");
+  if (!el) return;
+  if (FETCH_STATE === "ok") el.textContent = "Injects: library version " + FETCHED.version + " (" + FETCHED.injects.length + " injects).";
+  else if (FETCH_STATE === "failed") el.textContent = "Injects: built-in set (" + BUILTIN.injects.length + " injects). The inject library couldn't be reached, so this game uses the copy inside the page.";
+  else if (FETCH_STATE === "off") el.textContent = "Injects: built-in set (" + BUILTIN.injects.length + " injects).";
+  else el.textContent = "Injects: checking the inject library...";
+}
+function chooseDeck() { useDeck(FETCHED || BUILTIN); }
+/* Tell the other screen which deck this one has, and check theirs (two-screen games on a relay). */
+function announceDeck() {
+  if (!G || !relayOn() || G.me === "mod") return;
+  relaySend("R0-DECK", {note:JSON.stringify({v:DECK_VERSION, n:DECK.length, s:DECK_START})}, function () {}, function () {});
+}
+function checkOtherDeck(note, from, meta) {
+  var m; try { m = JSON.parse(note); } catch (e) { return; }
+  if (!m || G.me === "mod" || from === G.me) return;
+  if (meta && meta.now && meta.at && meta.now - meta.at > 10 * 60 * 1000) return;   // left over from an earlier game in this room
+  var el = document.getElementById("deckWarn");
+  if (!el) return;
+  if (m.v === DECK_VERSION && m.n === DECK.length && m.s === DECK_START) { el.hidden = true; return; }
+  el.textContent = "The two screens are using different inject decks (this screen: " + (DECK_VERSION ? "version " + DECK_VERSION : "the built-in set") + "; the other: " + (m.v ? "version " + m.v : "the built-in set") + "). The injects would not match. Have both teams start a new exercise.";
+  el.hidden = false;
+}
+
 /* ============================================================
    STATE
    ============================================================ */
@@ -1770,6 +1902,7 @@ function snapshot() {
     mode:G.mode, me:G.me, maxRounds:G.maxRounds, round:G.round, attacker:G.attacker,
     sim:!!G.sim, simPhase:G.simPhase, durA:G.durA, durD:G.durD,
     chime:G.chime, sfx:G.sfx, clockOn:!!G.clockOn,
+    deck:{version:DECK_VERSION, start:DECK_START, injects:DECK},   /* build 12: the game keeps the deck it started with */
     /* build 11 — a running clock only records its time when paused or adjusted, so the save held the time it
        started with, and a reload gave the time back. Save what is actually left (see also: the save when the
        page closes, and the one every few seconds while a clock runs, below), because nothing else saves while
@@ -1812,6 +1945,10 @@ function readSave() {
   } catch (e) { return null; }
 }
 function restore(d) {
+  /* build 12 - use the deck this game started with, not whatever the library holds now. A save from before
+     build 12 has none, and those games were played with the built-in deck. */
+  var sd = d.deck ? sanitizeDeck(d.deck) : null;
+  useDeck(sd || BUILTIN);
   G = {
     mode:d.mode, me:d.me, teams:{}, maxRounds:d.maxRounds, round:d.round,
     attacker:d.attacker, revealPrec:d.revealPrec, log:[], pending:null,
@@ -1851,10 +1988,12 @@ function restore(d) {
   $("mastSub").textContent = meLabel();
   mountDock();
   startRelay();
+  announceDeck();
   startClockTick();
 }
 function enterFromTitle() {
   show("screen-setup");
+  prefetchDeck();   /* build 12: get the library's current deck ready for the game about to start */
   if (STORE_OK && readSave()) $("resumePanel").scrollIntoView({block:"nearest"});
 }
 $("btnTitleGo").addEventListener("click", enterFromTitle);
@@ -2254,12 +2393,14 @@ $("btnStart").addEventListener("click", function () {
   }
   $("startErr").hidden = true;
   clearSave();
+  chooseDeck();     /* build 12: the deck is fixed for this game from here on */
   G.teams.t1 = newTeam(n1, !relay || setupSide === "t1");
   G.teams.t2 = newTeam(n2, !relay || setupSide === "t2");
   $("mastSub").textContent = meLabel();
   updateChrome();
   mountDock();
   startRelay();
+  announceDeck();
   if (G.me === "mod") { G.phase = "sim"; simStartRound(); return; }
   var mine = relay ? [G.me] : ["t1","t2"];
   if ($("optAuto").checked) { mine.forEach(function (k) { autoPlace(G.teams[k]); }); beginPlay(); }
@@ -2649,6 +2790,8 @@ function routeIncoming(code, note, note2, from, meta) {
   /* build 11 — a clock change from another screen. Not a move, so it never ends a poll pass and
      is never held over an early end. */
   if (parts.indexOf("CLK") >= 0) { if (!G.over) applyRemoteClock(note, meta); return false; }
+  /* build 12 - the other screen's inject deck version; only compared, never a move. */
+  if (parts.indexOf("DECK") >= 0) { checkOtherDeck(note, from, meta); return false; }
   /* A move can still be on its way when the game ends early. Keep it, and play it
      in after a resume, or both screens would wait on it forever. */
   if (G.over) { if (G.resumeFrom) (G.heldMoves = G.heldMoves || []).push({code:code, note:note, note2:note2, from:from}); return false; }
@@ -4895,6 +5038,7 @@ startClockTick();
    (A browser keeps saved games per address, so staging and live games can't overwrite
    each other either.) */
 var IS_STAGING = /staging/i.test(window.location.hostname);
+prefetchDeck();   /* build 12: as early as the page can, so the setup screen already knows */
 (function () {
   var relay = IS_STAGING ? "https://ballotship-relay-staging.electionadminsuite.com" : "https://ballotship-relay.electionadminsuite.com";
   $("relayUrl").value = relay; $("relayUrl").placeholder = relay;
@@ -4908,9 +5052,10 @@ var IS_STAGING = /staging/i.test(window.location.hostname);
   });
 })();
 </script>
+<div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 11</span>
-  <span>clocks stay in step across screens; a clock is an option for one laptop and taking turns; a reload no longer gives clock time back</span>
+  <span class="tag">build 12</span>
+  <span>the injects now come from the inject library, which has its own editor page; a game keeps the deck it started with</span>
 </div>
 
 </body>

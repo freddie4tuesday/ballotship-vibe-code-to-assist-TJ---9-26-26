@@ -1,10 +1,11 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 11 (build 7 is what's live until 8 to 11 are released; see Releasing)
+**Current version:** build 12 (build 7 is what's live until 8 to 12 are released; see Releasing)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
+**Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor page's address includes a secret, see The inject library)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
-deploy config (`wrangler.jsonc`, `.assetsignore`), `worker/` (the relay), `tests/`, and `demo/`
+deploy config (`wrangler.jsonc`, `.assetsignore`), `worker/` (the relay), `injects/` (the inject library), `tests/`, and `demo/`
 
 ---
 
@@ -88,6 +89,36 @@ the browser, and if the relay is unreachable the page says so and teams read cod
   feature. Those bill for every connected second and are the likely cause of an earlier costly
   relay.
 
+## The inject library (`injects/`)
+
+The 16 injects are kept in their own service, with a page to list, edit, add, delete and reorder them and
+to choose which one starts (it was number 6). It has its own address and its own store, and a staging copy.
+
+- **The deck:** `GET /api/deck` returns it (public, read by the game). `injects/seed.json` is the copy
+  the store starts from, made from `index.html` by `node injects/tools/extract.js` (the tests check it
+  still matches). After that first read the store is the truth and the array inside `index.html` is
+  only the built-in copy the game falls back to.
+- **Editing:** at `https://ballotship-injects.electionadminsuite.com/edit/<secret>`. The secret is the
+  `EDIT_TOKEN` value, set once with `cd injects && npx wrangler secret put EDIT_TOKEN --config wrangler.jsonc`
+  (the staging one with `wrangler.staging.jsonc`, and a different value). It is a secret in the
+  address, not a login: anyone who has the link can edit, and it can leak through browser history or a
+  forwarded link. Change it by putting a new value (the old link stops working). If it isn't set, editing is
+  off and the game is unaffected. ROADMAP: ask TJ who should be allowed to edit.
+- **Edits go live at once.** Every save is a numbered version (the last 500 are kept). The editor's History
+  shows what changed and restores any version (a restore is itself a new version, so nothing is lost).
+  Two people saving at once: the second is told to reload.
+- **What the game does with it:** reads the deck when a game starts (setup shows which version) and keeps
+  it for the whole game, saved with the game, so an edit never changes a game under way. If the library
+  can't be reached, or sends a deck the game's own checks refuse, the game uses the built-in deck and says so.
+  Two screens compare deck versions at the start and warn if they differ.
+- **Checks on a save** (`injects/src/validate.js`, repeated in the game as `sanitizeDeck`): 4 to 99 injects;
+  known category, type and footprint shape (a crisis inject has none); text length limits; a sponsor's link and
+  logo must be https. Text is stored as typed and always escaped when shown.
+- **Deploying:** `deploy.sh` deploys the library's code with each build; it never touches the deck in the store.
+  Cloudflare keeps the store in a Durable Object, so a deploy can't lose an edit.
+- **Rollback of the code:** as for the page (Deployments in the dashboard). A bad *edit* is undone from the
+  editor's History, not by rolling back code.
+
 ## Demo video (`demo/`)
 
 A 4-minute narrated walkthrough of one game, made by `demo/record-demo.js`. The video isn't in
@@ -140,8 +171,9 @@ Nothing goes live without being looked at on a staging copy first.
 |---|---|---|
 | Page | https://ballotship.electionadminsuite.com | https://ballotship-staging.electionadminsuite.com |
 | Relay | https://ballotship-relay.electionadminsuite.com | https://ballotship-relay-staging.electionadminsuite.com |
+| Inject library | https://ballotship-injects.electionadminsuite.com | https://ballotship-injects-staging.electionadminsuite.com |
 | Git branch | `main` | `staging` |
-| Config | `wrangler.jsonc`, `worker/wrangler.jsonc` | `wrangler.staging.jsonc`, `worker/wrangler.staging.jsonc` |
+| Config | `wrangler.jsonc`, `worker/wrangler.jsonc`, `injects/wrangler.jsonc` | the same names with `.staging` |
 
 The staging page labels itself: `[STAGING]` in the browser tab, a magenta STAGING tag in the
 footer, and "STAGING" on the title screen. It uses the staging relay, and a browser keeps saved
@@ -150,7 +182,7 @@ games per address, so staging games and live games can't mix or overwrite each o
 **The path of a change:**
 
 1. Agree the change (wording changes come as a table for approval first).
-2. Build it on the `staging` branch, and run the tests: `cd tests && npm test` (about 4 minutes).
+2. Build it on the `staging` branch, and run the tests: `cd tests && npm test` (about 6 minutes).
 3. `./deploy.sh staging` puts it on the staging address.
 4. Someone looks at it there and says whether it's good.
 5. Only after that: merge `staging` into `main`, and run `./deploy.sh production`.
@@ -160,13 +192,13 @@ only from `main`; it refuses uncommitted changes; it refuses code the tests have
 (the tests leave a fingerprint of `index.html` and the relay, and the script checks it matches); and for live it refuses anything other than the exact page that is on
 staging right now. It needs a Cloudflare API token in `CLOUDFLARE_API_TOKEN`.
 
-The relay needs no separate step: both environments deploy the page and the relay together.
+The relay and the inject library need no separate step: both environments deploy the page, the relay and the library's code together. The staging game reads the staging library, so an edit made while trying things out never reaches a live game.
 
 `wrangler.jsonc` holds the account, the custom domain, and the routes. `.assetsignore` keeps the
-markdown files, config, `deploy.sh`, `worker/`, `tests/` and `demo/` off the site, so only
+markdown files, config, `deploy.sh`, `worker/`, `injects/`, `tests/` and `demo/` off the site, so only
 `index.html` is served.
 
-**Routing gotcha:** `electionadminsuite.com` has a wildcard route,
+**Routing gotcha (the same for every address here, including the inject library's):** `electionadminsuite.com` has a wildcard route,
 `*.electionadminsuite.com/*`, that sends every subdomain to `poll-worker-system`. Ballotship
 needs its own specific route, `ballotship.electionadminsuite.com/*`, or the poll-worker app
 answers with "Unknown jurisdiction". Ballot Proofing Workbench uses the same fix. The route is

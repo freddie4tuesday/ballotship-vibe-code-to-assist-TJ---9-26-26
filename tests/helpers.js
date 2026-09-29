@@ -2,6 +2,7 @@
 const { chromium } = require("playwright");
 const { spawn } = require("child_process");
 const path = require("path");
+const fs = require("fs");
 
 const ROOT = path.resolve(__dirname, "..");
 /* BALLOTSHIP_PAGE runs the tests against another copy of the page, e.g. the
@@ -51,7 +52,45 @@ async function withRelay(fn) {
 
 /* Playwright's own Chromium; CHROMIUM_PATH points at another copy if needed. */
 function launch() {
-  return chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+  return chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}).then(browser => {
+    /* Build 12: a game fetches its injects from the inject library. Tests never touch the live library, so every
+       screen they open gets the library switched off (the built-in deck), unless a test sets its own address
+       (BALLOTSHIP_DECK_URL in the environment, or window.BALLOTSHIP_DECK_URL in an init script of its own). */
+    const nc = browser.newContext.bind(browser);
+    browser.newContext = async (o) => {
+      const ctx = await nc(o);
+      await ctx.addInitScript(u => { if (typeof window.BALLOTSHIP_DECK_URL !== "string") window.BALLOTSHIP_DECK_URL = u; }, process.env.BALLOTSHIP_DECK_URL || "");
+      return ctx;
+    };
+    return browser;
+  });
+}
+
+/* A local inject library (../injects) on its own port, with an empty store in a temporary folder and a known
+   editing secret, so tests never touch a real one. fn(baseUrl, token). */
+async function withInjects(fn) {
+  const port = 8890 + Math.floor(Math.random() * 100);
+  const url = "http://127.0.0.1:" + port, token = "test-secret-" + Math.floor(Math.random() * 1e9);
+  const store = fs.mkdtempSync(path.join(require("os").tmpdir(), "ballotship-injects-"));
+  const proc = spawn("npx", ["wrangler", "dev", "--port", String(port), "--ip", "127.0.0.1", "--persist-to", store, "--var", "EDIT_TOKEN:" + token], {
+    cwd: path.join(ROOT, "injects"), stdio: ["ignore", "pipe", "pipe"], detached: true,
+  });
+  let log = "";
+  proc.stdout.on("data", d => (log += d));
+  proc.stderr.on("data", d => (log += d));
+  try {
+    const end = Date.now() + 90000;
+    let up = false;
+    while (!up && Date.now() < end) {
+      try { up = (await fetch(url + "/")).ok; } catch (e) {}
+      if (!up) await new Promise(r => setTimeout(r, 1000));
+    }
+    if (!up) throw new Error("local inject library did not start:\n" + log.slice(-2000));
+    return await fn(url, token);
+  } finally {
+    try { process.kill(-proc.pid); } catch (e) { proc.kill(); }
+    try { fs.rmSync(store, { recursive: true, force: true }); } catch (e) {}
+  }
 }
 
 /* Open one screen per side on the setup page, simultaneous mode, relay on,
@@ -63,6 +102,7 @@ async function setupScreens(browser, relayUrl, sides, opts) {
   for (const side of sides) {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await ctx.addInitScript(ms => { window.BALLOTSHIP_POLL_MS = ms; }, opts.pollMs || 250);
+    if (opts.deckUrls && opts.deckUrls[side] !== undefined) await ctx.addInitScript(u => { window.BALLOTSHIP_DECK_URL = u; }, opts.deckUrls[side]);   // build 12: which inject library this screen reads
     const p = await ctx.newPage();
     p.on("pageerror", e => errors.push(side + ": " + e.message));
     pages[side] = p;
@@ -87,4 +127,4 @@ async function setupScreens(browser, relayUrl, sides, opts) {
 const screenOn = p => p.$eval(".screen.on", e => e.id).catch(() => "");
 const threadHas = (p, text) => p.evaluate(t => JSON.stringify(G.thread).includes(t), text);
 
-module.exports = { ROOT, PAGE, reporter, withRelay, launch, setupScreens, screenOn, threadHas };
+module.exports = { ROOT, PAGE, reporter, withRelay, withInjects, launch, setupScreens, screenOn, threadHas };

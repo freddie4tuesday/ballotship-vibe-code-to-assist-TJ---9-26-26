@@ -45,6 +45,17 @@ const R_STAGING = "https://ballotship-relay-staging.electionadminsuite.com", R_L
     r.check("live: one footer tag, the build number", lf.tags.length === 1 && /^build \d+$/.test(lf.tags[0]), lf.tags.join(" | "));
     r.check("live: the relay defaults to the live relay", lf.relay === R_LIVE && lf.placeholder === R_LIVE, lf.relay);
 
+    // Build 12: which inject library each address reads. (Tests switch the library off with an override; take it away to ask.)
+    const lib = p => p.evaluate(() => { delete window.BALLOTSHIP_DECK_URL; return deckUrl(); });
+    r.check("staging reads the STAGING inject library", (await lib(s)) === "https://ballotship-injects-staging.electionadminsuite.com/api/deck", await lib(s));
+    r.check("live reads the LIVE inject library", (await lib(l)) === "https://ballotship-injects.electionadminsuite.com/api/deck", await lib(l));
+    const jc = f => fs.readFileSync(path.join(ROOT, "injects", f), "utf8").replace(/^\s*\/\/.*$/gm, "");
+    const liveCfg = jc("wrangler.jsonc"), stgCfg = jc("wrangler.staging.jsonc");
+    r.check("the two inject libraries are separate Workers with separate stores and their own addresses",
+      /"name": "ballotship-injects"/.test(liveCfg) && /"name": "ballotship-injects-staging"/.test(stgCfg) &&
+      /ballotship-injects\.electionadminsuite\.com\/\*/.test(liveCfg) && /ballotship-injects-staging\.electionadminsuite\.com\/\*/.test(stgCfg) &&
+      !/injects-staging/.test(liveCfg) && !/"pattern": "ballotship-injects\./.test(stgCfg));
+    r.check("the inject library is kept off the game's site (a saved deck or the editor page is never served from it)", /^injects$/m.test(fs.readFileSync(path.join(ROOT, ".assetsignore"), "utf8")));
     const f = await ctx.newPage(); await f.goto("file://" + path.join(ROOT, "index.html")); await f.waitForTimeout(300);
     const ff = await facts(f);
     r.check("a saved copy of the file behaves as live", !/STAGING/i.test(ff.title + ff.foot) && ff.relay === R_LIVE, JSON.stringify(ff));
