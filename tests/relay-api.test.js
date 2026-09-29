@@ -27,6 +27,8 @@ const { reporter, withRelay } = require("./helpers");
       r.check("the moderator cannot send moves", (await send({ from: "mod", code: "X" })).status === 400);
       const modRoom = relay + "/room/mod-" + Date.now() + "/send";
       const modSend = code => fetch(modRoom, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: "mod", code }) });
+      r.check("the moderator can send clock changes", (await modSend("R2-CLK")).status === 200);
+      r.check("poll says when each message was stored, and what time the relay thinks it is", typeof mod.now === "number" && Math.abs(mod.now - Date.now()) < 10000 && mod.messages.every(m => typeof m.at === "number" && m.at <= mod.now && m.at > mod.now - 10000), JSON.stringify(mod).slice(0, 200));
       r.check("the moderator can send end early and resume", (await modSend("R2-END")).status === 200 && (await modSend("R2-RESUME")).status === 200);
       r.check("an unknown side cannot send", (await send({ from: "zz", code: "X" })).status === 400);
       r.check("a message needs a code", (await send({ from: "t1", code: "" })).status === 400);

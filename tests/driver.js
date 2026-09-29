@@ -26,6 +26,10 @@ async function setup(browser, mode, side, relay, room, opts) {
     if (!(await p.isChecked("#optOnline"))) await p.check("#optOnline");
     await p.evaluate(([u, r]) => { const a = document.getElementById("relayUrl"), b = document.getElementById("relayRoom"); a.value = u; b.value = r; }, [relay, room]);
   }
+  if (opts.clock) {                                   // one laptop / taking turns: "Use a clock", with times like "0:05"
+    await p.check("#optClock");
+    await p.evaluate(([a, d]) => { document.getElementById("durA").value = a; document.getElementById("durD").value = d; }, [opts.clock.a || "10:00", opts.clock.d || "10:00"]);
+  }
   if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto");
   for (const id of ["#optAI", "#optSfx", "#optChime"]) if (await p.isChecked(id)) await p.uncheck(id);
   await p.click("#btnStart");

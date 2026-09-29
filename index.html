@@ -137,11 +137,43 @@
         mid-sentence, but the round does not wait." Nothing else changed. (The paragraph before
         it, "a pause here does not reach them", becomes wrong when the moderator's clock buttons
         start reaching the team screens; that change is on the roadmap and will reword it.)
-        Also new, not in the game: quick test mode (tests/quick.js), which runs the fast
-        smoke tests plus the tests for what changed, so iterating is faster (about 2 minutes against 4 for everything);
-        deploy.sh accepts a quick pass for staging but live still needs a full pass. Checked by
-        tests/build-number.test.js (the old sentence is gone, the new one is there) and
-        tests/quick-select.test.js.
+        Checked by tests/build-number.test.js (the old sentence is gone, the new one is there).
+        A quick test mode was built during this build and removed again before release: it was
+        written when the suite was believed to take 35 minutes, but it takes 4 (the 35 was tests
+        polling too fast and waiting on random ties, since fixed), so it saved about 2 and added
+        rules to maintain. Test shots are now scripted, so a random tie can't strand a test in
+        sudden death.
+  build 11 The clock, decided question by question and approved as a table first (the wording
+        of two paragraphs and a new setup option is Ready for Tuesday's, so it awaits their
+        approval on staging). Three parts. (1) A clock is now an option for one laptop and for
+        two screens taking turns ("Use a clock", off by default, so those games are unchanged).
+        Attack and response each get their own time (10:00 each by default); the clock is hidden
+        during the hand-over and starts when the writing screen opens, so passing the laptop
+        never costs a team time; at zero what is written is committed as it stands, a random
+        target is chosen if none was picked, and the crisis screen picks the first cells still
+        up, all logged once (commitAttack / commitDefense / commitCrisis now take an "auto"
+        argument, the same rule simultaneous games use). (2) In simultaneous games a change to
+        a clock on any screen (pause, resume, +1:00, -1:00, reset) now reaches the others: one
+        small relay message per press and nothing in between, carrying the clock's whole state
+        (time left, running or paused) rather than "pause now", stamped by the relay, so a
+        screen that hears late (screens still check every 15 s) ends up exactly right and gets
+        back the time that ran on; a version number settles two people pressing at once the
+        same way on every screen; a change for a phase a screen hasn't reached yet is kept.
+        (3) A clock at zero takes one last look at the relay before committing, so a pause that
+        is on its way is not missed (a commit can't be undone). The relay now returns the time
+        it stored each message and its own time, and lets the moderator send clock changes (the
+        relay deploys with the page). Found by the new tests and fixed here: a saved game held
+        the time a clock STARTED with, because a running clock only records its time when
+        paused or adjusted, so closing the tab mid-phase gave the time back (also true of
+        simultaneous games); the game now saves the time actually left when the page closes
+        and every 5 s while a clock runs. Verified by tests/clock-sync.test.js (three screens:
+        every button syncs, a screen checking only every 5 s ends within 1.5 s of the sender,
+        two presses at once converge, one message per press and none while idle, the last look
+        holds a commit and, with nothing waiting, lets it through, a change for a later phase is
+        kept), tests/turn-clock.test.js (the setup option, hand-over, zero for attack, response
+        and crisis, pause, reload, two screens taking turns), and by breaking the page on
+        purpose: without the late-message correction a screen ends 4 s behind, and without the
+        last look the clock commits with a pause waiting; the tests fail on exactly those.
 -->
 <html lang="en">
 <head>
@@ -737,7 +769,7 @@ body{padding-bottom:28px}
             <button class="mode" id="sideT2" type="button"><h3 style="font-size:17px">Team 2</h3><p>Plays a jurisdiction.</p></button>
             <button class="mode" id="sideMod" type="button"><h3 style="font-size:17px">Moderator</h3><p>No board. Runs the clock and watches the traffic.</p></button>
           </div>
-          <div class="hint" style="margin-top:10px">Each screen runs its own clock, with its own start, pause and adjust buttons. Phase changes start them together on their own, so the numbers match without anything being sent. A pause does not carry, so call that one out loud.</div>
+          <div class="hint" style="margin-top:10px">Each screen runs its own clock, with its own start, pause and adjust buttons. Phase changes start the clocks together. When anyone pauses, resumes, adds or takes a minute, or resets, the other screens follow at their next check, within about 15 seconds, and any time that ran on before the change reached them is given back.</div>
         </div>
         <div>
           <div class="field"><label class="fl" for="rn1">Team 1 name</label><input type="text" id="rn1" value="Ashwood County" maxlength="28"></div>
@@ -778,6 +810,7 @@ body{padding-bottom:28px}
           <div class="hint" id="roundHint"></div>
         </div>
         <div class="chk"><input type="checkbox" id="optPrec" checked><label for="optPrec">Reveal the real-world precedent after a team commits its response. They answer first, then see how it actually played out.</label></div>
+        <div class="chk" id="clockOpt" hidden><input type="checkbox" id="optClock"><label for="optClock"><b>Use a clock.</b> Each attack and each response gets a time limit, set below. When it runs out, whatever is written is committed and play moves on. With one laptop, the clock waits while it is handed over and starts when the team presses "We have the laptop".</label></div>
         <div class="two" id="simTimes">
           <div class="field"><label class="fl" for="durA">Time to write the attack</label><input type="text" id="durA" value="10:00" autocomplete="off" spellcheck="false"></div>
           <div class="field"><label class="fl" for="durD">Time to write the response</label><input type="text" id="durD" value="10:00" autocomplete="off" spellcheck="false"></div>
@@ -828,9 +861,10 @@ body{padding-bottom:28px}
         <p>Bottom right, open on every screen. Everything either team writes or attaches lands there and stays, so the two teams are in contact the whole way through rather than only at the handoff. With an automatic relay switched on, text, links and small files cross by themselves.</p>
         <p>Large files will not fit. Upload one somewhere the other team can reach and paste the link instead.</p>
         <h3 style="font-size:19px;text-transform:uppercase;margin:15px 0 7px">The clock</h3>
-        <p>Every screen runs its own clock, with its own start, pause, add a minute, take a minute and reset. Nothing about the clock travels between screens.</p>
-        <p>They stay together anyway, because the phases do. When both attacks have been swapped, every screen enters the response phase at the same moment and starts its own response clock, so the numbers match within a second without anything being sent.</p>
-        <p>The one thing that does not carry is a pause. If the moderator stops the clock, say so out loud and everyone presses pause. Same for adding time. That is the trade for not hammering the relay all afternoon.</p>
+        <p>Every screen runs its own clock, with its own start, pause, add a minute, take a minute and reset, so nothing has to be sent to keep it running.</p>
+        <p>They start together because the phases do. When both attacks have been swapped, every screen enters the response phase at the same moment and starts its own response clock.</p>
+        <p>When anyone pauses, resumes, adds or takes a minute, or resets, the change is sent to the other screens, and they follow at their next check on the relay, within about 15 seconds. It carries the time left, not just the button that was pressed, so a screen that hears late ends up exactly right and gets back any time that ran on. A clock that reaches zero checks once more before it commits, in case a pause is on its way.</p>
+        <p>With one laptop, or two screens taking turns, the clock is a setup option and is off unless the facilitator turns it on. Each attack and each response gets its own time. It waits while the laptop is handed over and starts when the team presses "We have the laptop". At zero, what is written is committed and play moves on.</p>
         <h3 style="font-size:19px;text-transform:uppercase;margin:15px 0 7px">The AI piece</h3>
         <p>The last box in every attack is the thing you made with AI. Each inject names a specific task and offers a starter prompt if you want one, and the attack will not commit without it.</p>
         <p>Push past another paragraph of text. An image, a screenshot, a voice memo, a mailer, a letterhead, a spoofed alert, a fake headline. The exercise is worth far more when the other team has to look at a convincing fake object and decide what to do about it, and that is the honest version of what an office is up against. Attach it in the relay panel so they can actually see it.</p>
@@ -1250,7 +1284,7 @@ body{padding-bottom:28px}
         </div>
         <div class="btnrow"><button class="btn big" id="btnMdNext" hidden>Start the next round</button></div>
         <hr class="rule">
-        <p style="font-size:14px">This clock is yours alone. It runs in step with the teams because the phases start together, but a pause here does not reach them. Call it out loud and have both rooms press pause.</p>
+        <p style="font-size:14px">A pause, resume, minute added or taken, or reset on any screen, this one included, reaches the others at their next check, within about 15 seconds. Time that ran on before it arrived is given back.</p>
         <p style="font-size:14px">Any screen can pause its clock or add a minute. If a team's clock runs out, what it has written is committed as it stands and the round moves on. Nobody is cut off mid-sentence, but the round does not wait.</p>
         <p style="font-size:14px">Everything both teams write and attach arrives in the relay panel, bottom right. That is the debrief record, so there is no need to stop for one during play.</p>
       </div>
@@ -1735,7 +1769,12 @@ function snapshot() {
     v:SAVE_V, at:Date.now(),
     mode:G.mode, me:G.me, maxRounds:G.maxRounds, round:G.round, attacker:G.attacker,
     sim:!!G.sim, simPhase:G.simPhase, durA:G.durA, durD:G.durD,
-    chime:G.chime, sfx:G.sfx, clock:G.clock || null,
+    chime:G.chime, sfx:G.sfx, clockOn:!!G.clockOn,
+    /* build 11 — a running clock only records its time when paused or adjusted, so the save held the time it
+       started with, and a reload gave the time back. Save what is actually left (see also: the save when the
+       page closes, and the one every few seconds while a clock runs, below), because nothing else saves while
+       a clock simply counts down. */
+    clock:G.clock ? Object.assign({}, G.clock, {left:clockLeft()}) : null,
     R: G.R ? (function () { var o = {}, k; for (k in G.R) if (k !== "card") o[k] = G.R[k]; o.cardNo = G.R.card.no; return o; })() : null,
     revealPrec:G.revealPrec, over:G.over, suddenDeath:G.suddenDeath,
     phase:G.phase, gateTeam:G.gateTeam, gateRole:G.gateRole, gateNext:G.gateNext,
@@ -1782,7 +1821,8 @@ function restore(d) {
     endedEarly:d.endedEarly || null, resumeFrom:d.resumeFrom || null, heldMoves:d.heldMoves || [],
     requireAI:d.requireAI !== false, thread:d.thread || [], inbox:d.inbox || [],
     sim:!!d.sim, simPhase:d.simPhase || null, durA:d.durA || 600, durD:d.durD || 600,
-    chime:d.chime !== false, sfx:d.sfx !== false, clock:d.clock || null, R:null
+    chime:d.chime !== false, sfx:d.sfx !== false, clock:d.clock || null, R:null,
+    clockOn:d.clockOn !== undefined ? !!d.clockOn : !!d.sim
   };
   if (d.R) {
     G.R = {}; for (var kr in d.R) if (kr !== "cardNo") G.R[kr] = d.R[kr];
@@ -2149,10 +2189,18 @@ function pickMode(m) {
   $("modeRelay").classList.toggle("on", m === "relay");
   $("modePass").classList.toggle("on", m === "pass");
   $("relayFields").hidden = (m === "pass");
-  $("simTimes").hidden = (m !== "sim");
+  syncClockUI();
   $("sideMod").hidden = (m !== "sim");
   if (m !== "sim" && setupSide === "mod") pickSide("t1");
 }
+/* build 11 — simultaneous games always have a clock; one laptop, or two screens taking turns,
+   only if the facilitator asks (off by default, so those games work as they always did). */
+function syncClockUI() {
+  var sim = setupMode === "sim";
+  $("clockOpt").hidden = sim;
+  $("simTimes").hidden = !(sim || $("optClock").checked);
+}
+$("optClock").addEventListener("change", syncClockUI);
 function pickSide(s) {
   setupSide = s;
   $("sideT1").classList.toggle("on", s === "t1");
@@ -2190,7 +2238,7 @@ $("btnStart").addEventListener("click", function () {
     mode: sim ? "sim" : relay ? "relay" : "pass",
     sim: sim, me: relay ? setupSide : null,
     durA: parseDur($("durA").value, 600), durD: parseDur($("durD").value, 600),
-    chime: $("optChime").checked,
+    chime: $("optChime").checked, clockOn: sim || $("optClock").checked,
     clock: null, simPhase: null, R: null, sfx: $("optSfx").checked,
     teams: {}, maxRounds: parseInt($("rounds").value, 10),
     round: 1, attacker: "t1", revealPrec: $("optPrec").checked,
@@ -2363,6 +2411,7 @@ function openOffense() {
   var card = drawCard();
   G.pending = {atkKey:atkKey, defKey:defKey, card:card, origin:null, cells:[], aiDesc:""};
   G.phase = "offense"; save();
+  turnClockStart("attack");
   renderOffense();
 }
 function renderOffense() {
@@ -2395,33 +2444,47 @@ function paintOffAim() {
   var p = G.pending;
   paintAimBar("offAim", p.card, p.origin, p.cells, offAim);
 }
-$("btnCommitAttack").addEventListener("click", function () {
+/* build 11 — auto is true when a clock ran out: whatever is on the page is committed as it is, the
+   checks that would send the team back to the form are skipped, and no target means a random one
+   (the same rule as simultaneous games). */
+function commitAttack(auto) {
   var p = G.pending;
   closeAim();
   var parts = readAForm("off"), desc = atkToText(parts);
-  var ae = atkErr(parts);
-  if (ae) { flash("offErr", ae); return; }
-  if (!p.card.crisis && p.origin === null) { flash("offErr", "Pick a target cell."); return; }
-  // the other team reads this, so a grid reference in it gives the board away
-  if (/(^|[^A-Za-z])[A-F]\s?-?[1-6]([^0-9]|$)/.test(parts.where + " " + parts.what) && !p.cellWarned) {
-    p.cellWarned = true;
-    flash("offErr", "That reads like it names a grid cell, and the other team sees these words before it responds. Reword it, or commit again to send it as written.");
-    return;
+  if (!auto) {
+    var ae = atkErr(parts);
+    if (ae) { flash("offErr", ae); return; }
+    if (!p.card.crisis && p.origin === null) { flash("offErr", "Pick a target cell."); return; }
+    // the other team reads this, so a grid reference in it gives the board away
+    if (/(^|[^A-Za-z])[A-F]\s?-?[1-6]([^0-9]|$)/.test(parts.where + " " + parts.what) && !p.cellWarned) {
+      p.cellWarned = true;
+      flash("offErr", "That reads like it names a grid cell, and the other team sees these words before it responds. Reword it, or commit again to send it as written.");
+      return;
+    }
   }
+  if (auto && !p.card.crisis && p.origin === null) {
+    p.origin = randomOrigin(p.card.shape);
+    p.cells = footprint(p.origin, p.card.shape);
+    p.autoTarget = true;
+  }
+  if (auto && !desc) desc = "(nothing written before time)";
   var ai = parts.ai;
   p.atkParts = parts;
   p.attackDesc = desc;
   p.aiDesc = ai;
   $("offErr").hidden = true;
+  turnClockStop();
   logToThread("attack", p.atkKey,
-    "Inject " + p.card.no + ", " + p.card.title + ". " + desc + (ai ? "\n\nAI artifact: " + ai : ""));
+    "Inject " + p.card.no + ", " + p.card.title + ". " + desc + (ai ? "\n\nAI artifact: " + ai : "") +
+    (p.autoTarget ? "\n\n(No target chosen before time. Fired at random.)" : ""));
   /* build 5 — on one laptop nothing is sent, so the words are already here. The
      defense screen used to show them only when they had arrived over the relay,
      so a passed laptop always said "Nothing came across in writing." */
   if (G.mode === "pass") { p.theirWords = !!desc; gateTo(p.defKey, "An inject is inbound", "defense"); return; }
   p.code = encAttack(p);
   sendAttack();
-});
+}
+$("btnCommitAttack").addEventListener("click", function () { commitAttack(false); });
 
 function sendAttack() { G.phase = "send-attack"; save(); doSendAttack(); }
 function doSendAttack() {
@@ -2531,13 +2594,15 @@ function noteActivity() {
 }
 ["pointerdown", "keydown"].forEach(function (ev) { document.addEventListener(ev, noteActivity, true); });
 document.addEventListener("visibilitychange", function () { if (!document.hidden) noteActivity(); });
-function relayLoop() {
-  if (!relayLive()) return;
-  if (Date.now() - lastActivity > IDLE_PAUSE_MS) {
-    pollPaused = true;
-    relayStatus("Relay paused after 30 minutes with no activity on this screen. Click anywhere to catch up.", false);
-    return;
-  }
+/* One check of the relay: fetch what is new, route each message, save. Used by the polling loop
+   and, since build 11, by the last look before a clock commits at zero. Only one check is ever in
+   flight, so a message can't be routed twice; a second caller waits its turn.
+   done(error, moved, superseded) */
+var pollBusy = false;
+function relayFetchOnce(done) {
+  if (pollBusy) { window.setTimeout(function () { relayFetchOnce(done); }, 200); return; }
+  if (!relayOn() || !G) { done(new Error("no relay"), false, false); return; }
+  pollBusy = true;
   var url = relayBase() + "/poll?since=" + (G.relay.cursor || 0) + "&as=" + G.me, gen = pollGen;
   window.fetch(url).then(function (r) {
     return r.json().then(function (b) {
@@ -2545,28 +2610,45 @@ function relayLoop() {
       return b;
     });
   }).then(function (b) {
-    if (gen !== pollGen) return;      // superseded: a newer loop is already running
-    var msgs = b.messages || [], moved = false;
+    pollBusy = false;
+    if (gen !== pollGen) { done(null, false, true); return; }      // superseded: a newer loop is already running
+    var msgs = b.messages || [], moved = false, got = Date.now();
     relayStatus(null, false);
     for (var i = 0; i < msgs.length; i++) {
       G.relay.cursor = msgs[i].seq;
-      if (routeIncoming(msgs[i].code, msgs[i].note || "", msgs[i].note2 || "", msgs[i].from)) { moved = true; break; }
+      if (routeIncoming(msgs[i].code, msgs[i].note || "", msgs[i].note2 || "", msgs[i].from, {at:msgs[i].at, now:b.now, got:got})) { moved = true; break; }
     }
     save();
-    if (gen !== pollGen) return;      // routing a message restarted polling (an end or resume)
+    done(null, moved, gen !== pollGen);
+  }, function (e) { pollBusy = false; done(e || new Error("failed"), false, gen !== pollGen); });
+}
+function relayLoop() {
+  if (!relayLive()) return;
+  if (Date.now() - lastActivity > IDLE_PAUSE_MS) {
+    pollPaused = true;
+    relayStatus("Relay paused after 30 minutes with no activity on this screen. Click anywhere to catch up.", false);
+    return;
+  }
+  var gen = pollGen;
+  relayFetchOnce(function (err, moved, superseded) {
+    if (superseded || gen !== pollGen) return;                      // a newer loop, or routing restarted polling (an end or resume)
+    if (err) {
+      relayStatus("Cannot reach the relay: " + (err && err.message ? err.message : err) + ". Read the code out instead.", true);
+      pollTimer = window.setTimeout(relayLoop, pollMs() * 3);
+      return;
+    }
     if (!moved) pollTimer = window.setTimeout(relayLoop, pollMs());
-  }, function (e) {
-    if (gen !== pollGen) return;
-    relayStatus("Cannot reach the relay: " + (e && e.message ? e.message : e) + ". Read the code out instead.", true);
-    pollTimer = window.setTimeout(relayLoop, pollMs() * 3);
   });
 }
 /* Returns true when the screen has moved on, which ends this poll pass. */
-function routeIncoming(code, note, note2, from) {
+function routeIncoming(code, note, note2, from, meta) {
   var parts = normalize(code).split("-");
   /* build 6 — the other screen ended early, or resumed after ending early. */
   if (parts.indexOf("END") >= 0) { if (!G.over) endEarly(true); return false; }
   if (parts.indexOf("RESUME") >= 0) { if (G.over && G.resumeFrom) { resumeEarly(true); return true; } return false; }
+  /* build 11 — a clock change from another screen. Not a move, so it never ends a poll pass and
+     is never held over an early end. */
+  if (parts.indexOf("CLK") >= 0) { if (!G.over) applyRemoteClock(note, meta); return false; }
   /* A move can still be on its way when the game ends early. Keep it, and play it
      in after a resume, or both screens would wait on it forever. */
   if (G.over) { if (G.resumeFrom) (G.heldMoves = G.heldMoves || []).push({code:code, note:note, note2:note2, from:from}); return false; }
@@ -3112,12 +3194,9 @@ document.addEventListener("keydown", function (e) {
 });
 
 /* ============================================================
-   SHARED CLOCK
-   One screen owns it. That screen counts down locally and
-   broadcasts the state over the relay; every other screen shows
-   what it was last told. Drift over a seven-minute phase is well
-   under a second, and the owner re-broadcasts every ten seconds
-   anyway, so the two screens never visibly disagree.
+   CLOCK
+   Every screen counts down locally. Phase changes start the clocks together, and (from
+   build 11) a change made on one screen reaches the others; see "Keeping the clocks in step".
    ============================================================ */
 var clkTimer = null, chimedFor = null;
 
@@ -3141,9 +3220,13 @@ function fmtDur(sec) {
    with no traffic at all. Everything else is a button on each screen. */
 function phaseDur(p) { return p === "defense" ? G.durD : G.durA; }
 
-function clockSet(phase, secs, running) {
-  G.clock = {phase:phase, left:secs, running:!!running, endsAt: running ? Date.now() + secs * 1000 : null};
+/* build 11 — the clock carries a key (which round and phase it is for) and a version, so a
+   change made on one screen can be applied on the others. See "Keeping the clocks in step". */
+function clockSet(phase, secs, running, key) {
+  G.clock = {phase:phase, left:secs, running:!!running, endsAt: running ? Date.now() + secs * 1000 : null,
+    key:key || (G.round + ":" + phase), ver:0, by:""};
   chimedFor = null;
+  applyPendingClock();
   paintClock();
   save();
 }
@@ -3156,18 +3239,92 @@ function clockToggle() {
   if (!G || !G.clock) return;
   if (G.clock.running) { G.clock.left = clockLeft(); G.clock.running = false; G.clock.endsAt = null; }
   else { G.clock.running = true; G.clock.endsAt = Date.now() + G.clock.left * 1000; }
-  paintClock(); save();
+  clockChanged();
 }
 function clockAdjust(delta) {
   if (!G || !G.clock) return;
   G.clock.left = Math.max(0, clockLeft() + delta);
   if (G.clock.running) G.clock.endsAt = Date.now() + G.clock.left * 1000;
   chimedFor = null;
-  paintClock(); save();
+  clockChanged();
 }
 function clockReset() {
   if (!G || !G.clock) return;
-  clockSet(G.clock.phase, phaseDur(G.clock.phase), false);
+  var v = G.clock.ver || 0;
+  clockSet(G.clock.phase, phaseDur(G.clock.phase), false, G.clock.key);
+  G.clock.ver = v;
+  clockChanged();
+}
+
+/* ------------------------------------------------------------------
+   KEEPING THE CLOCKS IN STEP (build 11)
+   Each screen still runs its own clock, which is why nothing has to be sent to keep
+   one going. What is sent is a change: when anyone pauses, resumes, adds or takes a
+   minute, or resets, that screen sends one small message, and nothing at all in
+   between (the old ten-second heartbeat is what got the original's sync removed).
+   The message carries the clock's whole state (how much is left and whether it is
+   running), not "pause now", and the relay stamps it with the relay's own time, so:
+     - however late a screen hears (screens check every 15 s), it ends up exactly right,
+       and time that ran on after the change is given back
+     - two people pressing at once settle the same way everywhere: each change has a
+       version (one more than the newest the sender knew of), the higher version wins,
+       and a tie goes to the later team name
+     - a change for a phase this screen has not reached yet is kept until it gets there
+   Only simultaneous games sync: a passed laptop has one screen, and in taking-turns games
+   only the writing team's clock is running.
+   ------------------------------------------------------------------ */
+function clockChanged() {
+  var c = G.clock;
+  c.ver = (c.ver || 0) + 1; c.by = G.me || "";
+  paintClock(); save();
+  if (G.sim && relayOn() && !G.over) clockSend();
+}
+function clockSend() {
+  var c = G.clock, body = {k:c.key, r:G.round, p:c.phase, left:Math.round(clockLeft() * 10) / 10, running:!!c.running, ver:c.ver, by:c.by};
+  relaySend("R" + G.round + "-CLK", {note:JSON.stringify(body)}, function () {}, function () {});
+}
+function clockNewer(a, b) { return a.ver > b.ver || (a.ver === b.ver && String(a.by || "") > String(b.by || "")); }
+function applyClockMsg(m, meta) {
+  var c = G.clock;
+  if (!c || !clockNewer(m, c)) return;
+  var elapsed = 0;
+  if (m.running && meta && meta.at && meta.now) elapsed = Math.max(0, (meta.now + (Date.now() - (meta.got || Date.now())) - meta.at) / 1000);
+  var left = Math.max(0, m.left - elapsed);
+  c.left = left; c.running = !!m.running; c.endsAt = c.running ? Date.now() + left * 1000 : null;
+  c.ver = m.ver; c.by = m.by;
+  if (left > 0) chimedFor = null;
+  paintClock(); save();
+}
+function applyRemoteClock(note, meta) {
+  var m;
+  try { m = JSON.parse(note); } catch (e) { return; }
+  if (!m || !m.k || typeof m.left !== "number" || typeof m.ver !== "number") return;
+  if (G.clock && G.clock.key === m.k) { applyClockMsg(m, meta); return; }
+  if (parseInt(m.k, 10) < G.round) return;                                  // an old round
+  var pend = G.clockPending = G.clockPending || {}, old = pend[m.k];
+  if (!old || clockNewer(m, old.m)) pend[m.k] = {m:m, meta:{at:meta && meta.at, now:meta && meta.now, got:(meta && meta.got) || Date.now()}};
+}
+function applyPendingClock() {
+  var pend = G.clockPending;
+  if (!pend) return;
+  Object.keys(pend).forEach(function (k) { if (parseInt(k, 10) < G.round) delete pend[k]; });
+  var hit = pend[G.clock.key];
+  if (hit) { delete pend[G.clock.key]; applyClockMsg(hit.m, hit.meta); }
+}
+
+/* Clocks when passing one laptop, or two screens taking turns (an option). One clock for the
+   attack and a fresh one for the response, each starting when that team's writing screen
+   opens, which is after the hand-over, so passing the laptop never costs a team time. */
+function turnClockStart(phase) {
+  if (!G.clockOn || G.sim) return;
+  var key = G.round + ":" + G.attacker + ":" + phase;
+  if (G.clock && G.clock.key === key) { paintClock(); return; }              // a reload: it comes back as it was, paused
+  clockSet(phase, phaseDur(phase), true, key);
+}
+function turnClockStop() {
+  if (!G.clockOn || G.sim || !G.clock) return;
+  G.clock.left = clockLeft(); G.clock.running = false; G.clock.endsAt = null; G.clock.done = true;
+  paintClock(); save();
 }
 /* ------------------------------------------------------------------
    HIT AND SUNK CLIPS
@@ -3240,7 +3397,8 @@ function chime() {
   } catch (e) {}
 }
 function paintClock() {
-  if (!G || !G.sim) { $("clockBox").hidden = true; $("modCtl").hidden = true; return; }
+  var live = G && (G.sim || (G.clockOn && G.clock && !G.clock.done && (G.phase === "offense" || G.phase === "defense" || G.phase === "crisis")));
+  if (!G || !live) { $("clockBox").hidden = true; $("modCtl").hidden = true; return; }
   var left = clockLeft(), c = G.clock || {};
   var cls = "clk" + (left <= 0 ? " done" : left <= 15 ? " hot" : left <= 60 ? " warn" : "") +
     (c.running ? "" : " paused");
@@ -3259,25 +3417,45 @@ function paintClock() {
       " \u00b7 round " + G.round + " \u00b7 " + (c.running ? "running" : left <= 0 ? "expired" : "paused");
     $("btnMdGo").textContent = c.running ? "Pause" : "Start";
   }
-  if (left <= 0 && chimedFor !== (G.round + ":" + c.phase)) {
-    chimedFor = G.round + ":" + c.phase;
+  var ck = c.key || (G.round + ":" + c.phase);
+  if (left <= 0 && chimedFor !== ck) {
+    chimedFor = ck;
     chime();
     onTimeUp(c.phase);
   }
 }
+var lastClockSave = 0;
 function startClockTick() {
   if (clkTimer) window.clearInterval(clkTimer);
   clkTimer = window.setInterval(function () {
-    if (!G || !G.sim) return;
+    if (!G || !(G.sim || G.clockOn)) return;
     paintClock();
+    if (G.clock && G.clock.running && Date.now() - lastClockSave > 5000) { lastClockSave = Date.now(); save(); }   // in case the page never gets to say goodbye
   }, 250);
 }
+/* Closing, reloading or leaving the page saves the time actually left. */
+window.addEventListener("pagehide", function () { if (G && G.clock && G.clock.running) save(); });
+document.addEventListener("visibilitychange", function () { if (document.hidden && G && G.clock && G.clock.running) save(); });
 /* Time running out commits what is on the page. It does not cut anyone off
    mid-sentence by force, but the round moves, which is the point of a clock. */
 function onTimeUp(phase) {
-  if (!G || !G.sim || G.me === "mod") return;
-  if (phase === "attack" && G.simPhase === "attack") simCommitAttack(true);
-  else if (phase === "defense" && G.simPhase === "defense") simCommitResponse(true);
+  if (!G) return;
+  if (!G.sim) {                                     // one laptop, or taking turns
+    if (phase === "attack" && G.phase === "offense") commitAttack(true);
+    else if (phase === "defense" && G.phase === "defense") commitDefense(true);
+    else if (phase === "defense" && G.phase === "crisis") commitCrisis(true);      // the response was already committed
+    return;
+  }
+  if (G.me === "mod") return;
+  /* build 11 — a pause from another screen may still be on its way (screens check every 15 s),
+     and a commit can't be undone, so take one last look at the relay first and commit only
+     if the clock is still at zero once anything waiting there has been applied. */
+  var go = function () {
+    if (!G || G.over || !G.clock || G.clock.phase !== phase || clockLeft() > 0) return;
+    if (phase === "attack" && G.simPhase === "attack") simCommitAttack(true);
+    else if (phase === "defense" && G.simPhase === "defense") simCommitResponse(true);
+  };
+  if (relayOn()) relayFetchOnce(go); else go();
 }
 ["btnClkGo","btnMdGo"].forEach(function (id) { var e = $(id); if (e) e.addEventListener("click", clockToggle); });
 ["btnClkPlus","btnMdPlus"].forEach(function (id) { var e = $(id); if (e) e.addEventListener("click", function () { clockAdjust(60); }); });
@@ -3514,7 +3692,7 @@ $("btnArDone").addEventListener("click", function () { advanceHalf(); });
    The response is required and recorded. It does not change what
    the inject does. That judgment happens in the debrief.
    ============================================================ */
-function openDefense() { G.phase = "defense"; save(); renderDefense(); }
+function openDefense() { G.phase = "defense"; save(); turnClockStart("defense"); renderDefense(); }
 function renderDefense() {
   var p = G.pending, def = teamOf(p.defKey);
   $("defN").textContent = "DEFENSE \u00b7 ROUND " + G.round + " \u00b7 " + def.name.toUpperCase();
@@ -3547,18 +3725,22 @@ function renderDefense() {
   briefReopen = brief;
   if (!p.briefShown) { p.briefShown = true; save(); brief(); }
 }
-$("btnCommitDefense").addEventListener("click", function () {
+function commitDefense(auto) {
   var p = G.pending;
   var parts = readForm("def");
-  var fe = formErr(parts, false);
-  if (fe) { flash("defErr", fe); return; }
+  if (!auto) {
+    var fe = formErr(parts, false);
+    if (fe) { flash("defErr", fe); return; }
+  }
   p.defParts = parts;
-  var desc = respToText(parts);
+  var desc = respToText(parts) || (auto ? "(nothing written before time)" : "");
   p.defDesc = desc;
   $("defErr").hidden = true;
   logToThread("response", p.defKey, "Response to inject " + p.card.no + ". " + desc);
-  if (p.card.crisis) openCrisis(); else resolveStandard();
-});
+  if (p.card.crisis) { openCrisis(); if (auto) commitCrisis(true); }
+  else { turnClockStop(); resolveStandard(); }
+}
+$("btnCommitDefense").addEventListener("click", function () { commitDefense(false); });
 
 /* ============================================================
    CRISIS
@@ -3596,15 +3778,20 @@ function renderCrisisGrid() {
     }});
   $("crisNote").textContent = crisisPick.length + " of " + p.crisisNeed + " selected. Only cells that are still up can be chosen.";
 }
-$("btnCrisDone").addEventListener("click", function () {
-  var p = G.pending;
-  if (crisisPick.length !== p.crisisNeed) { flash("crisErr", "Select exactly " + p.crisisNeed + " cells."); return; }
+function commitCrisis(auto) {
+  var p = G.pending, def = teamOf(p.defKey);
+  if (auto) {                                        // time ran out: the first cells still up, and what is written
+    for (var i = 0; i < N * N && crisisPick.length < p.crisisNeed; i++)
+      if (def.board[i] && !def.hits[i] && crisisPick.indexOf(i) < 0) crisisPick.push(i);
+  } else if (crisisPick.length !== p.crisisNeed) { flash("crisErr", "Select exactly " + p.crisisNeed + " cells."); return; }
   var stmt = $("crisStatement").value.trim();
-  if (stmt.length < 20) { flash("crisErr", "The continuity statement is required before play resumes."); return; }
-  p.statement = stmt;
+  if (!auto && stmt.length < 20) { flash("crisErr", "The continuity statement is required before play resumes."); return; }
+  p.statement = stmt || (auto ? "(nothing written before time)" : "");
   $("crisErr").hidden = true;
+  turnClockStop();
   applyHits(crisisPick.slice(), []);
-});
+}
+$("btnCrisDone").addEventListener("click", function () { commitCrisis(false); });
 
 /* ============================================================
    RESOLUTION
@@ -4722,8 +4909,8 @@ var IS_STAGING = /staging/i.test(window.location.hostname);
 })();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 10</span>
-  <span>the moderator screen scores correctly and its clock note no longer contradicts itself; a staging copy for review before changes go live</span>
+  <span class="tag">build 11</span>
+  <span>clocks stay in step across screens; a clock is an option for one laptop and taking turns; a reload no longer gives clock time back</span>
 </div>
 
 </body>

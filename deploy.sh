@@ -6,9 +6,8 @@
 #
 # What it refuses to do (so the process can't be skipped by accident):
 #   - deploy from the wrong branch, or with uncommitted changes
-#   - deploy code the tests haven't passed on. `npm test` (full, about 35 min) writes
-#     tests/.last-pass and `npm run quick` writes tests/.last-quick: fingerprints of index.html and
-#     worker/src/index.js that this checks. Staging accepts either; LIVE needs the full pass.
+#   - deploy code the tests haven't passed on (`npm test`, about 4 minutes, leaves tests/.last-pass, a
+#     fingerprint of index.html and worker/src/index.js; this checks it matches)
 #   - go live with anything other than the exact page that is on staging right now
 #
 # Needs CLOUDFLARE_API_TOKEN (Workers edit, plus DNS edit for electionadminsuite.com). Set
@@ -34,15 +33,8 @@ wrangler=${WRANGLER:-npx -y wrangler@latest}
 [ -n "${CLOUDFLARE_API_TOKEN:-}" ] || fail "set CLOUDFLARE_API_TOKEN first"
 [ "$(git branch --show-current)" = "$branch" ] || fail "$target deploys from the '$branch' branch; you are on '$(git branch --show-current)'"
 [ -z "$(git status --porcelain)" ] || fail "there are uncommitted changes; commit them first"
-# Staging accepts a full pass or a quick pass (npm run quick); live needs a full pass (npm test).
-now=$(mktemp); sha256sum index.html worker/src/index.js > "$now"
-if [ "$target" = production ]; then
-  cmp -s "$now" tests/.last-pass || { rm -f "$now"; fail "going live needs the FULL test suite to have passed on this exact code. Run: (cd tests && npm test)"; }
-else
-  cmp -s "$now" tests/.last-pass 2>/dev/null || cmp -s "$now" tests/.last-quick 2>/dev/null \
-    || { rm -f "$now"; fail "the tests haven't passed on this exact code. Run: (cd tests && npm run quick)  (or npm test)"; }
-fi
-rm -f "$now"
+diff -q <(sha256sum index.html worker/src/index.js) tests/.last-pass >/dev/null 2>&1 \
+  || fail "the tests haven't passed on this exact code. Run: (cd tests && npm test)"
 
 n=$(grep -o '<span class="tag">build [0-9]*' index.html | grep -o '[0-9]*$')
 [ -n "$n" ] || fail "could not read the build number from the footer of index.html"

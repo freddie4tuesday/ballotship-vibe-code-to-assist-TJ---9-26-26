@@ -9,41 +9,22 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Builds 8, 9 and 10 are waiting on staging review.** Build 8 fixes the moderator screen's final
+- **Builds 8 to 11 are waiting on staging review.** Build 8 fixes the moderator screen's final
   score (it was always 0–0 and started sudden death; it now reads each county's damage from the
   result codes). Build 9 adds staging itself. Build 10 fixes the clock note on the moderator
-  screen that contradicted itself (approved wording). All three are on the `staging` branch, on the
-  staging address for review once build 10 is deployed there. They go live when you say so after looking.
+  screen that contradicted itself (approved wording). Build 11 is the clock work (below). All are on the
+  `staging` branch; 8 to 10 are on the staging address now, and 11 goes there once its wording is
+  approved. They go live when you say so after looking.
 
 ## Backlog
 
-- **Moderator's clock buttons should reach the team screens (decided: yes).** Each screen runs
-  its own clock, which is fine; the change is that a pause, resume, +1:00, -1:00 or reset made on
-  any clock should reach the others. Design, chosen to cost the least:
-  - **Send only when someone acts**, one small relay message per press, and nothing in between (no
-    heartbeat; the original's ten-second heartbeat is what got it removed).
-  - **The message carries the clock's absolute state** (phase, time left, running or paused), not
-    "pause now", so a late or repeated message can't leave a screen wrong: whenever it lands, the
-    screen ends up right. Messages apply in the relay's own order, so two presses at once settle
-    the same way everywhere.
-  - **Delivery uses the checks screens already make, unchanged (decided: keep the 15-second
-    check).** No extra traffic at all beyond the one message per press. A pause reaches the
-    other screens at their next check, so up to 15 s later (7.5 s on average), and because the
-    message carries the absolute state they end up exactly right when it lands: time they spent
-    running past the pause is given back.
-  - **One gap, with a cheap fix:** if a team's clock reaches zero during that delay, the screen
-    commits what's written before the pause has reached it, and a commit can't be undone. So a
-    screen takes **one last look at the relay just before it commits at zero**, applies any clock
-    message waiting there, and commits only if the clock is still at zero. Cost: one extra check
-    per team at each time-out.
-  - **Last look approved:** the screen checks the relay once just before committing at zero (see above).
-  - When this ships it must also reword the moderator panel's "a pause here does not reach them" (Ready
-    for Tuesday's text, so as a table for approval first).
-  - Only simultaneous games need it; a passed laptop has one screen, and in taking-turns only the
-    writing team's clock runs.
-  - Tests: a pause reaches both team screens at their next check and they show the same time; a
-    message that arrives late still leaves the right time; a pause sent just before zero stops the
-    commit; nothing is sent while nobody acts.
+- **An inject library page (asked for): a page at its own address where the injects are listed and can be
+  added or edited.** Today the 16 injects are code inside `index.html` (`DECK`, from "the scenario
+  workbook", which we haven't seen). Open design questions, to settle before building: where edits are
+  saved and how they reach games (a draft and publish step that mirrors staging and live is my
+  suggestion); who may edit (a login is my suggestion); a game must keep the deck it started with, and
+  both screens of a two-screen game must have the same one; what the page needs (all fields, a footprint
+  preview, add and reorder, history with rollback, import from the workbook).
 - **Question for TJ: sudden death in simultaneous mode.** (Also why the full-game test now scripts its shots: random ones tie now and then.) When a simultaneous game ends in a
   tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
   *taking-turns* screens instead of another simultaneous round. Found while recording the demo.
@@ -107,5 +88,5 @@ Each item: a short title, then one or two lines on what and why.
 - **Pop-ups fit the screen; pass-the-laptop shows earlier shots and the written attack** — build 5.
 - **End early and resume; ask before replacing a saved game; moderator switches the relay on; 1-round test game** — build 6.
 - **The log as a Word file, and Print that prints the log instead of the whole screen** — build 7.
-- **Quick test mode (`npm run quick`)** — after build 10 (tests only, no app change; staging accepts a quick pass, live needs the full one).
 - **Clock wording fix** — build 10, on staging.
+- **A clock for one laptop and for taking turns (option); clock changes reaching every screen, with a last look before committing at zero; a reload no longer gives clock time back** — build 11, on the branch, waiting on wording approval before staging.

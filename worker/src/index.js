@@ -95,8 +95,9 @@ export class Room extends DurableObject {
     const side = String(b.from || "");
     const code = String(b.code || "");
     // The moderator only watches, except that it may end the exercise early or
-    // resume it (build 6), which both team screens need to hear about.
-    const modControl = /-(END|RESUME)$/.test(code);
+    // resume it (build 6), or change the clock (build 11), which the team screens
+    // need to hear about.
+    const modControl = /-(END|RESUME|CLK)$/.test(code);
     if (!SIDES.includes(side) || (side === "mod" && !modControl)) return json({ error: "from must be t1 or t2" }, 400);
     const note = String(b.note || "");
     const note2 = String(b.note2 || "");
@@ -116,10 +117,15 @@ export class Room extends DurableObject {
     const as = url.searchParams.get("as") || "";
     if (!SIDES.includes(as)) return json({ error: "as must be t1, t2 or mod" }, 400);
     const rows = as === "mod"
-      ? this.sql.exec("SELECT seq, side, code, note, note2 FROM msgs WHERE seq > ? ORDER BY seq LIMIT ?", since, MAX_BATCH).toArray()
-      : this.sql.exec("SELECT seq, side, code, note, note2 FROM msgs WHERE seq > ? AND side != ? ORDER BY seq LIMIT ?", since, as, MAX_BATCH).toArray();
+      ? this.sql.exec("SELECT seq, side, code, note, note2, at FROM msgs WHERE seq > ? ORDER BY seq LIMIT ?", since, MAX_BATCH).toArray()
+      : this.sql.exec("SELECT seq, side, code, note, note2, at FROM msgs WHERE seq > ? AND side != ? ORDER BY seq LIMIT ?", since, as, MAX_BATCH).toArray();
+    // `at` is when the relay stored each message and `now` is the relay's clock at this
+    // reply, both in milliseconds (build 11). A clock change that reaches a screen late
+    // (screens check every 15 s) is corrected by how long it was in transit, and both times
+    // come from this one clock, so screens whose own clocks differ still agree.
     return json({
-      messages: rows.map(r => ({ seq: r.seq, from: r.side, code: r.code, note: r.note, note2: r.note2 })),
+      messages: rows.map(r => ({ seq: r.seq, from: r.side, code: r.code, note: r.note, note2: r.note2, at: r.at })),
+      now: Date.now(),
     });
   }
 }

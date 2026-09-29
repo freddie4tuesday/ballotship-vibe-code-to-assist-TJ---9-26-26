@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 10 (build 7 is what's live until 8, 9 and 10 are released; see Releasing)
+**Current version:** build 11 (build 7 is what's live until 8 to 11 are released; see Releasing)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
@@ -94,6 +94,23 @@ A 4-minute narrated walkthrough of one game, made by `demo/record-demo.js`. The 
 git; re-record it after any change to how the game looks. See `demo/README.md` for how,
 and ROADMAP.md for where it should live.
 
+## The clock
+
+- **Simultaneous games** always have a clock, on every screen. Each screen counts down on its own; phase
+  changes start the clocks together. When anyone pauses, resumes, adds or takes a minute, or resets,
+  that screen sends one small relay message with the clock's whole state, and the other screens
+  follow at their next check (up to 15 seconds; they end up exactly right, and get back time that ran
+  on). Nothing is sent between presses. A clock that reaches zero checks the relay once more before it
+  commits, in case a pause is on its way.
+- **One laptop, or two screens taking turns:** "Use a clock" is a setup option, off by default. Attack
+  and response each get their own time (10:00 by default), it waits during the hand-over and starts when
+  the writing screen opens.
+- **At zero,** whatever is written is committed as it stands and play moves on (no target picked means a
+  random shot, and the log says so).
+- A saved game keeps the time actually left, and comes back paused.
+- Code: `clockSet`, `clockChanged` and "Keeping the clocks in step" in `index.html`; the relay stamps
+  messages so a late one can be corrected.
+
 ## The after-action log
 
 Three ways out of the final screen, all made by one function (`logHTML` in `index.html`), so
@@ -133,15 +150,14 @@ games per address, so staging games and live games can't mix or overwrite each o
 **The path of a change:**
 
 1. Agree the change (wording changes come as a table for approval first).
-2. Build it on the `staging` branch, and run the tests: `cd tests && npm run quick` while building (about 2 minutes; see `tests/README.md`), and `npm test` (the full suite, about 4 minutes) before going live.
+2. Build it on the `staging` branch, and run the tests: `cd tests && npm test` (about 4 minutes).
 3. `./deploy.sh staging` puts it on the staging address.
 4. Someone looks at it there and says whether it's good.
 5. Only after that: merge `staging` into `main`, and run `./deploy.sh production`.
 
 **`deploy.sh` enforces the order.** It deploys staging only from the `staging` branch and live
 only from `main`; it refuses uncommitted changes; it refuses code the tests haven't passed on
-(the tests leave a fingerprint of `index.html` and the relay, and the script checks it matches:
-staging accepts a quick pass or a full one, live needs the full one); and for live it refuses anything other than the exact page that is on
+(the tests leave a fingerprint of `index.html` and the relay, and the script checks it matches); and for live it refuses anything other than the exact page that is on
 staging right now. It needs a Cloudflare API token in `CLOUDFLARE_API_TOKEN`.
 
 The relay needs no separate step: both environments deploy the page and the relay together.
