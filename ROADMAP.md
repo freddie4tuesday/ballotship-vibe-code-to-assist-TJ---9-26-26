@@ -13,6 +13,16 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Backlog
 
+- **The AI assignment becomes a feature flag: decided, not built.** "We don't need the AI in every game." Today the
+  setup option "Require an AI-made artifact with every attack" is on by default, and turning it off only makes the AI
+  task optional (it still shows). **Decided:** the flag is **off by default**, and when off the game **hides the AI
+  completely**: no task, prompt or artifact box on the attack screen, nothing for the other team to read, no AI
+  lines in the log, Word file, print or debrief questions, and the setup and Rules wording that describe it
+  are dropped or reworded. When on, it works as it does now (required before an attack can be committed). It is a
+  shared setting, so with the join code the host decides it for every screen. The inject library's AI task and
+  prompt fields stay in the deck but become optional in the editor and in the checks. All the wording changes
+  come as a table for approval first.
+
 - **Auto-delete relay rooms after 1 week: decided, not built yet.** Why: the exercise makes convincing fake
   material (spoofed alerts, fake headlines), and the game's own rules say to delete it after the retro; without
   this it stays on Cloudflare until someone removes it, which is a privacy and misuse risk if a room name leaks, and
