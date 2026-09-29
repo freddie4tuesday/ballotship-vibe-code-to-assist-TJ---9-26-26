@@ -9,17 +9,12 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Build 17 is built and waiting for the owner's staging review** (it is the largest release to date; builds 14 to 17 go live
-  together when the owner says so). It holds: the forgiving join code box; the AI assignment as an option (off by default,
-  hidden when off); relay rooms deleting a week after their last message; the relay always on for two-screen games (checkbox gone,
-  "Set up by hand" if the relay can't be reached); the updated mode cards; and the exercise label in the after-action log. **Still
-  open:** the demo recorder (`demo/record-demo.js`) uses the old relay fields and needs rewriting when the video is re-recorded.
-- Builds 14 (game starts with inject 1), 15 (emailed editor sign-in) and 16 (join codes) are on staging awaiting review;
+- Nothing is waiting on review. Builds 14 to 17 went live together. **Still open:** the demo recorder (`demo/record-demo.js`) uses the old relay fields and needs rewriting when the video is re-recorded.
   builds 8 to 13 are live.
 
 ## Backlog
 
-- **Inject editor sign-in: built (build 15), waiting on staging review.** Emailed one-time link for readyfortuesday.com
+- **Inject editor sign-in: live (build 15).** Emailed one-time link for readyfortuesday.com
   and decaro.net addresses, 1-day sign-in, sent with Resend from `ballotship-no-reply@electionadminsuite.com`; saves record who
   made them. **Not done, add when wanted:** a way to remove a person before their day is up (today: change
   `ALLOWED_DOMAINS` and redeploy, which stops new sign-ins but not one already made; or wait a day); a list of
@@ -29,7 +24,7 @@ Each item: a short title, then one or two lines on what and why.
   screen, under "Set up the exercise" as a quieter second button, and again in the "New to Ballotship?" box on the
   setup screen. Open: a link to the video (needs re-recording first, since it predates builds 5 to 13) or a
   self-playing walkthrough inside the game (bigger, never goes stale). New wording needs approval first.
-- **One person sets up the exercise; the others join with a code: built (build 16), waiting on staging review.**
+- **One person sets up the exercise; the others join with a code: live (build 16).**
   Moderator hosts if there is one, else Team 1; a short code (one word and three digits) typed into a box; the joining
   team picks its side and names itself; everything else comes from the host, including the inject deck. Setup by
   hand stays for one laptop and for taking turns with no relay. **Follow-ups:** the demo recorder
@@ -100,7 +95,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Done
 
-- **Relay rooms deleted a week after their last message; the AI assignment as an option, off by default; the join box forgiving about the code's shape; the relay always on for two-screen games with a set-up-by-hand fallback; updated mode cards; the exercise label in the log** - build 17, on staging awaiting review.
+- **Relay rooms deleted a week after their last message; the AI assignment as an option, off by default; the join box forgiving about the code's shape; the relay always on for two-screen games with a set-up-by-hand fallback; updated mode cards; the exercise label in the log** - build 17, live.
 
 - **The inject editor at a plain address, no key** - build 13, live.
 
