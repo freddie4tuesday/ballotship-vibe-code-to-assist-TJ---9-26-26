@@ -60,10 +60,16 @@ const unxml = t => t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;
     const html = fs.readFileSync(web.file, "utf8");
 
     // Print: the hidden frame holds the log.
+    // The page prints from a hidden frame and removes it as soon as printing ends, which a headless browser does at once,
+    // so looking for the frame afterwards is a race. What is printed is the frame's own document (srcdoc); take it the moment
+    // the frame is added.
+    await p.evaluate(() => {
+      window.__printedDoc = null;
+      new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.id === "printFrame") window.__printedDoc = n.srcdoc; }))).observe(document.body, { childList: true });
+    });
     await p.$eval("#btnPrint", e => e.click());
-    await p.waitForSelector("#printFrame", { state: "attached", timeout: 10000 });
-    await p.waitForFunction(() => { const f = document.getElementById("printFrame"); return !f || (f.contentDocument && f.contentDocument.body && f.contentDocument.body.textContent.length > 100); }, null, { timeout: 10000 });
-    const printed = await p.evaluate(() => { const f = document.getElementById("printFrame"); return f ? { text: f.contentDocument.body.textContent, grids: f.contentDocument.querySelectorAll(".grid, .cell").length } : null; });
+    await p.waitForFunction(() => window.__printedDoc, null, { timeout: 10000 });
+    const printed = await p.evaluate(() => { const d = new DOMParser().parseFromString(window.__printedDoc, "text/html"); return { text: d.body.textContent, grids: d.querySelectorAll(".grid, .cell").length }; });
 
     // A page to parse the log and the XML with (the browser's own parsers).
     const helper = await browser.newPage();
