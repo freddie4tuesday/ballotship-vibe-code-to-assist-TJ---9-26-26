@@ -1,4 +1,6 @@
-// The demo video page, as its own Worker (no custom route, so the live game is untouched).
+// The demo video page, as its own Worker at https://ballotship-demo.electionadminsuite.com (its own specific route, because
+// *.electionadminsuite.com/* belongs to another app; the live game is untouched). The old ballotship-demo.electionadminsuite.workers.dev
+// address keeps working.
 // Copy the video in first: see README.md, "Publishing the video".
 {
   "$schema": "../tests/node_modules/wrangler/config-schema.json",
@@ -8,5 +10,9 @@
   "main": "site-worker/index.js",
   // The video goes through site-worker first for byte-range (seeking) support.
   "assets": { "directory": "site", "binding": "ASSETS", "run_worker_first": ["/*.mp4"] },
-  "workers_dev": true
+  "workers_dev": true,
+  "routes": [
+    { "pattern": "ballotship-demo.electionadminsuite.com", "custom_domain": true },
+    { "pattern": "ballotship-demo.electionadminsuite.com/*", "zone_name": "electionadminsuite.com" }
+  ]
 }
