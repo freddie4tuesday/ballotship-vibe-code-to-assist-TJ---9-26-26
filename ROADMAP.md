@@ -9,10 +9,24 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-_(nothing yet)_
+- **Moderator screen's final score was always 0–0 — fixed as build 8, waiting to go live.** The
+  moderator never tracked damage, so it called a tie and started sudden death. It now reads each
+  county's damage from the result codes. Tested (fails on build 7, passes on build 8). Sits on the
+  branch `fix-moderator-score`, not yet merged to `main` or deployed; waiting on how you want
+  changes released (see the staging proposal).
 
 ## Backlog
 
+- **Moderator's clock buttons don't reach the team screens (by design in the original; question
+  raised after a session).** Each screen runs its own clock; a pause, +1:00 or reset on the
+  moderator's clock changes only the moderator's. The original code notes that it used to send
+  the clock over the relay and heartbeat every ten seconds, and stopped because that put
+  hundreds of extra messages through the Worker. Now that the relay handles moderator commands
+  (end early, resume), a pause could carry the same way. The catch is delivery speed: during
+  writing phases team screens check the relay only every 15 s, so a pause would arrive up to
+  15 s late unless they check faster (about 1.5 s: a two-hour, three-screen session then makes
+  roughly 14,000 requests, inside Cloudflare's free 100,000 a day). Undecided; see the clock
+  discussion under the countdown item.
 - **Countdown clock for passing the laptop and taking turns.** The clock exists only in
   simultaneous mode today, as in the original. Reported after a pass-the-laptop session.
   **Decided: when time runs out, commit what's written**, as simultaneous mode does (with a
@@ -21,12 +35,6 @@ _(nothing yet)_
   the clock shows when passing the laptop (the top bar, as in simultaneous), whether a
   facilitator can pause it, and how the "curtain" screen between teams interacts with it.
   App change, so the wording of any new setup options comes back here as a table first.
-- **Moderator screen's final score is always 0–0 (bug, found in build 6 testing).** The
-  moderator never tracks either county's damage, so when it presses "End the exercise" after
-  the last round it sees a tie and starts sudden death, which switches it to the taking-turns
-  screens (see the sudden-death question below). The team screens score correctly. Fix: have
-  the moderator read each county's damage from the result codes already crossing the relay.
-  Present before build 6 (from the code); `end-early.test.js` reports it as a known issue.
 - **Question for TJ: sudden death in simultaneous mode.** When a simultaneous game ends in a
   tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
   *taking-turns* screens instead of another simultaneous round. Found while recording the demo.

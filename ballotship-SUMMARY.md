@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 7
+**Current version:** build 8
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
@@ -161,7 +161,7 @@ Carried over from Ballot Proofing Workbench:
 
 ## Suggested opening prompt for a Claude chat
 
-> Attached is a single-file browser app (Ballotship, build 7), its summary, and its roadmap.
+> Attached is a single-file browser app (Ballotship, build 8), its summary, and its roadmap.
 > The build log is in the HTML comment at the top of the file — please read it before
 > proposing changes. Each change should get the next build number in the log and the footer.
 > I'd like to work on [X].

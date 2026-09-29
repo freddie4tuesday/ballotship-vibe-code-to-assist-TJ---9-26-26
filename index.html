@@ -96,6 +96,20 @@
         The chat note in the test carries < > & to prove escaping. Catches while building: the
         first test picture was invalid PNG data I had typed by hand (LibreOffice complained,
         Word would have too), so the test now generates a real one.
+  build 8  Moderator screen scores, reported as a bug in build 6 testing and confirmed. The
+        moderator has no board, so it never tracked either county's damage: its top bar showed
+        "0 of 7" all game, and "End the exercise" after the last round saw a 0-0 tie and
+        started sudden death (a switch to the taking-turns screens). Every result code
+        already carries what it needs, the sender's running total of cells down (D4) and the
+        sites that just went offline, but the moderator only counted the packets and never
+        learned which team sent each one. It now reads both into that team's record
+        (modReadResult): the total only ever goes up, so a missed or repeated packet can't
+        drift it. Verified: tests/full-game.test.js and tests/end-early.test.js now require
+        the moderator's final winner, damage and sites offline to match the teams' and not be
+        0-0, with a moderator that presses "Start round N+1" like a real one. On build 7 both
+        fail (the moderator shows down [0,0] against the teams' [4,1] and sits in sudden
+        death); on build 8 both pass. The tie-break itself (does sudden death in simultaneous
+        mode belong on the taking-turns screens?) is still a question for TJ, on the roadmap.
 -->
 <html lang="en">
 <head>
@@ -2503,7 +2517,7 @@ function relayLoop() {
     relayStatus(null, false);
     for (var i = 0; i < msgs.length; i++) {
       G.relay.cursor = msgs[i].seq;
-      if (routeIncoming(msgs[i].code, msgs[i].note || "", msgs[i].note2 || "")) { moved = true; break; }
+      if (routeIncoming(msgs[i].code, msgs[i].note || "", msgs[i].note2 || "", msgs[i].from)) { moved = true; break; }
     }
     save();
     if (gen !== pollGen) return;      // routing a message restarted polling (an end or resume)
@@ -2515,18 +2529,19 @@ function relayLoop() {
   });
 }
 /* Returns true when the screen has moved on, which ends this poll pass. */
-function routeIncoming(code, note, note2) {
+function routeIncoming(code, note, note2, from) {
   var parts = normalize(code).split("-");
   /* build 6 — the other screen ended early, or resumed after ending early. */
   if (parts.indexOf("END") >= 0) { if (!G.over) endEarly(true); return false; }
   if (parts.indexOf("RESUME") >= 0) { if (G.over && G.resumeFrom) { resumeEarly(true); return true; } return false; }
   /* A move can still be on its way when the game ends early. Keep it, and play it
      in after a resume, or both screens would wait on it forever. */
-  if (G.over) { if (G.resumeFrom) (G.heldMoves = G.heldMoves || []).push({code:code, note:note, note2:note2}); return false; }
+  if (G.over) { if (G.resumeFrom) (G.heldMoves = G.heldMoves || []).push({code:code, note:note, note2:note2, from:from}); return false; }
   if (parts.indexOf("MSG") >= 0) { addIncomingMessage(note); return false; }
   if (parts.indexOf("TIME") >= 0) return false;   /* from an older build; the clock is local now */
   if (G.me === "mod") {           /* a moderator watches; it never plays */
     var isRes = /^[HK]/.test(parts[1] || "");
+    if (isRes) modReadResult(from, parts);
     logToThread(isRes ? "response" : "attack", null,
       code + (note ? "\n" + note : "") + (note2 ? "\n" + note2 : ""));
     modTrack(isRes);
@@ -4063,6 +4078,26 @@ $("btnSrNext").addEventListener("click", function () {
   simStartRound();
 });
 
+/* build 8 — the moderator has no board, so it never knew either county's damage:
+   its top bar showed "0 of 7" all game, and "End the exercise" saw a 0-0 tie and
+   started sudden death. But every result code already carries what it needs: the
+   sender's running total of cells down (D4) and the sites that just went offline
+   (PP1, EOC ...). The sender is the county that was hit, so this reads them into
+   that county's record. A running total, so a missed or repeated packet can't
+   drift it, and sites only ever go offline, never back. */
+function modReadResult(from, parts) {
+  if (from !== "t1" && from !== "t2") return;
+  var t = teamOf(from), i, m, sunk = [];
+  for (i = 0; i < parts.length; i++) if ((m = /^D(\d{1,2})$/.exec(parts[i]))) break;
+  if (i >= parts.length) return;
+  var down = parseInt(m[1], 10);
+  if (down > TOTAL_CELLS) return;
+  for (i++; i < parts.length; i++) parts[i].split(".").forEach(function (c) { if (BY_CODE[c]) sunk.push(BY_CODE[c].id); });
+  t.cellsDown = Math.max(t.cellsDown, down);
+  sunk.forEach(function (id) { t.offline[id] = true; });
+  updateChrome();
+}
+
 /* The moderator has no board, so it learns where the round is from the packets
    going past. Both attacks in means the response clock should start. Both
    results in means the round is done. */
@@ -4265,7 +4300,7 @@ function resumeEarly(fromRemote) {
   if (!fromRemote && relayOn()) relaySend("R" + G.round + "-RESUME", {}, function () {}, function () {});
   resume();
   updateChrome();
-  held.forEach(function (m) { if (!G.over) routeIncoming(m.code, m.note, m.note2); });
+  held.forEach(function (m) { if (!G.over) routeIncoming(m.code, m.note, m.note2, m.from); });
   save();
   if (!fromRemote && G.mode !== "pass" && !relayOn())
     window.alert("Resumed. Press Resume the game on the other screen too.");
@@ -4634,8 +4669,8 @@ startClockTick();
 })();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 7</span>
-  <span>the log downloads as a Word file too, and Print now prints the log instead of the whole screen</span>
+  <span class="tag">build 8</span>
+  <span>the moderator screen now shows both counties' real damage and scores the game correctly</span>
 </div>
 
 </body>

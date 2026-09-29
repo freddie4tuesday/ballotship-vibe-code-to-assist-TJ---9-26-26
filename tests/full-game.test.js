@@ -67,6 +67,8 @@ async function step(p) {
           const did = await step(pages[side]).catch(e => "error: " + e.message.split("\n")[0]);
           seen[side].add(did);
         }
+        // A real moderator presses "Start round N+1" as each round finishes.
+        if (await pages.mod.isVisible("#btnMdNext") && (await pages.mod.evaluate(() => G.round < G.maxRounds))) await pages.mod.click("#btnMdNext").catch(() => {});
         await pages.t1.waitForTimeout(250);
       }
       for (const side of ["t1", "t2"]) {
@@ -87,6 +89,16 @@ async function step(p) {
         JSON.stringify(res.t1.down) === JSON.stringify(res.t2.down), JSON.stringify([res.t1.down, res.t2.down]));
       r.check("the moderator saw both teams' traffic", await pages.mod.evaluate(() =>
         G.thread.some(m => m.kind === "attack") && G.thread.some(m => m.kind === "response")));
+      // The moderator ends the exercise too, and must agree with the teams on the score (build 8).
+      await pages.mod.waitForSelector("#btnMdNext:not([hidden])", { timeout: 30000 }).catch(() => {});
+      await pages.mod.$eval("#btnMdNext", e => e.click()).catch(() => {});
+      await pages.mod.waitForFunction(() => G.over || (document.querySelector(".screen.on") || {}).id !== "screen-mod", null, { timeout: 15000 }).catch(() => {});
+      const snap = p => p.evaluate(() => ({ screen: (document.querySelector(".screen.on") || {}).id, winner: G.winner || null, why: G.why || null,
+        down: [G.teams.t1.cellsDown, G.teams.t2.cellsDown], off: [0, 1].map(i => Object.keys(G.teams["t" + (i + 1)].offline).filter(k => G.teams["t" + (i + 1)].offline[k]).sort().join("+")) }));
+      const ms = await snap(pages.mod), ts = await snap(pages.t1);
+      r.check("the moderator ends the exercise on the final screen, not in sudden death", ms.screen === "screen-over", ms.screen);
+      r.check("the moderator's final score matches the teams' (winner, damage, sites offline)", JSON.stringify([ms.winner, ms.why, ms.down, ms.off]) === JSON.stringify([ts.winner, ts.why, ts.down, ts.off]), JSON.stringify([ms, ts]));
+      r.check("...and the moderator's top bar shows the damage too", await pages.mod.$$eval("#score .ci", els => els.map(e => parseInt(e.textContent, 10))).then(v => JSON.stringify(v) === JSON.stringify(ts.off.map(x => x ? x.split("+").length : 0))));
       r.check("polling stops once the game is over", await pages.t1.evaluate(() => G.over && !pollTimer));
       r.check("no JavaScript errors on any screen", errors.length === 0, errors.join("; "));
       console.log("        result: winner " + (res.t1.winner || "tie") + " by " + res.t1.why +

@@ -84,21 +84,20 @@ async function run(browser, mode, relay, r, ender) {
   const done = await until(async () => {
     for (const { p } of players) await step(p, m).catch(() => {});
     await modStep();
-    const sc = await Promise.all(screens.map(s => screenOn(s.p)));
-    return sc.every((x, i) => x === "screen-over" || (sides[i] === "mod" && x !== "screen-mod" && (sc.filter((y, j) => sides[j] !== "mod").every(y => y === "screen-over"))));
+    return (await Promise.all(screens.map(s => screenOn(s.p)))).every(x => x === "screen-over");
   }, 240000);
   const endState = await Promise.all(screens.map(s => s.p.evaluate(() => ({ me: G.me, screen: (document.querySelector(".screen.on") || {}).id,
-    over: G.over, suddenDeath: !!G.suddenDeath, down: [G.teams.t1.cellsDown, G.teams.t2.cellsDown] }))));
+    over: G.over, winner: G.winner || null, why: G.why || null, down: [G.teams.t1.cellsDown, G.teams.t2.cellsDown],
+    off: [Object.keys(G.teams.t1.offline).filter(k => G.teams.t1.offline[k]).sort().join("+"), Object.keys(G.teams.t2.offline).filter(k => G.teams.t2.offline[k]).sort().join("+")] }))));
   if (!done) console.log("        end state: " + JSON.stringify(endState));
-  // Known issue (ROADMAP.md): the moderator never tracks damage, so its own "End the
-  // exercise" sees 0-0, calls a tie and goes to sudden death. Judge the teams here.
-  const teamsDone = endState.filter(x => x.me !== "mod").every(x => x.screen === "screen-over");
-  const modState = endState.find(x => x.me === "mod");
-  if (modState && modState.screen !== "screen-over")
-    console.log("  KNOWN  moderator screen went to sudden death at the real end (" + modState.screen + ", sees cells down " + modState.down + "); see ROADMAP.md");
-  r.check(label + ": the game then plays on to the real end" + (modState ? " (team screens)" : ""), teamsDone, endState.map(x => x.screen).join(", "));
-  r.check(label + ": a full game isn't marked as ended early", teamsDone && !(await P.isVisible("#overEarly")) && !(await P.isVisible("#btnResumeGame")));
-
+  r.check(label + ": the game then plays on to the real end", done, endState.map(x => x.screen).join(", "));
+  r.check(label + ": a full game isn't marked as ended early", done && !(await P.isVisible("#overEarly")) && !(await P.isVisible("#btnResumeGame")));
+  if (endState.some(x => x.me === "mod")) {
+    // The moderator has no board, so it reads each county's damage from the result codes (build 8).
+    const same = endState.every(x => JSON.stringify([x.winner, x.why, x.down, x.off]) === JSON.stringify([endState[0].winner, endState[0].why, endState[0].down, endState[0].off]));
+    r.check(label + ": the moderator's final score matches the teams' (winner, damage, sites offline)", same, JSON.stringify(endState.map(x => [x.me, x.winner, x.why, x.down, x.off])));
+    r.check(label + ": ...and it isn't 0-0", endState.find(x => x.me === "mod").down.some(n => n > 0));
+  }
   const errs = screens.flatMap(s => s.errors);
   r.check(label + ": no JavaScript errors", errs.length === 0, errs.join("; "));
   return screens;
