@@ -26,11 +26,15 @@ function reporter(title) {
 
 /* Local relay from ../worker via `wrangler dev`. If RELAY_URL is set (the
    runner does this), reuse that one instead of starting another. */
-async function withRelay(fn) {
-  if (process.env.RELAY_URL) return fn(process.env.RELAY_URL);
+async function withRelay(fn, opts) {
+  opts = opts || {};   // opts.fresh: always start a relay of its own; opts.vars: settings for it (e.g. ROOM_TTL_SECONDS)
+  if (process.env.RELAY_URL && !opts.fresh) return fn(process.env.RELAY_URL);
   const port = 8790 + Math.floor(Math.random() * 100);
   const url = "http://127.0.0.1:" + port;
-  const proc = spawn("npx", ["wrangler", "dev", "--port", String(port), "--ip", "127.0.0.1"], {
+  const args = ["wrangler", "dev", "--port", String(port), "--ip", "127.0.0.1"];
+  if (opts.fresh) args.push("--persist-to", fs.mkdtempSync(path.join(require("os").tmpdir(), "ballotship-relay-")));
+  Object.keys(opts.vars || {}).forEach(k => args.push("--var", k + ":" + opts.vars[k]));
+  const proc = spawn("npx", args, {
     cwd: path.join(ROOT, "worker"), stdio: ["ignore", "pipe", "pipe"], detached: true,
   });
   let log = "";

@@ -35,7 +35,9 @@ async function setup(browser, mode, side, relay, room, opts) {
     await p.evaluate(([a, d]) => { document.getElementById("durA").value = a; document.getElementById("durD").value = d; }, [opts.clock.a || "10:00", opts.clock.d || "10:00"]);
   }
   if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto");
-  for (const id of ["#optAI", "#optSfx", "#optChime"]) if (await p.isChecked(id)) await p.uncheck(id);
+  for (const id of ["#optSfx", "#optChime"]) if (await p.isChecked(id)) await p.uncheck(id);
+  if (opts.ai) { if (!(await p.isChecked("#optAI"))) await p.check("#optAI"); }          // build 17: the AI assignment is off unless asked for
+  else if (await p.isChecked("#optAI")) await p.uncheck("#optAI");
   await p.click("#btnStart");
   if (relay) { await p.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 }); codes[room] = await p.evaluate(() => G.joinCode); }
   if (side) registry[side] = p;

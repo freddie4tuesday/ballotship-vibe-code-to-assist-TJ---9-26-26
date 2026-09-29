@@ -4,7 +4,7 @@
   Text is stored as typed and always escaped when shown; nothing here is HTML.
 
   A deck is { injects: [ ... ] }; the first inject starts the game (build 14: there used to be a start position, 6). Each inject: id, cat, title, type, shape (not for a crisis
-  inject), crisis (optional), scene, atk {where what when goal}, op, comms, prec, src, ai {task prompt},
+  inject), crisis (optional), scene, atk {where what when goal}, op, comms, prec, src, ai {task prompt} (optional, from build 17),
   sponsor (optional) {name full url logo}.
 
   Limits are about twice the longest text in the built-in deck (scene 168, op 123, comms 182,
@@ -44,9 +44,11 @@ export function validateInject(c, where = "Inject") {
   need(c.comms, "comms", "the communications line", LIMITS.comms);
   need(c.prec, "prec", "the precedent", LIMITS.prec);
   need(c.src, "src", "the precedent's source", LIMITS.src, true);
+  // Build 17: the AI assignment is optional (a game can run without it), so an inject may have no AI task or prompt;
+  // if given they still have to fit.
   const ai = c.ai && typeof c.ai === "object" ? c.ai : {};
-  need(ai.task, "task", "the AI assignment", LIMITS.task);
-  need(ai.prompt, "prompt", "the AI prompt", LIMITS.prompt);
+  need(ai.task === undefined ? "" : ai.task, "task", "the AI assignment", LIMITS.task, true);
+  need(ai.prompt === undefined ? "" : ai.prompt, "prompt", "the AI prompt", LIMITS.prompt, true);
   if (c.crisis !== undefined && c.crisis !== true) bad("'crisis' is either on or left out");
   if (c.crisis) { if (c.shape !== undefined && c.shape !== null && c.shape !== "") bad("a crisis inject hits the whole jurisdiction, so it has no footprint shape"); }
   else if (!isStr(c.shape) || !META.shapes[c.shape]) bad("choose a footprint shape");

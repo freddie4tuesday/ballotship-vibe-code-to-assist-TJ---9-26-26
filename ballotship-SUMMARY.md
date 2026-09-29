@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 16 (on the branch; staging is build 15, live is build 13)
+**Current version:** build 17 (on the branch; staging is build 16, live is build 13)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address and needs an emailed sign-in link; see The inject library)
@@ -43,7 +43,7 @@ room's name; the host posts one settings message, including the inject deck, int
 by hand, as before.
 
 Optional features on the setup screen: a relay that passes codes automatically between buildings,
-an AI assignment required with every attack, a reveal of the real-world precedent after each
+an AI assignment (off by default; when off it is hidden everywhere, when on an attack can't be committed without it), a reveal of the real-world precedent after each
 response, sounds, and random site placement. The round count runs from 4 to 12.
 
 ---
@@ -88,8 +88,9 @@ the browser, and if the relay is unreachable the page says so and teams read cod
     and stops after 30 idle minutes. The next click catches up, so nothing is lost.
   - The Worker refuses more than 400 requests a minute for one room, caps a room at 5,000
     messages, and caps a message at 1.5 MB.
-- **Not included on purpose:** rooms are never auto-deleted. See ROADMAP.md, Ideas, for why it
-  should be considered.
+- **Rooms delete themselves a week after their last message** (build 17, decided with the owner: the exercise
+  makes convincing fake material and the rules say to delete it afterwards). One Durable Object alarm, reset by
+  every message; download the after-action log before then if it is needed. `ROOM_TTL_SECONDS` shortens it for tests.
 - **Deploy:** from `worker/`, run `npx wrangler deploy --message "build N"`.
 - **Don't** switch it to always-open WebSocket connections without Cloudflare's hibernation
   feature. Those bill for every connected second and are the likely cause of an earlier costly

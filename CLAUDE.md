@@ -26,7 +26,7 @@ Read `ballotship-SUMMARY.md` first (current build, standing rules, deploy and ro
   library's Workers: never print it, commit it or put it in a doc. Changing the fields an inject has means changing
   `injects/src/validate.js`, `sanitizeDeck` in `index.html` and the editor together.
 - **Relay:** plain HTTP polling only. Don't switch to always-open WebSockets without
-  hibernation (cost). Room auto-delete is deliberately off; see the roadmap.
+  hibernation (cost). Rooms delete themselves a week after their last message (build 17).
 - Work on the `staging` branch; merge it into `main` only when going live.
 
 ## Documentation rules

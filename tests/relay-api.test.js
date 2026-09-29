@@ -1,7 +1,8 @@
 /*
   Relay rules, checked directly against a local copy of ../worker (no browser):
   message order, own-message filtering, moderator sees all, input checks,
-  browser permission (CORS), size cap, and the per-room request limit.
+  browser permission (CORS), size cap, and the per-room request limit. And (build 17) that a room is deleted a set time
+  after its LAST message: tested with a 3-second lifetime on a relay of its own, where the live one uses a week.
 */
 const { reporter, withRelay } = require("./helpers");
 
@@ -49,8 +50,27 @@ const { reporter, withRelay } = require("./helpers");
       r.check("a flooded room is slowed down (429 after 400/minute)", limited === 20, limited + " refused");
       r.check("other rooms are unaffected by a flood", (await poll("t1")).messages.length === 1);
     });
+    // ---- rooms are deleted after their last message ----
+    await withRelay(async relay => {
+      const sleep = ms => new Promise(x => setTimeout(x, ms));
+      const room = relay + "/room/ttl-" + Date.now();
+      const send = (note) => fetch(room + "/send", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: "t1", code: "R1-MSG", note }) }).then(x => x.json());
+      const count = async () => (await (await fetch(room + "/poll?as=mod&since=0")).json()).messages.length;
+      await send("one");
+      await sleep(2000);
+      const two = await send("two");                 // 2 s in: this resets the 3-second clock
+      await sleep(2000);                             // 4 s after the first, 2 s after the second
+      r.check("a message resets the clock: the room is still there 4 s after the first message of a 3 s lifetime", (await count()) === 2 && two.seq === 2, "" + (await count()));
+      await sleep(2600);                             // now more than 3 s after the last message
+      r.check("...and is gone about 3 s after the LAST message", (await count()) === 0);
+      const again = await send("fresh");
+      r.check("...and the same room name works again, starting from message 1", again.ok === true && again.seq === 1 && (await count()) === 1, JSON.stringify(again));
+      await sleep(3600);
+      r.check("...and is deleted again in the same way", (await count()) === 0);
+    }, { fresh: true, vars: { ROOM_TTL_SECONDS: "3" } });
   } catch (e) {
     r.fail("test crashed", e.message);
   }
+  console.log(r.failures ? r.failures + " check(s) failed." : "All checks passed.");
   process.exit(r.failures ? 1 : 0);
 })();

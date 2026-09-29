@@ -184,7 +184,7 @@ function drawForm(){
     +field("Communications",c.comms,L.comms,"comms",{rows:3})
     +field("Real-world precedent",c.prec,L.prec,"prec",{rows:4})
     +field("Precedent source",c.src,L.src,"src",{hint:"optional"})
-    +'<fieldset><legend>AI assignment</legend>'+field("Task",c.ai.task,L.task,"ai.task",{rows:2})+field("Prompt to paste into an AI tool",c.ai.prompt,L.prompt,"ai.prompt",{rows:4})+'</fieldset>'
+    +'<fieldset><legend>AI assignment (optional; used only when a game turns the AI assignment on)</legend>'+field("Task",c.ai.task,L.task,"ai.task",{rows:2})+field("Prompt to paste into an AI tool",c.ai.prompt,L.prompt,"ai.prompt",{rows:4})+'</fieldset>'
     +'<fieldset><legend>Sponsor credit (optional)</legend><label><span><input type="checkbox" data-k="sponsor" style="width:auto"'+(sp?" checked":"")+'> This inject has a sponsor</span></label>'
     +(sp?'<div class="row">'+field("Short name",sp.name,L.sname,"sponsor.name")+field("Full name",sp.full,L.sfull,"sponsor.full")+'</div>'+field("Link",sp.url,L.url,"sponsor.url",{hint:"must start with https://"})+field("Logo image address",sp.logo,L.url,"sponsor.logo",{hint:"must start with https://"}):'')+'</fieldset>'
     +'<div class="bar" style="padding:0">'

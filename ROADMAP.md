@@ -9,55 +9,35 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Queue of builds, in order (nothing starts until the owner says begin):**
-  1. **Join box forgiving about the code's shape.** `falcon482`, `falcon 482` and capitals should all find `falcon-482`
-     (today the dash is required, so the others say "no exercise with that code"). No wording changes. Logged under
-     build 16 if that build has not gone live, otherwise as its own build.
-  2. **The AI assignment as a feature flag** (off by default, hidden when off): see Backlog.
-  3. **Relay rooms auto-delete after 1 week:** see Backlog.
-  4. **Update the demo recorder** for join codes (docs/tooling only, no build number).
-  6. **The after-action log must say, clearly and several times, that this is an ELECTION EXERCISE and not real events: decided,
-     not built; a condition of item 5.** Today the log's only mention is its title, "Ballotship after-action log". Owner: "We don't want
-     there to be any way to mistake that these are real events." Proposal (wording comes as a table first): a banner at the top
-     of the log; the same line at the head of every round and every inject (so a page torn out or a paragraph copied still says it);
-     a closing line; in the Word file and in print, the line in the header and footer of every page; the downloaded file's name
-     starting with EXERCISE; the same wording in the relay thread's export; and the page's title. It applies to all three exports
-     (web page, Word, print), which share one function, and its test checks each copy carries it.
-  5. **Setup screen: relay always on for two-screen games, and the mode descriptions brought up to date: **decided: two-screen games always use the relay (the
-     owner accepted that what teams write is stored for up to a week, on condition of item 6).** The three mode cards no longer describe the game (simultaneous says a moderator runs the clock and
-     doesn't mention join codes; taking turns says nothing is connected and codes are read aloud, which is now only the
-     no-relay fallback). The relay checkbox sits far from the other options. Proposal: no checkbox; the two two-screen modes always
-     use the relay (join codes); if the relay can't be reached when Start is pressed, offer "set up by hand (no internet)" as
-     today. One laptop never uses the relay. Trade-offs: needs internet at the start (the fallback covers it), and every two-screen
-     game's writing passes through Cloudflare (the 1-week room deletion in item 3 limits how long).
-
-- **Builds 14 (game starts with the first inject) and 15 (the editor's emailed sign-in) are on staging; build 16 (join codes) is on the branch.** Builds 8 to 13 are live. All wait on your review.
+- **Build 17 is built on the branch and partly held.** Done: the forgiving join code box; the AI assignment as an option (off by
+  default, hidden when off); relay rooms deleting a week after their last message. **Held for the owner's approval of the wording
+  (a table has been sent):** the relay always on for two-screen games with the checkbox gone; the new mode descriptions and the
+  "set up by hand" fallback message; the exercise label in the after-action log (a condition of the relay change, the owner
+  wants it "very clear ... several times"); and rewording the few Rules sentences that mention AI inside other text.
+  **Not done:** the demo recorder (`demo/record-demo.js`) still sets up with the old relay fields and needs rewriting
+  (docs/tooling only) when the video is re-recorded, which it needs anyway.
+- Builds 14 (game starts with inject 1), 15 (emailed editor sign-in) and 16 (join codes) are on staging awaiting review;
+  builds 8 to 13 are live.
 
 ## Backlog
 
+- **Relay always on for two-screen games, the mode descriptions, and the exercise label in the log: decided, held for wording approval.**
+  Decided: the two two-screen modes always use the relay (no checkbox; one laptop never does), because the owner accepted that
+  what teams write is stored for up to a week, **on condition that the after-action log says, very clearly and several times, that
+  this is an ELECTION EXERCISE and not real events** ("we don't want there to be any way to mistake that these are real events").
+  Today the log's only mention is its title. Proposal for the label: a banner at the top; the same line at the head of every round
+  and inject (so a copied paragraph or torn-out page still says it); a closing line; in the Word file and in print, the line in the
+  header and footer of every page; the downloaded file's name starting EXERCISE; the relay-traffic section and the page title too.
+  All three exports share one function, so one change covers them, and a test checks each carries it. The three mode cards are
+  out of date (simultaneous says a moderator runs the clock and omits join codes; taking turns says nothing is connected and codes
+  are read aloud, true only without the relay), and the relay checkbox sits far from the other options. If the relay can't be reached
+  when Start is pressed, offer "set up by hand" (today's manual path). New wording comes as a table for approval first.
 - **Inject editor sign-in: built (build 15), waiting on staging review.** Emailed one-time link for readyfortuesday.com
   and decaro.net addresses, 1-day sign-in, sent with Resend from `ballotship-no-reply@electionadminsuite.com`; saves record who
   made them. **Not done, add when wanted:** a way to remove a person before their day is up (today: change
   `ALLOWED_DOMAINS` and redeploy, which stops new sign-ins but not one already made; or wait a day); a list of
   individual allowed addresses inside the two domains; the game's own setup is not protected (today it doesn't need to be).
 
-- **The AI assignment becomes a feature flag: decided, not built.** "We don't need the AI in every game." Today the
-  setup option "Require an AI-made artifact with every attack" is on by default, and turning it off only makes the AI
-  task optional (it still shows). **Decided:** the flag is **off by default**, and when off the game **hides the AI
-  completely**: no task, prompt or artifact box on the attack screen, nothing for the other team to read, no AI
-  lines in the log, Word file, print or debrief questions, and the setup and Rules wording that describe it
-  are dropped or reworded. When on, it works as it does now (required before an attack can be committed). It is a
-  shared setting, so with the join code the host decides it for every screen. The inject library's AI task and
-  prompt fields stay in the deck but become optional in the editor and in the checks. All the wording changes
-  come as a table for approval first.
-
-- **Auto-delete relay rooms after 1 week: decided, not built yet.** Why: the exercise makes convincing fake
-  material (spoofed alerts, fake headlines), and the game's own rules say to delete it after the retro; without
-  this it stays on Cloudflare until someone removes it, which is a privacy and misuse risk if a room name leaks, and
-  storage grows slowly. Against: a facilitator may want the relay record for a later report (each screen also
-  keeps its own copy, and the after-action log can be downloaded first). To settle when building: a week counts
-  from the room's LAST message (so a game under way never vanishes), and the game should say on the setup screen
-  that rooms are deleted after a week. Plan: a Durable Object alarm in the relay that deletes the room's messages.
 - **"Watch a demo" button before the game starts: wanted, placement and kind to settle.** Proposed place: the title
   screen, under "Set up the exercise" as a quieter second button, and again in the "New to Ballotship?" box on the
   setup screen. Open: a link to the video (needs re-recording first, since it predates builds 5 to 13) or a
@@ -132,6 +112,8 @@ Each item: a short title, then one or two lines on what and why.
 ---
 
 ## Done
+
+- **Relay rooms deleted a week after their last message; the AI assignment as an option, off by default; the join box forgiving about the code's shape** - build 17, on the branch (parts held, see Up next).
 
 - **The inject editor at a plain address, no key** - build 13, live.
 

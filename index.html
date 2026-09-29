@@ -272,6 +272,29 @@
         claiming one side; wrong code and unreachable relay; a used room is skipped; a saved host game keeps
         its code), by the relay test (moderator may post settings only), and by breaking the page on purpose:
         without the first-claim rule both screens get in, and without the name update the tests fail.
+  build 17 Three things from the queue, and three held for approval. DONE: (1) The join box forgives the code's
+        shape: falcon482, "Falcon 482" and falcon-482 all find the same room (cleanJoinCode); before, the
+        dash was required and anything else said "no exercise with that code". (2) The AI assignment is a
+        setup choice, OFF by default ("we don't need the AI in every game"). Before, the checkbox was on and
+        turning it off only made the AI box optional; now off HIDES it everywhere: the attack form's AI box,
+        task and starter prompt, the "made with AI" panel the other team sees, that question in the brief, the
+        AI paragraphs of the Rules, and the AI debrief prompt; nothing AI reaches the log because nothing
+        is collected. On, it behaves as before (an attack can't be committed without it). One class on the
+        page (no-ai) does the hiding, so a save/reload and a joining screen (it rides in the host's settings)
+        get the same result. In the inject library an inject's AI task and prompt are now optional (server
+        checks, the game's checks, the editor). (3) Relay rooms are deleted a week after their LAST message
+        (a Durable Object alarm, reset by each message; a room that is only read never gets one), decided
+        with the owner so exercise material doesn't sit on Cloudflare. The relay deploys with the page.
+        HELD until the owner has approved the wording (they are new on-screen words, and the standing rule
+        is a table first): the relay always on for two-screen games with the checkbox gone and a "set up by
+        hand" fallback when the relay can't be reached; the updated descriptions of the three modes; and
+        the after-action log saying several times that it is an election exercise, not real events; also
+        the Rules sentences that mention AI inside other text (the setup lede, the round steps and the chat
+        box hint), which need rewording rather than hiding. Verified by tests/ai-flag.test.js (both settings on one
+        laptop: the box, panel, Rules, brief, log and debrief; required when on and the message says what to
+        do; a reload keeps it), tests/join-code.test.js and the relay test (a message resets the clock,
+        the room is gone about 3 s after the last message on a 3-second setting and the name works again),
+        and the injects API test (an inject with no AI text is accepted, over-long AI text is refused).
 -->
 <html lang="en">
 <head>
@@ -550,6 +573,8 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--orange);border-c
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
+/* build 17 - the AI assignment is a feature flag (off by default). Anything marked ai-only disappears when it is off. */
+body.no-ai .ai-only, body.no-ai #theirArtifact, body.no-ai #sdArtifact{display:none!important}
 /* ---- AI assignment block ---- */
 .aibox{border:1px solid var(--line);border-left:5px solid var(--violet);background:#FAF8FD;padding:13px 15px;margin:14px 0}
 .aibox .aih{display:flex;align-items:baseline;gap:9px;font-family:var(--disp);font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:7px}
@@ -934,7 +959,7 @@ body{padding-bottom:28px}
         </div>
         <div class="chk"><input type="checkbox" id="optChime" checked><label for="optChime">Sound a tone when a clock runs out.</label></div>
         <div class="chk"><input type="checkbox" id="optSfx" checked><label for="optSfx">Play the hit and sunk clips when a site takes damage. Turn this off for a quiet room or a recorded session.</label></div>
-        <div class="chk"><input type="checkbox" id="optAI" checked><label for="optAI"><b>Require an AI-made artifact with every attack.</b> Each inject carries a short task and a prompt. A team cannot commit its attack until it has run the task and said what it produced.</label></div>
+        <div class="chk"><input type="checkbox" id="optAI"><label for="optAI"><b>Require an AI-made artifact with every attack.</b> Each inject carries a short task and a prompt. A team cannot commit its attack until it has run the task and said what it produced.</label></div>
         <div class="chk"><input type="checkbox" id="optAuto"><label for="optAuto">Place sites at random and skip the placement step.</label></div>
       </div>
       <div>
@@ -983,12 +1008,12 @@ body{padding-bottom:28px}
         <p>They start together because the phases do. When both attacks have been swapped, every screen enters the response phase at the same moment and starts its own response clock.</p>
         <p>When anyone pauses, resumes, adds or takes a minute, or resets, the change is sent to the other screens, and they follow at their next check on the relay, within about 15 seconds. It carries the time left, not just the button that was pressed, so a screen that hears late ends up exactly right and gets back any time that ran on. A clock that reaches zero checks once more before it commits, in case a pause is on its way.</p>
         <p>With one laptop, or two screens taking turns, the clock is a setup option and is off unless the facilitator turns it on. Each attack and each response gets its own time. It waits while the laptop is handed over and starts when the team presses "We have the laptop". At zero, what is written is committed and play moves on.</p>
-        <h3 style="font-size:19px;text-transform:uppercase;margin:15px 0 7px">The AI piece</h3>
-        <p>The last box in every attack is the thing you made with AI. Each inject names a specific task and offers a starter prompt if you want one, and the attack will not commit without it.</p>
-        <p>Push past another paragraph of text. An image, a screenshot, a voice memo, a mailer, a letterhead, a spoofed alert, a fake headline. The exercise is worth far more when the other team has to look at a convincing fake object and decide what to do about it, and that is the honest version of what an office is up against. Attach it in the relay panel so they can actually see it.</p>
-        <p><b>Do not generate video.</b> Even a short clip takes longer to render than the round allows, and a team waiting on it loses the part of the round that matters. If the inject calls for something on camera, write the script and make the thumbnail instead.</p>
-        <p>Start the AI the moment the inject appears. Put one person on the tool while the rest of the table reads the card and argues about the other four boxes. Teams that run it in sequence finish late.</p>
-        <p>Fictional county, fictional names, no real people or agencies. Label whatever you make as exercise material. None of it gets posted, and it all goes after the debrief.</p>
+        <h3 class="ai-only" style="font-size:19px;text-transform:uppercase;margin:15px 0 7px">The AI piece</h3>
+        <p class="ai-only">The last box in every attack is the thing you made with AI. Each inject names a specific task and offers a starter prompt if you want one, and the attack will not commit without it.</p>
+        <p class="ai-only">Push past another paragraph of text. An image, a screenshot, a voice memo, a mailer, a letterhead, a spoofed alert, a fake headline. The exercise is worth far more when the other team has to look at a convincing fake object and decide what to do about it, and that is the honest version of what an office is up against. Attach it in the relay panel so they can actually see it.</p>
+        <p class="ai-only"><b>Do not generate video.</b> Even a short clip takes longer to render than the round allows, and a team waiting on it loses the part of the round that matters. If the inject calls for something on camera, write the script and make the thumbnail instead.</p>
+        <p class="ai-only">Start the AI the moment the inject appears. Put one person on the tool while the rest of the table reads the card and argues about the other four boxes. Teams that run it in sequence finish late.</p>
+        <p class="ai-only">Fictional county, fictional names, no real people or agencies. Label whatever you make as exercise material. None of it gets posted, and it all goes after the debrief.</p>
         <h3 style="font-size:19px;text-transform:uppercase;margin:15px 0 7px">Winning</h3>
         <p>When the rounds run out, the jurisdiction with fewer sites offline wins. Tie goes to the one with fewer individual cells down, then to a sudden death round.</p>
         <p>Every site counts the same. A one-cell polling place is as expensive to lose as the four-cell operations center, which means the operations center is the hardest site to knock out and the polling places are the cheapest.</p>
@@ -1112,7 +1137,7 @@ body{padding-bottom:28px}
               <input type="text" id="off_when" autocomplete="off"></div>
             <div class="rf key"><label for="off_goal"><b>What you are trying to break</b></label>
               <textarea id="off_goal"></textarea></div>
-            <div class="rf ai"><label for="off_ai"><b>The piece you made with AI</b></label>
+            <div class="rf ai ai-only"><label for="off_ai"><b>The piece you made with AI</b></label>
               <div class="aitask" id="off_aiTask"></div>
               <div class="aitools">
                 <button type="button" data-aiprompt="off">Show a starter prompt</button>
@@ -1265,7 +1290,7 @@ body{padding-bottom:28px}
               <input type="text" id="sa_when" autocomplete="off"></div>
             <div class="rf key"><label for="sa_goal"><b>What you are trying to break</b></label>
               <textarea id="sa_goal"></textarea></div>
-            <div class="rf ai"><label for="sa_ai"><b>The piece you made with AI</b></label>
+            <div class="rf ai ai-only"><label for="sa_ai"><b>The piece you made with AI</b></label>
               <div class="aitask" id="sa_aiTask"></div>
               <div class="aitools">
                 <button type="button" data-aiprompt="sa">Show a starter prompt</button>
@@ -1528,7 +1553,7 @@ body{padding-bottom:28px}
         <p>Do not generate a synthetic voice or face of a named real person.</p></div>
       <div class="rulecard safe"><div class="t">Work it together</div>
         <p>The response boxes ask who owns it and who else has to know because that is the part most plans are thin on. Talk it through as a group before anyone types.</p></div>
-      <div class="rulecard safe"><div class="t">Nothing you make here leaves the room</div>
+      <div class="rulecard safe ai-only"><div class="t">Nothing you make here leaves the room</div>
         <p>The AI piece produces material that is supposed to look convincing. Label it as exercise material, keep it in the room, and delete it after the retro.</p></div>
 
       <h3>A round, step by step</h3>
@@ -1541,14 +1566,14 @@ body{padding-bottom:28px}
       </ol>
       <p>Ten minutes a phase, so about 23 minutes a round with the result screen. Round 1 always runs long while everyone learns the boxes, so expect to add time or treat it as practice.</p>
 
-      <h3>The AI piece</h3>
-      <p>The last box in every attack is the thing you made with AI. Each inject names a task and offers a starter prompt, and the attack will not commit without it.</p>
-      <p>Push past another paragraph of text. An image, a screenshot, a voice memo, a mailer, a letterhead, a spoofed alert, a fake headline. The exercise is worth far more when the other team has to look at a convincing fake object and decide what to do about it.</p>
-      <div class="rulecard"><div class="t">Do not generate video</div>
+      <h3 class="ai-only">The AI piece</h3>
+      <p class="ai-only">The last box in every attack is the thing you made with AI. Each inject names a task and offers a starter prompt, and the attack will not commit without it.</p>
+      <p class="ai-only">Push past another paragraph of text. An image, a screenshot, a voice memo, a mailer, a letterhead, a spoofed alert, a fake headline. The exercise is worth far more when the other team has to look at a convincing fake object and decide what to do about it.</p>
+      <div class="rulecard ai-only"><div class="t">Do not generate video</div>
         <p>Even a short clip takes longer to render than the round allows, and the team waiting on it loses the part of the round that actually matters. If an inject calls for something on camera, write the script and make the thumbnail instead.</p></div>
-      <div class="rulecard safe"><div class="t">Start the AI first, not last</div>
+      <div class="rulecard safe ai-only"><div class="t">Start the AI first, not last</div>
         <p>Put one person on the tool the moment the inject appears, while the rest of the table reads the card and works through the other four boxes. Teams that do it in sequence run out of clock.</p></div>
-      <p>Attach whatever you make in the relay panel so the other team can see it. Label everything as exercise material. No synthetic voice or face of a named real person.</p>
+      <p class="ai-only">Attach whatever you make in the relay panel so the other team can see it. Label everything as exercise material. No synthetic voice or face of a named real person.</p>
       <p>Nobody is cut off when a clock runs out. Whatever is on the page is committed and the round moves. Ask the moderator for more time if you need it.</p>
 
       <h3>The board</h3>
@@ -1883,7 +1908,7 @@ function sanitizeDeck(d) {
         scene:txt(c.scene, L.scene),
         atk:{where:txt(a.where, L.where), what:txt(a.what, L.what), when:txt(a.when, L.when), goal:txt(a.goal, L.goal)},
         op:txt(c.op, L.op), comms:txt(c.comms, L.comms), prec:txt(c.prec, L.prec), src:txt(c.src, L.src, true),
-        ai:{task:txt(ai.task, L.task), prompt:txt(ai.prompt, L.prompt)}};
+        ai:{task:txt(ai.task === undefined ? "" : ai.task, L.task, true), prompt:txt(ai.prompt === undefined ? "" : ai.prompt, L.prompt, true)}};   // build 17: both optional, since the AI assignment can be off
       if (c.crisis === true) o.crisis = true;
       else { if (!SHAPES.hasOwnProperty(c.shape)) return null; o.shape = c.shape; }
       if (c.sponsor) o.sponsor = {name:txt(c.sponsor.name, L.sname), full:txt(c.sponsor.full, L.sfull), url:https(c.sponsor.url), logo:https(c.sponsor.logo)};
@@ -2076,6 +2101,7 @@ function restore(d) {
     for (var k3 in d.pending) if (k3 !== "cardNo") G.pending[k3] = d.pending[k3];
     G.pending.card = CARD_BY_NO[d.pending.cardNo];
   }
+  applyAiFlag();
   place = d.place ? {key:d.place.key, placed:d.place.placed, active:d.place.active, orient:d.place.orient} : null;
   crisisPick = d.crisisPick || null;
   $("mastSub").textContent = meLabel();
@@ -2084,7 +2110,13 @@ function restore(d) {
   announceDeck();
   startClockTick();
 }
+/* build 17 - the AI assignment is a setup choice (off by default). One class on the page hides every part of it when it is off;
+   before a game exists it follows the setup checkbox, so the Rules a facilitator reads match what the game will show. */
+function applyAiFlag() {
+  document.body.classList.toggle("no-ai", G ? !G.requireAI : !$("optAI").checked);
+}
 function enterFromTitle() {
+  applyAiFlag();
   show("screen-setup");
   prefetchDeck();   /* build 12: get the library's current deck ready for the game about to start */
   if (STORE_OK && readSave()) $("resumePanel").scrollIntoView({block:"nearest"});
@@ -2460,6 +2492,7 @@ function pickSide(s) {
   syncHostUI();
 }
 $("optOnline").addEventListener("change", syncHostUI);
+$("optAI").addEventListener("change", applyAiFlag);
 syncHostUI();
 $("modeSim").addEventListener("click", function () { pickMode("sim"); });
 $("modeRelay").addEventListener("click", function () { pickMode("relay"); });
@@ -2514,6 +2547,7 @@ $("btnStart").addEventListener("click", function () {
       if (setupSide === "mod") { n1 = "Team 1"; n2 = "Team 2"; } else n2 = "Team 2";   // a joining team names itself
     }
     clearSave();
+    applyAiFlag();
     chooseDeck();     /* build 12: the deck is fixed for this game from here on */
     G.teams.t1 = newTeam(n1, !relay || setupSide === "t1");
     G.teams.t2 = newTeam(n2, !relay || setupSide === "t2");
@@ -2626,6 +2660,12 @@ function paintJoinBanner() {
 }
 
 /* ---- the Join screen ---- */
+/* build 17 - a code read aloud or typed from a text arrives as "falcon482", "Falcon 482" or "falcon-482"; all are the same code.
+   Anything that isn't a word and three digits is passed on as typed (lower case), so it can still be looked up as a room name. */
+function cleanJoinCode(raw) {
+  var t = String(raw || "").trim().toLowerCase(), m = /^([a-z]+)[\s-]*(\d{3})$/.exec(t);
+  return m ? m[1] + "-" + m[2] : t.replace(/\s+/g, "");
+}
 var joinFound = null;   // {code, st, deck, taken:{t1,t2}, names:{t1,t2}, side}
 $("btnTitleJoin").addEventListener("click", function () { $("joinFound").hidden = true; $("joinErr").hidden = true; show("screen-join"); $("joinCode").focus(); });
 function joinErr(msg) { flash("joinErr", msg); }
@@ -2649,7 +2689,7 @@ function readSetupFrom(msgs) {
   return {st:st, deck:deck, taken:taken, names:names, cids:cids};
 }
 $("btnLookup").addEventListener("click", function () {
-  var code = $("joinCode").value.trim().toLowerCase();
+  var code = cleanJoinCode($("joinCode").value);
   $("joinErr").hidden = true; $("joinFound").hidden = true;
   if (!/^[a-z0-9][a-z0-9-]{2,47}$/.test(code)) { joinErr("There is no exercise with that code. Check it with whoever set it up, then try again."); return; }
   readRoom(code, function (err, msgs) {
@@ -2713,6 +2753,7 @@ function enterJoined(code, r, side, name, cid) {
   G.joinedCid[side] = cid;
   if (st.host === "t1") { G.joined.t1 = true; }
   clearSave();
+  applyAiFlag();
   var sd = r.deck ? sanitizeDeck(r.deck) : null;
   if (sd) useDeck(sd); else chooseDeck();      /* the host's own deck, so every screen plays the same injects */
   var other = side === "t1" ? "t2" : "t1";
@@ -3436,9 +3477,9 @@ function setAtkHints(p, card) {
   });
   var t = $(p + "_aiTask");
   if (t) {
+    /* build 17 - with the AI assignment off the whole box is hidden (ai-only), so there is no "optional" version of it. */
     t.innerHTML = '<span class="go">' + esc(card.ai ? card.ai.task : "") + "</span>" +
-      '<div class="ideas">' + esc(AI_IDEAS) + "</div>" +
-      (G.requireAI ? "" : '<div class="ideas">Optional in this session, but the debrief is thinner without it.</div>');
+      '<div class="ideas">' + esc(AI_IDEAS) + "</div>";
   }
   var pr = $(p + "_aiPrompt");
   if (pr) { pr.textContent = card.ai ? card.ai.prompt : ""; pr.hidden = true; }
@@ -3555,7 +3596,7 @@ function openBrief(o) {
   var body = "";
   body += o.words ? labelledHTML(o.desc)
     : quietQ("How " + o.from + " says it is running this", "Nothing came across in writing. Ask them to read it out before you answer.");
-  body += o.ai ? '<div class="briefq ai"><span class="k">What they made with AI</span><div class="v">' +
+  if (G.requireAI) body += o.ai ? '<div class="briefq ai"><span class="k">What they made with AI</span><div class="v">' +
       esc(o.ai) + "</div></div>"
     : quietQ("What they made with AI", "Nothing came across. Ask them to send it over the relay panel.");
   $("briefWhat").innerHTML = body;
@@ -5070,7 +5111,7 @@ function logHTML() {
     "<li>Compare each response to the real-world precedent. What did the jurisdiction in the news do differently?</li>" +
     "<li>Look at the final boards. Which site turned out to be the single point of failure, and is that true off the board?</li>" +
     "<li>The game let every inject land. Which of these would your office actually have stopped, and what would that have taken?</li>" +
-    "<li>Look again at the AI artifacts. Which took the longest to make, which was most convincing, and how long would each take to debunk?</li>" +
+    (G.requireAI ? "<li>Look again at the AI artifacts. Which took the longest to make, which was most convincing, and how long would each take to debunk?</li>" : "") +
     "<li>Everything in this log was produced in an hour by people who are not trying to hurt you. What follows from that?</li>" +
     "</ol></html>";
   return html;
@@ -5378,8 +5419,8 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 <div class="join-banner no-print" id="joinBanner" hidden></div>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 16</span>
-  <span>one screen sets the exercise up; the others join with a code</span>
+  <span class="tag">build 17</span>
+  <span>the AI assignment is an option, off by default; relay rooms delete after a week; the join box forgives the code's shape</span>
 </div>
 
 </body>

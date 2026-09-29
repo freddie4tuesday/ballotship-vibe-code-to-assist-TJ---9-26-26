@@ -11,8 +11,8 @@
 
   Cost notes: plain HTTP only (no held-open connections), so an idle room
   costs nothing between requests. A per-room request limit stops a runaway
-  tab or a bug from running up usage. Rooms are NOT auto-deleted (see
-  ROADMAP.md, Ideas).
+  tab or a bug from running up usage. A room is deleted a week after its
+  last message (build 17).
 */
 import { DurableObject } from "cloudflare:workers";
 
@@ -62,15 +62,35 @@ export default {
   },
 };
 
+/* Build 17 - a room is deleted a week after its LAST message (decided with the owner). The exercise has teams make
+   convincing fake material, and the game's rules say to delete it afterwards; before this, everything stayed on
+   Cloudflare until someone removed it. Counting from the last message means a game under way never disappears, and a
+   room that is only read (a stranger trying codes) never gets an alarm at all. Each message resets one Durable Object
+   alarm, a single small write. ROOM_TTL_SECONDS shortens it for tests; the live relay uses the default. */
+const ROOM_TTL_DEFAULT_S = 7 * 24 * 60 * 60;
+
 export class Room extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
     this.sql = ctx.storage.sql;
+    this.init();
+    this.hits = [];   // request timestamps for the rate limit; in memory is enough
+  }
+
+  init() {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS msgs (
       seq INTEGER PRIMARY KEY AUTOINCREMENT,
       side TEXT NOT NULL, code TEXT NOT NULL, note TEXT NOT NULL, note2 TEXT NOT NULL,
       at INTEGER NOT NULL)`);
-    this.hits = [];   // request timestamps for the rate limit; in memory is enough
+  }
+
+  ttlMs() { const n = Number(this.env.ROOM_TTL_SECONDS); return (n > 0 ? n : ROOM_TTL_DEFAULT_S) * 1000; }
+
+  /* Runs one TTL after the last message: everything in the room goes. The table is made again at once, because this
+     object stays in memory and the next request must find it there (a stale screen simply sees an empty room). */
+  async alarm() {
+    await this.ctx.storage.deleteAll();
+    this.init();
   }
 
   limited() {
@@ -110,6 +130,7 @@ export class Room extends DurableObject {
       "INSERT INTO msgs (side, code, note, note2, at) VALUES (?, ?, ?, ?, ?) RETURNING seq",
       side, code, note, note2, Date.now()
     ).one().seq;
+    await this.ctx.storage.setAlarm(Date.now() + this.ttlMs());   // build 17: a week from now, unless another message comes first
     return json({ ok: true, seq });
   }
 
