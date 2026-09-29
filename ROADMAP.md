@@ -17,24 +17,23 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Backlog
 
-- **Moderator's clock buttons don't reach the team screens (by design in the original; question
-  raised after a session).** Each screen runs its own clock; a pause, +1:00 or reset on the
-  moderator's clock changes only the moderator's. The original code notes that it used to send
-  the clock over the relay and heartbeat every ten seconds, and stopped because that put
-  hundreds of extra messages through the Worker. Now that the relay handles moderator commands
-  (end early, resume), a pause could carry the same way. The catch is delivery speed: during
-  writing phases team screens check the relay only every 15 s, so a pause would arrive up to
-  15 s late unless they check faster (about 1.5 s: a two-hour, three-screen session then makes
-  roughly 14,000 requests, inside Cloudflare's free 100,000 a day). Undecided; see the clock
-  discussion under the countdown item.
-- **Countdown clock for passing the laptop and taking turns.** The clock exists only in
-  simultaneous mode today, as in the original. Reported after a pass-the-laptop session.
-  **Decided: when time runs out, commit what's written**, as simultaneous mode does (with a
-  tone if the tone option is on), and the round moves on. Open details to settle when we
-  build it: the default times (attack and response, 10:00 each in simultaneous mode), where
-  the clock shows when passing the laptop (the top bar, as in simultaneous), whether a
-  facilitator can pause it, and how the "curtain" screen between teams interacts with it.
-  App change, so the wording of any new setup options comes back here as a table first.
+- **Moderator's clock buttons should reach the team screens (decided: yes).** Each screen runs
+  its own clock today; a pause, +1:00 or reset on the moderator's clock changes only the
+  moderator's. The original code notes it used to send the clock over the relay and heartbeat
+  every ten seconds, and stopped because that put hundreds of extra messages through the Worker.
+  Now that the relay handles moderator commands (end early, resume), a pause can carry the same
+  way. Speed is the catch: during writing phases team screens check the relay only every 15 s,
+  so they'd check every few seconds while a clock is running in a game with a moderator (a
+  two-hour, three-screen session makes roughly 14,000 requests at 1.5 s, inside Cloudflare's
+  free 100,000 a day; a few seconds slower cuts that a lot). To do: moderator sends
+  pause/resume/+1:00/-1:00/reset as relay commands; team screens apply them; the room-limit
+  and idle-pause guardrails stay; a test covers it.
+- **Fix the wording: "The clock is advisory either way" contradicts itself.** On a team screen,
+  time running out commits what's written and moves the round on, so it isn't advisory; only
+  the moderator's own clock is (it commits nothing). Proposed replacement for the moderator
+  panel: "Any screen can pause its clock or add a minute. If a team's clock runs out, what it
+  has written is committed as it stands and the round moves on. Nobody is cut off mid-sentence,
+  but the round does not wait." Ready for Tuesday's text, so it needs approval as a table first.
 - **Question for TJ: sudden death in simultaneous mode.** When a simultaneous game ends in a
   tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
   *taking-turns* screens instead of another simultaneous round. Found while recording the demo.
