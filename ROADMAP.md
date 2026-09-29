@@ -9,6 +9,14 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
+- **Queue of builds, in order (nothing starts until the owner says begin):**
+  1. **Join box forgiving about the code's shape.** `falcon482`, `falcon 482` and capitals should all find `falcon-482`
+     (today the dash is required, so the others say "no exercise with that code"). No wording changes. Logged under
+     build 16 if that build has not gone live, otherwise as its own build.
+  2. **The AI assignment as a feature flag** (off by default, hidden when off): see Backlog.
+  3. **Relay rooms auto-delete after 1 week:** see Backlog.
+  4. **Update the demo recorder** for join codes (docs/tooling only, no build number).
+
 - **Builds 14 (game starts with the first inject) and 15 (the editor's emailed sign-in) are on staging; build 16 (join codes) is on the branch.** Builds 8 to 13 are live. All wait on your review.
 
 ## Backlog
