@@ -9,94 +9,74 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- Nothing is waiting on review. Builds 14 to 17 went live together. **Still open:** the demo recorder (`demo/record-demo.js`) uses the old relay fields and needs rewriting when the video is re-recorded.
+**Build 18 (decided, waiting for the owner's approval of the wording table, then built as one build):**
+
+1. **Draws replace the tie-break round.** Games can end in a draw; the sudden-death round is removed (owner's decision, from the
+   questions for TJ). Fewer sites offline wins; if level, fewer cells down wins; only if BOTH are level is it a draw. Touches the end
+   screens, the after-action log (which marks "sudden death" rounds today), the Rules paragraph about ties, the moderator's final
+   score, and the tests (the scripted-shot workaround that avoided sudden death can go).
+2. **A jurisdiction is entered at setup, once for the whole exercise** (a real one, e.g. "Pinal County"), carried to every screen
+   through the join code, shown in the after-action log, and used where the game names a jurisdiction: today the only place is the
+   response hint "Name the Recorder's Office or Pinal County policy..." (two boxes), which will use what was entered. Teams keep
+   their own names. If none is entered the hint falls back to plain wording with no county name.
+3. **The deck version in the log:** one line in the log, in all three exports.
+4. **A limit on wrong join codes: 10 per visitor per hour**, enforced by the relay (a browser's own count would be trivial to get
+   round), so nobody can try codes to find other people's exercises. Counted by the visitor's network address; only lookups that
+   find no exercise count.
+5. **The "Watch a demo" button:** on the title screen under "Set up the exercise" as a quieter second button, and again in the
+   "New to Ballotship?" box (owner agreed the placement). It links to the demo video, so the video has to be re-recorded first
+   (it predates builds 5 to 17), which needs the demo recorder rewritten for join codes (tooling, no build number). The kind
+   (a link, not a self-playing walkthrough) is my assumption; say if you want the walkthrough instead.
 
 ## Backlog
 
-- **Inject editor sign-in: live (build 15).** Emailed one-time link for readyfortuesday.com
-  and decaro.net addresses, 1-day sign-in, sent with Resend from `ballotship-no-reply@electionadminsuite.com`; saves record who
-  made them. **Not done, add when wanted:** a way to remove a person before their day is up (today: change
-  `ALLOWED_DOMAINS` and redeploy, which stops new sign-ins but not one already made; or wait a day); a list of
-  individual allowed addresses inside the two domains; the game's own setup is not protected (today it doesn't need to be).
-
-- **"Watch a demo" button before the game starts: wanted, placement and kind to settle.** Proposed place: the title
-  screen, under "Set up the exercise" as a quieter second button, and again in the "New to Ballotship?" box on the
-  setup screen. Open: a link to the video (needs re-recording first, since it predates builds 5 to 13) or a
-  self-playing walkthrough inside the game (bigger, never goes stale). New wording needs approval first.
-- **One person sets up the exercise; the others join with a code: live (build 16).**
-  Moderator hosts if there is one, else Team 1; a short code (one word and three digits) typed into a box; the joining
-  team picks its side and names itself; everything else comes from the host, including the inject deck. Setup by
-  hand stays for one laptop and for taking turns with no relay. **Follow-ups:** the demo recorder
-  (`demo/record-demo.js`) still types the old relay fields and needs updating before the next re-record; a global
-  limit on lookups of codes that don't exist (a stranger could try codes; each try is one relay request); "remove a
-  screen that joined by mistake" (today, start a new exercise).
-
-- **Inject library page: live (build 12); open follow-ups below.** A page at its own address where the injects are
-  listed and can be added, edited, reordered and deleted. Today the 16 injects are code inside
-  `index.html` (`DECK`, from "the scenario workbook", which we haven't seen). **Decided:**
-  - **Edits go live immediately** (no draft step). A saved edit is what the next game uses. Because a
-    slip would reach real games at once, every save is a numbered version, any version can be restored
-    from the page, and the page shows what changed.
-  - **Anyone with the address can edit, to start with (changed in build 13: no key at all).** Build 12 had a
-    long secret in the address; the owner asked for a plain address instead. Reasons for: nothing to look up or
-    share, and History restores any slip. Reasons against: anyone who finds `/edit` can change the injects real
-    games use, and there is no record of who. **Superseded: the owner wants an emailed sign-in link limited to
-    readyfortuesday.com and decaro.net addresses (see the item above).** Still worth asking TJ.
-  - **Extras wanted:** history with restore; a picture of the squares an inject covers; reordering (build 14: the first inject in the list starts the game; the separate "choose the
-    starting inject" button from build 12 was dropped at the owner's request). Not wanted: importing from the workbook.
-  **Design:** its own Worker and store (`injects/`), with a staging copy like everything else (code
-  changes go staging first; the deck content itself is edited on the live page). The game fetches the
-  deck when a game starts, keeps that deck for the whole game (a game already under way is never
-  changed by an edit), and falls back to the deck built into `index.html` if it can't reach it, so
-  it still works offline. The two screens of a two-screen game must use the same deck, so each
-  announces its deck version and warns if they differ. The server and the game both check a deck
-  before using it. Also: one inject has a sponsor credit (name, logo, link) and there is a third type,
-  "External"; the editor covers both.
-- **Inject library: things it doesn't do yet.** Only whole-deck saves (two people editing at once: the second is told to reload, and redo their edit); no per-inject comments or who-changed-what (the link isn't a login, so there is no "who"); a game shows which deck version it uses on the setup screen only, not in the after-action log. Add when asked. Also decide whether the built-in copy in `index.html` should ever be refreshed from the library (it is only the offline fallback, and goes stale as the library is edited).
-- **Question for TJ: sudden death in simultaneous mode.** (Also why the full-game test now scripts its shots: random ones tie now and then.) When a simultaneous game ends in a
-  tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
-  *taking-turns* screens instead of another simultaneous round. Found while recording the demo.
-  It may be intentional, but it looks like a bug. Ask TJ before changing it, and add a test
-  either way.
-- **Decide where the demo video lives long-term.** For now it's at
-  https://ballotship-demo.electionadminsuite.workers.dev (its own Worker; see `demo/README.md`).
-  Longer term: YouTube or Ready for Tuesday's site? Linking it from the title screen or the
-  "New to Ballotship?" box would be an app change, so it needs approval.
-- **Setup screen scrolls sideways on phones.** At phone width (390 px) the "Which team is at
-  this screen" buttons (Team 1 / Team 2 / Moderator) are wider than the screen, so the setup
-  page scrolls sideways. Present since the original file (checked against build 3), found
-  during the build 4 visual check. Small layout fix: let those buttons wrap or stack.
-  **Open question first: is Ballotship ever meant to be played on a phone?** It's designed
-  around laptops and shared screens in a room (team screens, a moderator screen, a
-  "one screen, passed" laptop mode), so a phone may never be used, and this may not be worth
-  fixing. Confirm with TJ / Ready for Tuesday. If phones are out of scope, say so in the summary
-  and move this to Ideas; if a facilitator might set up or follow along on a phone, fix it.
-- **Get TJ's test suite and merge it with ours.** The page's code says a test suite of TJ's
-  exists that "run[s] a whole game in under a second", but it wasn't in the uploaded file. Ask
-  TJ for it. We now have our own suite in `tests/`. If TJ's turns up, merge the two and keep
-  the best of both, following the steps in `tests/README.md`.
-- **Widen test coverage.** Turn-taking and one-screen modes are now played end to end by
-  `shot-marks.test.js` (build 5). Still not tested: codes typed by
-  hand, resuming after closing the tab, the AI-artifact requirement, the precedent reveal,
-  timed auto-commit, and sudden death. Add these over time, or take them from TJ's suite.
+- **Inject editor sign-in** (live, build 15). **Not done, add when wanted:** a way to remove a person before their day is up
+  (today: change `ALLOWED_DOMAINS` and redeploy, which stops new sign-ins but not one already made; or wait a day); a list of
+  individual allowed addresses inside the two domains.
+- **Join codes** (live, build 16). **Follow-up:** "remove a screen that joined by mistake" (today, start a new exercise). The
+  limit on wrong codes is item 4 above.
+- **Inject library** (live, build 12). Open follow-ups: only whole-deck saves (two people editing at once: the second is told to
+  reload and redo their edit); no per-inject comments; whether the built-in copy of the injects in `index.html` (the offline
+  fallback) should ever be refreshed from the library, since it goes stale as the library is edited. Design notes: its own Worker
+  and store (`injects/`) with a staging copy; the game fetches the deck when a game starts and keeps it for the whole game; edits
+  go live at once with every save a restorable version; a joining screen plays the host's deck (build 16); the server and the game
+  both check a deck; one inject has a sponsor credit and there is a third type, "External".
+- **Decide where the demo video lives long-term.** For now it's at https://ballotship-demo.electionadminsuite.workers.dev (its own
+  Worker; see `demo/README.md`). Longer term: YouTube or Ready for Tuesday's site? Item 5 above links to it.
+- **Widen test coverage.** Not tested: codes typed by hand in the set-up-by-hand games, resuming after closing the tab, the
+  precedent reveal, and timed auto-commit. (Sudden death goes away in build 18.)
+- **Hand back to Ready for Tuesday.** Plan the transfer of the Cloudflare and GitHub accounts and secrets. Rotate the Cloudflare
+  token and the Resend key that were pasted into a chat. GitHub refuses `build-N` tag pushes from the working environment, so
+  tags have to be created on GitHub (harmless).
 
 ## Ideas / maybe
 
-- **"Watch a demo" button in the game (Option B).** A self-playing walkthrough built into
-  Ballotship, so it never goes out of date. Bigger than the video. Decide after seeing which
-  parts of the video people still find confusing.
-- **Host the board art ourselves (someday, not soon).** The board image is loaded from a
-  readyfortuesday.com upload; if that file moves, the board goes plain (the game still works).
-  Low priority: this project is going back to Ready for Tuesday, and linking to their copy keeps
-  the image under their control. Revisit only if the link breaks or before a high-stakes session.
+- **A self-playing "Watch a demo" inside the game.** Never goes stale, but much bigger than the video link. Decide after seeing
+  which parts of the video people still find confusing.
+- **Host the board art ourselves (someday, not soon).** The board image is loaded from a readyfortuesday.com upload; if that file
+  moves, the board goes plain (the game still works). Low priority: this project is going back to Ready for Tuesday, and linking
+  to their copy keeps the image under their control. Revisit only if the link breaks or before a high-stakes session.
+
+## Decided not to do
+
+- **Phones.** Ballotship is not designed for phones (owner, from the questions for TJ), so the setup screen's sideways scrolling at
+  phone width stays as it is.
+- **TJ's test suite.** The page's code mentions one, but we have our own in `tests/` and won't chase his.
+- **TJ's costly relay.** Not pursued. The relay stays plain HTTP polling (never always-open WebSockets without hibernation, which
+  is the likely cause of the expense).
+- **Importing the injects from the scenario workbook.** Not wanted; the library is edited by hand.
+- **Choosing a starting inject** separately from the order (build 12 had a button; build 14 removed it: the first inject starts).
 
 ---
 
 ## Done
 
-- **Relay rooms deleted a week after their last message; the AI assignment as an option, off by default; the join box forgiving about the code's shape; the relay always on for two-screen games with a set-up-by-hand fallback; updated mode cards; the exercise label in the log** - build 17, live.
+- **Relay rooms deleted a week after their last message; the AI assignment as an option (off by default, hidden when off); the join box forgiving about the code's shape; the relay always on for two-screen games with a "set up by hand" fallback; updated mode cards; the exercise label in the after-action log** - build 17, live.
 
-- **The inject editor at a plain address, no key** - build 13, live.
+- **The inject editor at a plain address, no key** - build 13 (replaced by the emailed sign-in in build 15).
+- **The game starts with the first inject; the order is set in the inject library** - build 14, live.
+- **The inject editor's emailed sign-in link (readyfortuesday.com, decaro.net; 1 day; Resend)** - build 15, live.
+- **One screen sets up, the others join with a code** - build 16, live.
 
 - **Builds 8 to 12 released together: moderator score fix, staging, clock wording, clocks in step and a clock option, the inject library and its editor page** - builds 8 to 12, live.
 
@@ -112,5 +92,5 @@ Each item: a short title, then one or two lines on what and why.
 - **Pop-ups fit the screen; pass-the-laptop shows earlier shots and the written attack** — build 5.
 - **End early and resume; ask before replacing a saved game; moderator switches the relay on; 1-round test game** — build 6.
 - **The log as a Word file, and Print that prints the log instead of the whole screen** — build 7.
-- **Clock wording fix** — build 10, on staging.
-- **A clock for one laptop and for taking turns (option); clock changes reaching every screen, with a last look before committing at zero; a reload no longer gives clock time back** — build 11, on the branch, waiting on wording approval before staging.
+- **Clock wording fix** — build 10, live (released with builds 8 to 12).
+- **A clock for one laptop and for taking turns (option); clock changes reaching every screen, with a last look before committing at zero; a reload no longer gives clock time back** — build 11, live.
