@@ -16,8 +16,15 @@ Each item: a short title, then one or two lines on what and why.
   2. **The AI assignment as a feature flag** (off by default, hidden when off): see Backlog.
   3. **Relay rooms auto-delete after 1 week:** see Backlog.
   4. **Update the demo recorder** for join codes (docs/tooling only, no build number).
-  5. **Setup screen: relay always on for two-screen games, and the mode descriptions brought up to date: proposed, awaiting
-     the owner's answers.** The three mode cards no longer describe the game (simultaneous says a moderator runs the clock and
+  6. **The after-action log must say, clearly and several times, that this is an ELECTION EXERCISE and not real events: decided,
+     not built; a condition of item 5.** Today the log's only mention is its title, "Ballotship after-action log". Owner: "We don't want
+     there to be any way to mistake that these are real events." Proposal (wording comes as a table first): a banner at the top
+     of the log; the same line at the head of every round and every inject (so a page torn out or a paragraph copied still says it);
+     a closing line; in the Word file and in print, the line in the header and footer of every page; the downloaded file's name
+     starting with EXERCISE; the same wording in the relay thread's export; and the page's title. It applies to all three exports
+     (web page, Word, print), which share one function, and its test checks each copy carries it.
+  5. **Setup screen: relay always on for two-screen games, and the mode descriptions brought up to date: **decided: two-screen games always use the relay (the
+     owner accepted that what teams write is stored for up to a week, on condition of item 6).** The three mode cards no longer describe the game (simultaneous says a moderator runs the clock and
      doesn't mention join codes; taking turns says nothing is connected and codes are read aloud, which is now only the
      no-relay fallback). The relay checkbox sits far from the other options. Proposal: no checkbox; the two two-screen modes always
      use the relay (join codes); if the relay can't be reached when Start is pressed, offer "set up by hand (no internet)" as
