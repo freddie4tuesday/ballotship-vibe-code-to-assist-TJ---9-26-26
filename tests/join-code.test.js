@@ -152,12 +152,13 @@ const clone = o => JSON.parse(JSON.stringify(o));
 
       // ---- a used room is skipped ----
       {
-        await fetch(relay + "/room/taken-111/send", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: "t1", code: "R1-MSG", note: "hi" }) });
+        const tag = Date.now(), taken = "taken-" + tag, fresh = "fresh-" + tag;   // unique per run: a local relay keeps its rooms between runs
+        await fetch(relay + "/room/" + taken + "/send", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ from: "t1", code: "R1-MSG", note: "hi" }) });
         const p = await setupPage();
-        await p.evaluate(() => { let n = 0; window.genJoinCode = () => (n++ === 0 ? "taken-111" : "fresh-222"); });
+        await p.evaluate(([a, b]) => { let n = 0; window.genJoinCode = () => (n++ === 0 ? a : b); }, [taken, fresh]);
         await p.click("#modeSim"); await p.click("#sideT1"); await p.check("#optOnline"); await p.check("#optAuto"); await p.click("#btnStart");
         await p.waitForFunction(() => window.G && G.joinCode, null, { timeout: 15000 });
-        r.check("a code whose room already has messages is not used; the next is", (await p.evaluate(() => G.joinCode)) === "fresh-222");
+        r.check("a code whose room already has messages is not used; the next is", (await p.evaluate(() => G.joinCode)) === fresh);
         r.check("the words the codes are made of are lower-case, plain and not repeated", await p.evaluate(() => JOIN_WORDS.length >= 200 && new Set(JOIN_WORDS).size === JOIN_WORDS.length && JOIN_WORDS.every(w => /^[a-z]{3,9}$/.test(w))));
       }
 

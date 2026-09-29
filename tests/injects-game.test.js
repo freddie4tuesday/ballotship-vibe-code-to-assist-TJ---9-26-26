@@ -7,7 +7,7 @@
     - if the library can't be reached, or sends something the game's own checks refuse (a made-up type,
       a javascript: link), the game uses the built-in deck and still plays
     - text typed into an inject is shown as plain text, never run as a page
-    - two screens with different decks each say so; two with the same deck say nothing
+    - two screens: a joiner plays the host's deck, so they agree even if their own libraries differ, and no warning shows
   The editor page:
     - lists the injects, edits one, saves it, and the game's deck changes
     - reorders (the first inject starts the game); adds and deletes; shows a footprint picture
@@ -99,10 +99,13 @@ const clone = o => JSON.parse(JSON.stringify(o));
         await new Promise(r2 => setTimeout(r2, 2500));
         const warn = pg => pg.$eval("#deckWarn", e => !e.hidden);
         r.check("two screens with the same deck: no warning", !(await warn(same.pages.t1)) && !(await warn(same.pages.t2)));
+        // Build 16: a joining screen takes the HOST's deck, so two screens whose own libraries differ still agree.
         const diff = await setupScreens(browser, relay, ["t1", "t2"], { pollMs: 300, deckUrls: { t1: lib + "/api/deck", t2: "" } });
-        const both = await until(async () => (await warn(diff.pages.t1)) && (await warn(diff.pages.t2)), 15000);
-        r.check("two screens with different decks: both warn", both);
-        r.check("...saying which versions, and what to do", /version \d+/.test(await diff.pages.t1.$eval("#deckWarn", e => e.textContent)) && /start a new exercise/.test(await diff.pages.t2.$eval("#deckWarn", e => e.textContent)), await diff.pages.t2.$eval("#deckWarn", e => e.textContent));
+        await new Promise(r2 => setTimeout(r2, 2500));
+        const dv = pg => pg.evaluate(() => ({ v: DECK_VERSION, first: DECK[0].title }));
+        const [d1, d2] = [await dv(diff.pages.t1), await dv(diff.pages.t2)];
+        r.check("two screens whose own libraries differ: the joiner plays the host's deck, so both agree", d1.v > 0 && d1.v === d2.v && d1.first === d2.first, JSON.stringify([d1, d2]));
+        r.check("...and neither warns of a mismatch", !(await warn(diff.pages.t1)) && !(await warn(diff.pages.t2)));
         r.check("no JavaScript errors on the two-screen pages", same.errors.concat(diff.errors).length === 0, same.errors.concat(diff.errors).join("; "));
 
         // ---- the editor page ----
