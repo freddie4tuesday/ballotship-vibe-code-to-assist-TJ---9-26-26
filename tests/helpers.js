@@ -4,7 +4,9 @@ const { spawn } = require("child_process");
 const path = require("path");
 
 const ROOT = path.resolve(__dirname, "..");
-const PAGE = "file://" + path.join(ROOT, "index.html");
+/* BALLOTSHIP_PAGE runs the tests against another copy of the page, e.g. the
+   previous build, to show a bug before and after its fix. */
+const PAGE = "file://" + (process.env.BALLOTSHIP_PAGE ? path.resolve(process.env.BALLOTSHIP_PAGE) : path.join(ROOT, "index.html"));
 
 /* A tiny check/report helper, so every test prints the same PASS/FAIL lines. */
 function reporter(title) {

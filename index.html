@@ -449,6 +449,19 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--orange);border-c
 .aimbar.none{border-left-color:var(--violet);background:#FAF8FD}
 .aimbar.open{border-left-color:var(--amber);background:#FFF9EC}
 .aimsheet .sheet-in{max-width:620px}
+/* build 5 — every sheet used to scroll as one piece inside the overlay while its
+   header stayed stuck to the top of the window, so on a short screen the content
+   slid up behind the header and peeked out above it (reported on a laptop). Now
+   the box fits the window, the header stays put in it, and only the body scrolls.
+   The target grid also shrinks with the window's height (about 400px of the box
+   is not grid, 470px to be safe), so the whole picker fits on a typical laptop screen, and "Lock it
+   in" stays pinned to the bottom of the box when it still doesn't. */
+.sheet{align-items:center}
+.sheet-in{display:flex;flex-direction:column;max-height:calc(100vh - 56px);max-height:calc(100dvh - 56px)}
+.sheet-h{position:static;flex:none}
+.sheet-b{overflow-y:auto;flex:1 1 auto;min-height:0}
+.aimsheet .aimgrid-wrap{max-width:max(220px,calc(100vh - 470px));max-width:max(220px,calc(100dvh - 470px));margin-left:auto;margin-right:auto}
+.aimsheet .aimfoot{position:sticky;bottom:-22px;background:var(--paper);padding:10px 0 22px;margin-bottom:-22px}
 .aimsheet .sheet-b{padding:18px 22px 22px}
 .aimgrid-wrap{background:var(--evergreen-deep);padding:12px;margin-bottom:14px}
 .aimsheet .grid{display:grid;grid-template-columns:auto repeat(6,1fr);gap:4px}
@@ -2270,7 +2283,10 @@ $("btnCommitAttack").addEventListener("click", function () {
   $("offErr").hidden = true;
   logToThread("attack", p.atkKey,
     "Inject " + p.card.no + ", " + p.card.title + ". " + desc + (ai ? "\n\nAI artifact: " + ai : ""));
-  if (G.mode === "pass") { gateTo(p.defKey, "An inject is inbound", "defense"); return; }
+  /* build 5 — on one laptop nothing is sent, so the words are already here. The
+     defense screen used to show them only when they had arrived over the relay,
+     so a passed laptop always said "Nothing came across in writing." */
+  if (G.mode === "pass") { p.theirWords = !!desc; gateTo(p.defKey, "An inject is inbound", "defense"); return; }
   p.code = encAttack(p);
   sendAttack();
 });
@@ -3462,6 +3478,11 @@ function applyHits(cells, marks) {
   p.sunkIds = sunkIds;
   p.sunkNames = sunkIds.map(function (id) { return ASSET[id].name; });
   if (G.mode === "pass") {
+    /* build 5 — record each shot, so the attacker's next "Pick your target" shows
+       where it hit and missed. The two-screen modes do this when the result code
+       arrives (applyResultCode, simTakeResult); a passed laptop has no result
+       code, so it never did, and the picker came up blank every round. */
+    if (!p.card.crisis) p.cells.forEach(function (i, n) { teamOf(p.atkKey).shots[i] = marks[n] && marks[n].h ? "hit" : "miss"; });
     var hits = (marks || []).filter(function (m) { return m.h; }).length;
     teamOf(p.atkKey).lastReport = {
       text: p.card.crisis ? "Crisis inject absorbed across " + cells.length + " cells. Locations not disclosed."
