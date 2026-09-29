@@ -127,6 +127,21 @@
         staging first. Verified by tests/release-process.test.js (the page at a staging address,
         at the live address, and as a file; staging and live saved games kept apart; the
         deploy script's refusals) and the full suite.
+  build 10 One sentence on the moderator screen, approved as a table first. It said "The clock
+        is advisory either way. Nobody is cut off when it hits zero. Whatever is on the page is
+        committed and the round moves." That contradicts itself: on a team screen, time running
+        out commits what is written and moves the round on (onTimeUp), so the clock is not
+        advisory there; only the moderator's own clock is, since it commits nothing. Now: "Any
+        screen can pause its clock or add a minute. If a team's clock runs out, what it has
+        written is committed as it stands and the round moves on. Nobody is cut off
+        mid-sentence, but the round does not wait." Nothing else changed. (The paragraph before
+        it, "a pause here does not reach them", becomes wrong when the moderator's clock buttons
+        start reaching the team screens; that change is on the roadmap and will reword it.)
+        Also new, not in the game: quick test mode (tests/quick.js), which runs the fast
+        smoke tests plus the tests for what changed, so iterating is faster (about 2 minutes against 4 for everything);
+        deploy.sh accepts a quick pass for staging but live still needs a full pass. Checked by
+        tests/build-number.test.js (the old sentence is gone, the new one is there) and
+        tests/quick-select.test.js.
 -->
 <html lang="en">
 <head>
@@ -1236,7 +1251,7 @@ body{padding-bottom:28px}
         <div class="btnrow"><button class="btn big" id="btnMdNext" hidden>Start the next round</button></div>
         <hr class="rule">
         <p style="font-size:14px">This clock is yours alone. It runs in step with the teams because the phases start together, but a pause here does not reach them. Call it out loud and have both rooms press pause.</p>
-        <p style="font-size:14px">The clock is advisory either way. Nobody is cut off when it hits zero. Whatever is on the page is committed and the round moves.</p>
+        <p style="font-size:14px">Any screen can pause its clock or add a minute. If a team's clock runs out, what it has written is committed as it stands and the round moves on. Nobody is cut off mid-sentence, but the round does not wait.</p>
         <p style="font-size:14px">Everything both teams write and attach arrives in the relay panel, bottom right. That is the debrief record, so there is no need to stop for one during play.</p>
       </div>
       <div>
@@ -4707,8 +4722,8 @@ var IS_STAGING = /staging/i.test(window.location.hostname);
 })();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 9</span>
-  <span>the moderator screen shows both counties' real damage and scores correctly; a staging copy for review before changes go live</span>
+  <span class="tag">build 10</span>
+  <span>the moderator screen scores correctly and its clock note no longer contradicts itself; a staging copy for review before changes go live</span>
 </div>
 
 </body>

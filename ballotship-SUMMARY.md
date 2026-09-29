@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** build 9 (build 7 is what's live until 8 and 9 are released; see Releasing)
+**Current version:** build 10 (build 7 is what's live until 8, 9 and 10 are released; see Releasing)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Files in this package:** this summary, `ROADMAP.md`, `index.html` (the app itself), the
@@ -133,15 +133,15 @@ games per address, so staging games and live games can't mix or overwrite each o
 **The path of a change:**
 
 1. Agree the change (wording changes come as a table for approval first).
-2. Build it on the `staging` branch, and run the tests: `cd tests && npm test` (about 30 minutes).
+2. Build it on the `staging` branch, and run the tests: `cd tests && npm run quick` while building (about 2 minutes; see `tests/README.md`), and `npm test` (the full suite, about 4 minutes) before going live.
 3. `./deploy.sh staging` puts it on the staging address.
 4. Someone looks at it there and says whether it's good.
 5. Only after that: merge `staging` into `main`, and run `./deploy.sh production`.
 
 **`deploy.sh` enforces the order.** It deploys staging only from the `staging` branch and live
 only from `main`; it refuses uncommitted changes; it refuses code the tests haven't passed on
-(`npm test` leaves a fingerprint of `index.html` and the relay in `tests/.last-pass`, and the
-script checks it matches); and for live it refuses anything other than the exact page that is on
+(the tests leave a fingerprint of `index.html` and the relay, and the script checks it matches:
+staging accepts a quick pass or a full one, live needs the full one); and for live it refuses anything other than the exact page that is on
 staging right now. It needs a Cloudflare API token in `CLOUDFLARE_API_TOKEN`.
 
 The relay needs no separate step: both environments deploy the page and the relay together.

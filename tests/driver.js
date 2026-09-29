@@ -29,7 +29,30 @@ async function setup(browser, mode, side, relay, room, opts) {
   if (!(await p.isChecked("#optAuto"))) await p.check("#optAuto");
   for (const id of ["#optAI", "#optSfx", "#optChime"]) if (await p.isChecked(id)) await p.uncheck(id);
   await p.click("#btnStart");
+  if (side) registry[side] = p;
   return { p, errors };
+}
+
+/* Shots are scripted, not random. Team 1 always aims where the other county has a site that
+   hasn't been hit (a hit); team 2 always aims at empty water (a miss); neither repeats a
+   cell it has already fired at. Random shots tie now and then, and a tied simultaneous game
+   goes into sudden death on the taking-turns screens (a question for TJ, on the roadmap),
+   which these tests aren't about and can't drive. Falls back to a random cell if it runs out. */
+const registry = {};                       // side -> page, filled in by setup()
+async function scriptedAim(p, mode) {
+  const who = await p.evaluate(m => { const me = m === "pass" ? G.pending.atkKey : G.me; return { me, other: me === "t1" ? "t2" : "t1" }; }, mode);
+  const source = mode === "pass" ? p : registry[who.other];      // the page that knows the other county's board
+  if (!source) return null;
+  const other = await source.evaluate(o => ({ board: G.teams[o].board, hits: G.teams[o].hits }), who.other);
+  return p.evaluate(([me, other, mode]) => {
+    const card = G.sim ? G.R.card : G.pending.card, shots = G.teams[me].shots, need = SHAPES[card.shape].cells.length;
+    for (let o = 0; o < 36; o++) {
+      const cells = footprint(o, card.shape);
+      if (cells.length < need || cells.some(c => shots[c])) continue;       // off the grid, or fired at before
+      if (cells.some(c => other.board[c] && !other.hits[c]) === (me === "t1")) return cellLabel(o);
+    }
+    return null;
+  }, [who.me, other, mode]);
 }
 
 /* One step on one screen: whatever that screen needs next. 'fired' holds, per
@@ -41,8 +64,9 @@ async function step(p, mode, fired, results) {
     const want = fired[team] ? fired[team].size : 0;
     const shown = await p.$$eval("#aimGrid .cell.miss, #aimGrid .cell.down", els => els.length);
     if (want > 0) results.push({ team, round: await p.evaluate(() => G.round), want, shown });
-    const cells = await p.$$("#aimGrid button.cell.pick:not(.miss):not(.down)");
-    await cells[Math.floor(Math.random() * cells.length)].click();
+    const label = await scriptedAim(p, mode).catch(() => null);
+    if (label) await p.click('#aimGrid button[aria-label="' + label + '"]');
+    else { const cells = await p.$$("#aimGrid button.cell.pick:not(.miss):not(.down)"); await cells[Math.floor(Math.random() * cells.length)].click(); }
     await p.click("#btnAimOk");
     return;
   }

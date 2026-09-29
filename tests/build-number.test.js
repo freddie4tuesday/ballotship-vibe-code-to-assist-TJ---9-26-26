@@ -31,6 +31,11 @@ const { ROOT, PAGE, reporter, launch } = require("./helpers");
     await p.waitForTimeout(500);
     r.check("footer on screen shows build " + newest, (await p.textContent(".build-footer .tag")) === "build " + newest);
     r.check("Ready for Tuesday branding is present", /Ready for Tuesday/.test(await p.textContent("#titleFoot")));
+    // The moderator panel's clock note (build 10): it used to say the clock was "advisory" while also saying time
+    // running out commits what's written. Wording is Ready for Tuesday's, so it only changes on approval.
+    const panel = await p.$eval("#screen-mod", e => e.textContent.replace(/\s+/g, " "));
+    r.check("the moderator's clock note no longer calls the clock advisory", !/advisory/i.test(panel), panel.match(/[^.]*advisory[^.]*\./i) || "");
+    r.check("...and says what really happens when a team's clock runs out", /If a team's clock runs out, what it has written is committed as it stands and the round moves on\./.test(panel));
     // Setup screen (build 6).
     await p.click("#btnTitleGo");
     const last = await p.$eval("#rounds", e => { const o = e.options[e.options.length - 1]; return o.value + "|" + o.textContent; });

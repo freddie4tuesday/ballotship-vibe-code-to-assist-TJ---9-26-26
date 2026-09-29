@@ -9,10 +9,11 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Builds 8 and 9 are waiting on staging review.** Build 8 fixes the moderator screen's final
+- **Builds 8, 9 and 10 are waiting on staging review.** Build 8 fixes the moderator screen's final
   score (it was always 0–0 and started sudden death; it now reads each county's damage from the
-  result codes). Build 9 adds staging itself. Both are on the `staging` branch, on the staging
-  address for review. They go live when you say so after looking.
+  result codes). Build 9 adds staging itself. Build 10 fixes the clock note on the moderator
+  screen that contradicted itself (approved wording). All three are on the `staging` branch, on the
+  staging address for review once build 10 is deployed there. They go live when you say so after looking.
 
 ## Backlog
 
@@ -35,17 +36,14 @@ Each item: a short title, then one or two lines on what and why.
     screen takes **one last look at the relay just before it commits at zero**, applies any clock
     message waiting there, and commits only if the clock is still at zero. Cost: one extra check
     per team at each time-out.
+  - **Last look approved:** the screen checks the relay once just before committing at zero (see above).
+  - When this ships it must also reword the moderator panel's "a pause here does not reach them" (Ready
+    for Tuesday's text, so as a table for approval first).
   - Only simultaneous games need it; a passed laptop has one screen, and in taking-turns only the
     writing team's clock runs.
   - Tests: a pause reaches both team screens at their next check and they show the same time; a
     message that arrives late still leaves the right time; a pause sent just before zero stops the
     commit; nothing is sent while nobody acts.
-- **Fix the wording: "The clock is advisory either way" contradicts itself.** On a team screen,
-  time running out commits what's written and moves the round on, so it isn't advisory; only
-  the moderator's own clock is (it commits nothing). Proposed replacement for the moderator
-  panel: "Any screen can pause its clock or add a minute. If a team's clock runs out, what it
-  has written is committed as it stands and the round moves on. Nobody is cut off mid-sentence,
-  but the round does not wait." Ready for Tuesday's text, so it needs approval as a table first.
 - **Question for TJ: sudden death in simultaneous mode.** (Also why the full-game test now scripts its shots: random ones tie now and then.) When a simultaneous game ends in a
   tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
   *taking-turns* screens instead of another simultaneous round. Found while recording the demo.
@@ -109,3 +107,5 @@ Each item: a short title, then one or two lines on what and why.
 - **Pop-ups fit the screen; pass-the-laptop shows earlier shots and the written attack** — build 5.
 - **End early and resume; ask before replacing a saved game; moderator switches the relay on; 1-round test game** — build 6.
 - **The log as a Word file, and Print that prints the log instead of the whole screen** — build 7.
+- **Quick test mode (`npm run quick`)** — after build 10 (tests only, no app change; staging accepts a quick pass, live needs the full one).
+- **Clock wording fix** — build 10, on staging.

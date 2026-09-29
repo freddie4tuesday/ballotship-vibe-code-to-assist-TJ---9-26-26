@@ -19,8 +19,9 @@ Read `ballotship-SUMMARY.md` first (current build, standing rules, deploy and ro
 - **Addresses:** the page and the relay each have a live and a staging Worker. Every hostname needs
   its own specific route because `*.electionadminsuite.com/*` and `*-staging.electionadminsuite.com/*`
   belong to other apps (already in each `wrangler*.jsonc`).
-- **Tests:** `npm test` from `tests/` before every deploy, staging included; `deploy.sh` refuses
-  code the tests haven't passed on. They use a local relay only.
+- **Tests:** from `tests/`, `npm run quick` while building and before staging (smoke tests plus the tests
+  for what changed), and the full `npm test` before going live. `deploy.sh` refuses code the tests
+  haven't passed on (staging accepts either; live needs the full pass). They use a local relay only.
 - **Relay:** plain HTTP polling only. Don't switch to always-open WebSockets without
   hibernation (cost). Room auto-delete is deliberately off; see the roadmap.
 - Work on the `staging` branch; merge it into `main` only when going live.

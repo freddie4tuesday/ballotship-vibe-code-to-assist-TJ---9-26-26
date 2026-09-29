@@ -12,14 +12,33 @@ npm install
 npx playwright install chromium
 ```
 
-Then, every time (`npm install` also fetches `jszip`, which reads the .docx in the log-export test; `pip install python-docx` adds an optional second opinion on it):
+Then, every time:
 
 ```
-npm test
+npm run quick     # while building: the fast smoke tests plus the tests for what changed (about 2 minutes)
+npm test          # the FULL suite (about 4 minutes): needed before going live
 ```
 
-Each check prints PASS or FAIL. The run ends with "All 9 test files passed" or names the files
-that failed. It takes about 35 minutes, and a passing run leaves `tests/.last-pass`, which `deploy.sh` checks. To run one file on its own: `node full-game.test.js`. To run the tests against another copy of the page (for example the previous build, to show a bug before its fix), set `BALLOTSHIP_PAGE=/path/to/copy.html`.
+Each check prints PASS or FAIL, and the run ends with "All N test files passed" or names the files
+that failed, with how long each took. To run one file on its own: `node full-game.test.js`. To run
+the tests against another copy of the page (for example the previous build, to show a bug before its
+fix), set `BALLOTSHIP_PAGE=/path/to/copy.html`. (`npm install` also fetches `jszip`, which reads the
+.docx in the log-export test; `pip install python-docx` adds an optional second opinion on it.)
+
+### Quick mode, and when to use which
+
+Quick mode (`quick.js`) runs a **smoke set** every time (the fast checks: page load and build number,
+release process, relay rules, the log, polling, one round on three screens, and quick mode's own
+selector test), plus the tests for what changed **since the last full pass**: files are compared with
+git, and for `index.html` (one big file) the change is judged from the names of the functions the edits
+sit in. It prints what it chose and what it skipped, and why.
+
+- A change it can't tie to an area plays a whole game (`full-game`) instead of guessing it's harmless.
+- A change to the relay or to shared test code runs everything, as does having no record of a full pass.
+- **It's a time-saver, not a proof.** `deploy.sh` accepts a quick pass for **staging**, but **going live
+  needs a full pass** on the exact code.
+- A full pass writes `tests/.last-pass` and `tests/.last-pass-commit`; a quick pass writes
+  `tests/.last-quick`. All three are ignored by git.
 
 ## What's covered
 
@@ -32,6 +51,7 @@ that failed. It takes about 35 minutes, and a passing run leaves `tests/.last-pa
 | `end-early.test.js` | Ends a game early in every way of playing (and from the moderator screen), checks the final screen, a reload, and that Resume puts every screen back exactly; then plays on to the end. Also: starting over or discarding asks first, and a 1-round game plays through. |
 | `log-export.test.js` | The after-action log three ways: web page, Word (.docx) and Print. The Word file has every required part and well-formed XML, carries the picture and link, and contains every block of the web page; Print holds exactly the web page's text with no boards. Uses python-docx as a second reader if it's installed. |
 | `release-process.test.js` | Staging awareness: the page at a staging address says STAGING and uses the staging relay, at the live address it doesn't, staging and live saved games stay apart. And `deploy.sh` refuses to skip the order (wrong branch, no token). |
+| `quick-select.test.js` | Quick mode picks the right tests (pure logic, a few seconds): docs-only, relay, shared test code, each area of the game, an unrecognised change. |
 | `poll-loops.test.js` | After a burst of sends and an end-and-resume, one screen still checks the relay at the normal rate (one polling loop, not two). |
 | `relay-three-screens.test.js` | One round in detail: attacks crossing, chat reaching the other team and the moderator, and the 30-minute idle pause catching up after a click. |
 
