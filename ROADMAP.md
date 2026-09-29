@@ -13,6 +13,12 @@ _(nothing yet)_
 
 ## Backlog
 
+- **Moderator screen's final score is always 0–0 (bug, found in build 6 testing).** The
+  moderator never tracks either county's damage, so when it presses "End the exercise" after
+  the last round it sees a tie and starts sudden death, which switches it to the taking-turns
+  screens (see the sudden-death question below). The team screens score correctly. Fix: have
+  the moderator read each county's damage from the result codes already crossing the relay.
+  Present before build 6 (from the code); `end-early.test.js` reports it as a known issue.
 - **Question for TJ: sudden death in simultaneous mode.** When a simultaneous game ends in a
   tie, the tie-break round (`judgeEnd()` → `beginHalf()`) switches both screens to the
   *taking-turns* screens instead of another simultaneous round. Found while recording the demo.
@@ -42,6 +48,10 @@ _(nothing yet)_
 
 ## Ideas / maybe
 
+- **A countdown clock when passing the laptop or taking turns.** The clock exists only in
+  simultaneous mode today (by design in the original). Asked about after a pass-the-laptop
+  session. Needs deciding: does time running out just sound the tone, or commit what's written
+  as it does in simultaneous mode?
 - **"Watch a demo" button in the game (Option B).** A self-playing walkthrough built into
   Ballotship, so it never goes out of date. Bigger than the video. Decide after seeing which
   parts of the video people still find confusing.
@@ -74,3 +84,4 @@ _(nothing yet)_
 - **Plain-language additions: purpose line, "New to Ballotship?" explainer, "inject" definition, glossary** — build 4.
 - **Narrated demo video (4:15, voiceover, subtitles) and the tools to re-record it (`demo/`)** — after build 4 (no app change).
 - **Pop-ups fit the screen; pass-the-laptop shows earlier shots and the written attack** — build 5.
+- **End early and resume; ask before replacing a saved game; moderator switches the relay on; 1-round test game** — build 6.

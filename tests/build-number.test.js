@@ -31,6 +31,14 @@ const { ROOT, PAGE, reporter, launch } = require("./helpers");
     await p.waitForTimeout(500);
     r.check("footer on screen shows build " + newest, (await p.textContent(".build-footer .tag")) === "build " + newest);
     r.check("Ready for Tuesday branding is present", /Ready for Tuesday/.test(await p.textContent("#titleFoot")));
+    // Setup screen (build 6).
+    await p.click("#btnTitleGo");
+    const last = await p.$eval("#rounds", e => { const o = e.options[e.options.length - 1]; return o.value + "|" + o.textContent; });
+    r.check("the last round choice is 1 round, for testing", last === "1|1 round (for testing purposes)", last);
+    await p.click("#modeSim");
+    if (await p.isChecked("#optOnline")) await p.uncheck("#optOnline");
+    await p.click("#sideMod");
+    r.check("choosing Moderator switches the relay on", (await p.isChecked("#optOnline")) && (await p.isVisible("#relayRoom")));
     r.check("the page loads with no JavaScript errors", errors.length === 0, errors.join("; "));
   } catch (e) {
     r.fail("test crashed", e.message);

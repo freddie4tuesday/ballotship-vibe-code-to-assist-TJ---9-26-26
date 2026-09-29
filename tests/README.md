@@ -18,8 +18,8 @@ Then, every time:
 npm test
 ```
 
-Each check prints PASS or FAIL. The run ends with "All 5 test files passed" or names the files
-that failed. It takes about ten minutes. To run one file on its own: `node full-game.test.js`. To run the tests against another copy of the page (for example the previous build, to show a bug before its fix), set `BALLOTSHIP_PAGE=/path/to/copy.html`.
+Each check prints PASS or FAIL. The run ends with "All 7 test files passed" or names the files
+that failed. It takes about 25 minutes. To run one file on its own: `node full-game.test.js`. To run the tests against another copy of the page (for example the previous build, to show a bug before its fix), set `BALLOTSHIP_PAGE=/path/to/copy.html`.
 
 ## What's covered
 
@@ -29,9 +29,11 @@ that failed. It takes about ten minutes. To run one file on its own: `node full-
 | `full-game.test.js` | Team 1, team 2 and a moderator play a whole 4-round game through the relay, including crisis injects. Every screen reaches the end, both teams agree on the winner and the damage, and polling stops at game over. |
 | `relay-api.test.js` | The relay's rules: message order, each team seeing only the other's messages, the moderator seeing everything, bad input refused, CORS, the size cap, and the per-room flood limit. |
 | `shot-marks.test.js` | Plays 4 rounds in all three ways of playing: one screen passed, two screens taking turns, and two screens simultaneous. Every "Pick your target" must mark all of that team's earlier hits and misses, and every defense must show the attack as written. `MODES=pass` runs just one way. |
+| `end-early.test.js` | Ends a game early in every way of playing (and from the moderator screen), checks the final screen, a reload, and that Resume puts every screen back exactly; then plays on to the end. Also: starting over or discarding asks first, and a 1-round game plays through. |
+| `poll-loops.test.js` | After a burst of sends and an end-and-resume, one screen still checks the relay at the normal rate (one polling loop, not two). |
 | `relay-three-screens.test.js` | One round in detail: attacks crossing, chat reaching the other team and the moderator, and the 30-minute idle pause catching up after a click. |
 
-`helpers.js` holds the shared setup, and `run-all.js` runs every `*.test.js` file here.
+`helpers.js` holds the shared setup, `driver.js` plays any way of playing one step at a time, and `run-all.js` runs every `*.test.js` file here.
 
 ## Not covered yet
 

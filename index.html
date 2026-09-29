@@ -62,6 +62,23 @@
         every picker and every defense: on build 4, pass mode marked 0 of 2 to 0 of 7 earlier
         shots and showed no attack text in 8 of 8 defenses; on build 5 all pass, and the two
         two-screen modes pass on both (they were never affected).
+  build 6  End early, and resume, approved as a table first. An "End early" button in the top
+        bar asks first, then scores the board as it stands and goes to the final screen ("Ended
+        early in round N of M."; level scores are Drawn, no sudden death), so the log can be
+        downloaded or printed. The whole game is snapshotted before it ends, and "Resume the
+        game" restores it exactly, on every screen: END and RESUME cross the relay (the relay
+        now accepts those two from the moderator), and a move still in flight when the game
+        ended is held and played in after the resume. It survives closing the tab. Starting a
+        new exercise or discarding a saved one now asks first (both replaced a saved game
+        silently). Also, as asked: choosing Moderator switches the relay on, and the round list
+        ends with "1 round (for testing purposes)". Found and fixed on the way: restarting relay
+        polling from inside a poll (as an END arriving does) left a second loop running beside
+        the new one; with three screens that hit the relay's 400-a-minute room limit. Polling
+        loops now carry a generation number. Verified by tests/end-early.test.js (all three ways
+        of playing, plus the moderator ending it: 53+ checks), tests/poll-loops.test.js (one
+        screen makes 10 relay checks in 15 s; with the guard removed, 20), and a 1-round game.
+        Known, not fixed here: the moderator's own "End the exercise" always scores 0-0 and goes
+        to sudden death (it never tracks damage); on the roadmap.
 -->
 <html lang="en">
 <head>
@@ -554,6 +571,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--orange);border-c
 
 /* ---- build 6: end early ---- */
 .endctl{margin-left:6px}
+.endsheet{z-index:95}   /* above the target picker and the inject brief */
 .endsheet .sheet-in{max-width:560px}
 .endsheet .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 
@@ -691,6 +709,7 @@ body{padding-bottom:28px}
             <option value="8">8 rounds</option>
             <option value="10">10 rounds</option>
             <option value="12">12 rounds</option>
+            <option value="1">1 round (for testing purposes)</option>
           </select>
           <div class="hint" id="roundHint"></div>
         </div>
@@ -2074,6 +2093,9 @@ function pickSide(s) {
   $("sideT1").classList.toggle("on", s === "t1");
   $("sideT2").classList.toggle("on", s === "t2");
   $("sideMod").classList.toggle("on", s === "mod");
+  /* build 6 — a moderator screen needs the relay, and used to say so only after
+     Start was pressed. Choosing Moderator now switches it on. */
+  if (s === "mod" && !$("optOnline").checked) { $("optOnline").checked = true; $("onlineFields").hidden = false; }
 }
 $("optOnline").addEventListener("change", function () {
   $("onlineFields").hidden = !$("optOnline").checked;
@@ -4404,8 +4426,8 @@ startClockTick();
 })();
 </script>
 <div class="build-footer no-print">
-  <span class="tag">build 5</span>
-  <span>pop-ups fit the screen and scroll inside; passing the laptop now shows earlier hits and misses and the attack as written</span>
+  <span class="tag">build 6</span>
+  <span>end early and resume; asks before replacing a saved game; moderator switches the relay on; a 1-round test game</span>
 </div>
 
 </body>
