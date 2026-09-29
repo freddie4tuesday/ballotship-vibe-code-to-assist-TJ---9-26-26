@@ -25,15 +25,21 @@ Each item: a short title, then one or two lines on what and why.
     "pause now", so a late or repeated message can't leave a screen wrong: whenever it lands, the
     screen ends up right. Messages apply in the relay's own order, so two presses at once settle
     the same way everywhere.
-  - **Delivery uses the checks screens already make.** The catch is speed: in writing phases they
-    check only every 15 s, so a pause could land up to 15 s late. Proposed: check every 5 s while a
-    clock is running in a game with a moderator (about 4,300 requests for a 2-hour, 3-screen
-    session, against 100,000 a day free), otherwise as now. Average delay 2.5 s. Going faster than
-    5 s costs more and buys little, since the corrected time makes up the difference.
+  - **Delivery uses the checks screens already make, unchanged (decided: keep the 15-second
+    check).** No extra traffic at all beyond the one message per press. A pause reaches the
+    other screens at their next check, so up to 15 s later (7.5 s on average), and because the
+    message carries the absolute state they end up exactly right when it lands: time they spent
+    running past the pause is given back.
+  - **One gap, with a cheap fix:** if a team's clock reaches zero during that delay, the screen
+    commits what's written before the pause has reached it, and a commit can't be undone. So a
+    screen takes **one last look at the relay just before it commits at zero**, applies any clock
+    message waiting there, and commits only if the clock is still at zero. Cost: one extra check
+    per team at each time-out.
   - Only simultaneous games need it; a passed laptop has one screen, and in taking-turns only the
     writing team's clock runs.
-  - Tests: a pause from the moderator reaches both team screens within 8 s and they show the same
-    time; a late message still leaves the right time; nothing is sent while nobody acts.
+  - Tests: a pause reaches both team screens at their next check and they show the same time; a
+    message that arrives late still leaves the right time; a pause sent just before zero stops the
+    commit; nothing is sent while nobody acts.
 - **Fix the wording: "The clock is advisory either way" contradicts itself.** On a team screen,
   time running out commits what's written and moves the round on, so it isn't advisory; only
   the moderator's own clock is (it commits nothing). Proposed replacement for the moderator
