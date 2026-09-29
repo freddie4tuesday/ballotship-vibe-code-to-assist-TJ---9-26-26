@@ -29,10 +29,10 @@ const until = async (fn, ms) => { const end = Date.now() + ms; while (Date.now()
       await ctx.addInitScript(() => { window.BALLOTSHIP_DECK_URL = ""; });
       await p.goto(PAGE);
       const t = await p.$eval("#btnTitleDemo", e => ({ text: e.textContent, href: e.getAttribute("href"), target: e.getAttribute("target"), rel: e.getAttribute("rel") }));
-      r.check("the title screen has 'Watch a demo', opening the video in a new tab", t.text === "Watch a demo" && /^https:\/\/ballotship-demo\./.test(t.href) && t.target === "_blank" && /noopener/.test(t.rel), JSON.stringify(t));
+      r.check("the title screen has 'Watch a demo', opening the video in a new tab", t.text === "Watch a demo" && t.href === "https://ballotship-demo.electionadminsuite.com" && t.target === "_blank" && /noopener/.test(t.rel), JSON.stringify(t));
       await p.click("#btnTitleGo");
       const b = await p.$eval("#btnSetupDemo", e => ({ text: e.textContent, inBox: !!e.closest(".newbox"), target: e.getAttribute("target") }));
-      r.check("the 'New to Ballotship?' box has it too", b.text === "Watch a demo" && b.inBox && b.target === "_blank", JSON.stringify(b));
+      r.check("the 'New to Ballotship?' box has it too", b.text === "Watch a demo" && b.inBox && b.target === "_blank" && (await p.$eval("#btnSetupDemo", e => e.getAttribute("href"))) === "https://ballotship-demo.electionadminsuite.com", JSON.stringify(b));
       const hint = await p.$eval("#jurisdiction", e => e.parentElement.textContent.replace(/\s+/g, " ").trim());
       r.check("the setup screen asks for the Jurisdiction, with the approved hint", hint === "Jurisdiction The real jurisdiction this exercise is for, for example Pinal County. It appears in the log and in the response hints.", hint);
       await p.click("#modePass");

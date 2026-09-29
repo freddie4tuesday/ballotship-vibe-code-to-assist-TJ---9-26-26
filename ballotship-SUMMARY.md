@@ -1,6 +1,6 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** version 1.0 (build 19; live)
+**Current version:** version 1.0 is live (build 19); build 20 (the demo link) is on staging
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address and needs an emailed sign-in link; see The inject library)
@@ -149,7 +149,7 @@ list is the play order and a game starts with the first inject (build 14; it use
 
 ## Demo video (`demo/`)
 
-A 4-minute narrated walkthrough of one game, made by `demo/record-demo.js`. The video isn't in
+A 5-minute narrated walkthrough of one game (31 captions, rewritten and re-recorded for version 1.0, published at https://ballotship-demo.electionadminsuite.com), made by `demo/record-demo.js`. The video isn't in
 git; re-record it after any change to how the game looks. See `demo/README.md` for how,
 and ROADMAP.md for where it should live.
 

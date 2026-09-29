@@ -42,7 +42,7 @@
     el.style.opacity = 0;
     setTimeout(function () {
       el.innerHTML = html; el.style.opacity = 1;
-      var v = 10 + 9 * (n || 0); document.getElementById("sync").style.background = "rgb(" + v + "," + v + "," + v + ")";
+      var v = 10 + 7 * (n || 0); document.getElementById("sync").style.background = "rgb(" + v + "," + v + "," + v + ")";
     }, 250);
   };
   window.showCard = function (html) { document.getElementById("cardText").innerHTML = html; document.getElementById("card").classList.add("on"); };

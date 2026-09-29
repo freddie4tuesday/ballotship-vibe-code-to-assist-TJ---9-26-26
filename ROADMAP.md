@@ -23,7 +23,7 @@ Each item: a short title, then one or two lines on what and why.
   and store (`injects/`) with a staging copy; the game fetches the deck when a game starts and keeps it for the whole game; edits
   go live at once with every save a restorable version; a joining screen plays the host's deck (build 16); the server and the game
   both check a deck; one inject has a sponsor credit and there is a third type, "External".
-- **Re-record the demo video** (tooling: rewrite `demo/record-demo.js` for join codes; the current video predates builds 5 to 17), then **decide where it lives long-term.** For now it's at https://ballotship-demo.electionadminsuite.workers.dev (its own
+- **The demo video:** re-recorded for version 1.0; the game's "Watch a demo" button points at the new address from build 20. **Where it lives long-term:** it is at https://ballotship-demo.electionadminsuite.com (its own Worker); decide later whether it should also be on YouTube or Ready for Tuesday's site. For now it's at https://ballotship-demo.electionadminsuite.workers.dev (its own
   Worker; see `demo/README.md`). Longer term: YouTube or Ready for Tuesday's site? Item 5 above links to it.
 - **Widen test coverage.** Not tested: codes typed by hand in the set-up-by-hand games, resuming after closing the tab, the
   precedent reveal, and timed auto-commit. (Sudden death goes away in build 18.)

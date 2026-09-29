@@ -335,6 +335,13 @@
         and the staging footer, and the footer's HTML still holds the build number, which the release script reads. Verified by
         tests/release-process.test.js (staging still says STAGING and build 19; live and a saved copy say only "version 1.0"; the
         two pages are byte-for-byte the same file) and tests/build-number.test.js.
+  build 20 "Watch a demo" points at the demo video's own address, https://ballotship-demo.electionadminsuite.com, and the video behind
+        it is new. Asked for: a new address for the demo, with the script rewritten and the video re-recorded. The video (about 5
+        minutes, 31 captions, approved as a table) now shows the game as it is: one screen sets up with a jurisdiction, the other
+        joins with a code, the game starts at inject 1, the weather crisis comes up in round 3 by itself, draws and the exercise-labelled
+        log are described. Only the two links changed in the game (the title screen and the "New to Ballotship?" box); no wording
+        changed. The recorder (demo/record-demo.js) was rewritten for join codes and now stops if the scripted game doesn't end the way
+        the captions say. Verified by tests/draw-jurisdiction.test.js (both buttons open the demo address in a new tab).
 -->
 <html lang="en">
 <head>
@@ -883,7 +890,7 @@ body{padding-bottom:28px}
     <button class="btn big orange title-btn" id="btnTitleGo">Set up the exercise</button>
     <button class="btn ghost title-btn" id="btnTitleJoin" type="button" style="margin-top:12px">Join an exercise</button>
     <!-- build 18: the demo video (its own Worker, see demo/README.md). It opens in a new tab so a game in progress on this page is not lost. -->
-    <a class="btn ghost title-btn" id="btnTitleDemo" href="https://ballotship-demo.electionadminsuite.workers.dev" target="_blank" rel="noopener" style="margin-top:12px;text-decoration:none;display:inline-block">Watch a demo</a>
+    <a class="btn ghost title-btn" id="btnTitleDemo" href="https://ballotship-demo.electionadminsuite.com" target="_blank" rel="noopener" style="margin-top:12px;text-decoration:none;display:inline-block">Watch a demo</a>
     <div class="title-foot" id="titleFoot">Ready for Tuesday</div>
   </div>
 </section>
@@ -929,7 +936,7 @@ body{padding-bottom:28px}
       <p>The board works like the classic guessing game Battleship. Each team hides seven election sites on a 6&times;6 grid: polling places, vote centers, a sorting facility, the operations center. The other team can't see where they are. Each round the attacking team aims at a square, and the inject's <b>footprint</b> (the squares it covers) lands there. Any of your sites under it are <b>hit</b>, and a site with every square hit goes <b>offline</b> for the rest of the game. You learn hit or miss for each square, so over the rounds you can work out where the other side's sites are.</p>
       <p>An <b>inject</b> is a scenario card: one realistic problem dropped into the exercise, like a flooded polling place or a fake text telling voters the election moved.</p>
       <p>The board is only half of it. The other half is what your team writes in response, and that's what you review together afterward.</p>
-      <p><a class="btn ghost sm" id="btnSetupDemo" href="https://ballotship-demo.electionadminsuite.workers.dev" target="_blank" rel="noopener" style="text-decoration:none">Watch a demo</a></p>
+      <p><a class="btn ghost sm" id="btnSetupDemo" href="https://ballotship-demo.electionadminsuite.com" target="_blank" rel="noopener" style="text-decoration:none">Watch a demo</a></p>
     </div>
     <p class="lede">Two jurisdictions, seven sites each. Every round one team plays the adversary, draws an inject and picks a target. The other team writes how it responds. Then the inject lands, and any site under it goes offline. Whoever has knocked out more of the other jurisdiction when the rounds run out wins.</p>
     <p class="lede">There are no dice. A hit is a hit. The quality of a response is judged in the debrief, not by the game.</p>
@@ -5531,8 +5538,8 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 <div class="join-banner no-print" id="joinBanner" hidden></div>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 19</span>
-  <span>the live game shows a version number in its footer; the build number stays on staging</span>
+  <span class="tag">build 20</span>
+  <span>the demo button points at the new demo address</span>
 </div>
 
 </body>
