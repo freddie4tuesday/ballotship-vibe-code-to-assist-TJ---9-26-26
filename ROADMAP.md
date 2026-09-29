@@ -24,12 +24,19 @@ Each item: a short title, then one or two lines on what and why.
   screen, under "Set up the exercise" as a quieter second button, and again in the "New to Ballotship?" box on the
   setup screen. Open: a link to the video (needs re-recording first, since it predates builds 5 to 13) or a
   self-playing walkthrough inside the game (bigger, never goes stale). New wording needs approval first.
-- **One person sets up the exercise; the other screens join with one code: to design.** Today each screen has to
-  enter the same settings by hand (mode, relay address and room, rounds, team names, precedent, AI requirement,
-  clock times). Idea: the person who sets up gets a join code (a link, plus a short code to read aloud); the others
-  choose "Join", enter it, pick their side, and every shared setting arrives with it. Per-screen choices (sound,
-  random placement) stay per screen. Open questions are in the conversation of the day it was raised: who
-  hosts, how much the joiner can still change, and how the code travels when there is no relay.
+- **One person sets up the exercise; the other screens join with a code: decided, not built.** Today each screen
+  enters the same settings by hand (mode, relay address and room, rounds, team names, precedent, AI requirement,
+  clock times), so a typo in the room name or rounds gives two screens that quietly don't match. **Decided:**
+  - **The join code is a short code typed into a box, not a link** (a link is too much to read aloud or copy).
+    With a relay, the code is the room name (something like `amber-falcon-42`, made for the host) and the shared
+    settings are stored in the room, so joining fetches them.
+  - **Who sets up:** the moderator, if the game has one; otherwise the first team (Team 1).
+  - **The other team enters the code and chooses its own team name. Everything else is already set** by the host
+    (mode, rounds, precedent, AI requirement, clock times, random placement, sound, the inject deck version).
+  - **To settle when building:** the two-screen game with no relay (codes read aloud) can't fetch settings, so it
+    keeps today's manual setup unless told otherwise; a custom relay address can't ride in a short code, so joining
+    uses the page's own relay; if both teams pick the same side, the second is told to pick the other; a short
+    code is guessable in principle (about a million combinations), which protects only exercise material.
 
 - **Inject library page: live (build 12); open follow-ups below.** A page at its own address where the injects are
   listed and can be added, edited, reordered and deleted. Today the 16 injects are code inside
