@@ -16,6 +16,13 @@ Each item: a short title, then one or two lines on what and why.
   2. **The AI assignment as a feature flag** (off by default, hidden when off): see Backlog.
   3. **Relay rooms auto-delete after 1 week:** see Backlog.
   4. **Update the demo recorder** for join codes (docs/tooling only, no build number).
+  5. **Setup screen: relay always on for two-screen games, and the mode descriptions brought up to date: proposed, awaiting
+     the owner's answers.** The three mode cards no longer describe the game (simultaneous says a moderator runs the clock and
+     doesn't mention join codes; taking turns says nothing is connected and codes are read aloud, which is now only the
+     no-relay fallback). The relay checkbox sits far from the other options. Proposal: no checkbox; the two two-screen modes always
+     use the relay (join codes); if the relay can't be reached when Start is pressed, offer "set up by hand (no internet)" as
+     today. One laptop never uses the relay. Trade-offs: needs internet at the start (the fallback covers it), and every two-screen
+     game's writing passes through Cloudflare (the 1-week room deletion in item 3 limits how long).
 
 - **Builds 14 (game starts with the first inject) and 15 (the editor's emailed sign-in) are on staging; build 16 (join codes) is on the branch.** Builds 8 to 13 are live. All wait on your review.
 
