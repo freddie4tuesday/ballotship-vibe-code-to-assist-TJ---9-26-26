@@ -66,7 +66,8 @@ room="deploycheck-$(date +%s)"
 curl -fsS -X POST "$relay/room/$room/send" -H 'content-type: application/json' -d '{"from":"t1","code":"R1-MSG"}' | grep -q '"ok":true' || fail "relay did not accept a message at $relay"
 curl -fsS "$relay/room/$room/poll?as=t2" | grep -q 'R1-MSG' || fail "relay did not return the message at $relay"
 curl -fsS "$inj/api/deck" | grep -q '"injects"' || fail "the inject library did not return a deck at $inj/api/deck"
-curl -fsS "$inj/edit" | grep -q "inject library" || fail "the inject editor page did not load at $inj/edit"
+# (a variable, not a pipe: grep -q quits early, which under pipefail makes curl "fail" on a page this size)
+editor=$(curl -fsS "$inj/edit"); [[ "$editor" == *"inject library"* ]] || fail "the inject editor page did not load at $inj/edit"
 echo "OK: $page is build $n, the relay at $relay works, and the inject library at $inj answers (editor: $inj/edit)."
 
 if [ "$target" = production ]; then
