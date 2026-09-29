@@ -9,25 +9,16 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-- **Build 17 is on the branch, one piece short.** Done: the forgiving join code box; the AI assignment as an option (off by default,
+- **Build 17 is built and waiting for the owner's staging review** (it is the largest release to date; builds 14 to 17 go live
+  together when the owner says so). It holds: the forgiving join code box; the AI assignment as an option (off by default,
   hidden when off); relay rooms deleting a week after their last message; the relay always on for two-screen games (checkbox gone,
-  "Set up by hand" if the relay can't be reached); the updated mode cards. **Not built yet: the exercise label in the after-action
-  log** (owner's condition for accepting that everything teams write passes through Cloudflare): its exact wording awaits approval,
-  and the build must not go live without it. **Also open:** the setup lede still says the order is "the one set in the scenario
-  workbook", which is out of date now that the library sets the order (wording change, needs approval); the demo recorder still
-  uses the old relay fields and needs rewriting when the video is re-recorded.
+  "Set up by hand" if the relay can't be reached); the updated mode cards; and the exercise label in the after-action log. **Still
+  open:** the demo recorder (`demo/record-demo.js`) uses the old relay fields and needs rewriting when the video is re-recorded.
 - Builds 14 (game starts with inject 1), 15 (emailed editor sign-in) and 16 (join codes) are on staging awaiting review;
   builds 8 to 13 are live.
 
 ## Backlog
 
-- **The exercise label in the after-action log: decided, not built, wording awaiting approval; a condition of going live with build 17.**
-  The owner accepted that two-screen games always use the relay (what teams write stored up to a week, then deleted) **on condition that
-  the log says, very clearly and several times, that this is an ELECTION EXERCISE and not real events** ("we don't want there to be any
-  way to mistake that these are real events"). Today the log's only mention is its title. Proposal: a banner at the top; the same line
-  under every inject; a closing line; in the Word file and in print the line in the header and footer of every page; the downloaded
-  file's name starting EXERCISE; the relay-traffic section labelled too. One function makes all three exports, so one change covers
-  them, and a test checks each copy carries it.
 - **Inject editor sign-in: built (build 15), waiting on staging review.** Emailed one-time link for readyfortuesday.com
   and decaro.net addresses, 1-day sign-in, sent with Resend from `ballotship-no-reply@electionadminsuite.com`; saves record who
   made them. **Not done, add when wanted:** a way to remove a person before their day is up (today: change
@@ -109,7 +100,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Done
 
-- **Relay rooms deleted a week after their last message; the AI assignment as an option, off by default; the join box forgiving about the code's shape** - build 17, on the branch (parts held, see Up next).
+- **Relay rooms deleted a week after their last message; the AI assignment as an option, off by default; the join box forgiving about the code's shape; the relay always on for two-screen games with a set-up-by-hand fallback; updated mode cards; the exercise label in the log** - build 17, on staging awaiting review.
 
 - **The inject editor at a plain address, no key** - build 13, live.
 

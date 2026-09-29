@@ -56,7 +56,8 @@ const unxml = t => t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;
     const grab = async sel => { const [d] = await Promise.all([p.waitForEvent("download"), p.$eval(sel, e => e.click())]); const f = path.join(dir, d.suggestedFilename()); await d.saveAs(f); return { name: d.suggestedFilename(), file: f }; };
     const web = await grab("#btnExport"), word = await grab("#btnExportDoc");
     const today = new Date().toISOString().slice(0, 10);
-    r.check("file names carry the date and the right extension", web.name === "ballotship-after-action-" + today + ".html" && word.name === "ballotship-after-action-" + today + ".docx", web.name + ", " + word.name);
+    r.check("file names start with EXERCISE and carry the date and the right extension", web.name === "EXERCISE-ballotship-after-action-" + today + ".html" && word.name === "EXERCISE-ballotship-after-action-" + today + ".docx", web.name + ", " + word.name);
+    if (process.env.KEEP_LOG_FILES) { fs.copyFileSync(word.file, path.join(process.env.KEEP_LOG_FILES, word.name)); }   // for opening the Word file in another program by hand
     const html = fs.readFileSync(web.file, "utf8");
 
     // Print: the hidden frame holds the log.
@@ -83,6 +84,25 @@ const unxml = t => t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;
     r.check("Print is the same text as the web page download", same);
     r.check("Print has no boards in it", !!printed && printed.grids === 0 && !/Their map|Click a cell/.test(printed.text));
 
+    // The exercise label (build 17): the wording the owner approved, in all three copies.
+    const X = {
+      banner: "THIS IS AN ELECTION EXERCISE. Everything in this log is fictional. The events, jurisdictions, people and attacks were made up for training and did not happen.",
+      perInject: "Exercise only. Not a real event.",
+      closing: "End of an election exercise log. Nothing in it describes a real event, a real jurisdiction or a real person.",
+      page: "ELECTION EXERCISE. NOT A REAL EVENT.",
+    };
+    const nInjects = await helper.evaluate(h => new DOMParser().parseFromString(h, "text/html").querySelectorAll("article h3").length, html);
+    const count = (t, x) => t.split(x).length - 1;
+    const isExerciseTitle = await helper.evaluate(h => new DOMParser().parseFromString(h, "text/html").title, html);
+    r.check("web page: the title says EXERCISE", isExerciseTitle === "EXERCISE - Ballotship after-action log", isExerciseTitle);
+    const ends = await helper.evaluate(h => { const d = new DOMParser().parseFromString(h, "text/html"), ps = [...d.querySelectorAll("p.banner")], h1 = d.querySelector("h1"), last = [...d.querySelectorAll("li")].pop();
+      return { n: ps.length, first: ps[0] && ps[0].textContent, second: ps[1] && ps[1].textContent, beforeTitle: !!(ps[0] && (ps[0].compareDocumentPosition(h1) & 4)), afterPrompts: !!(ps[1] && last && (ps[1].compareDocumentPosition(last) & 2)) }; }, html);
+    r.check("web page: the banner comes before the title and the closing line after the last debrief prompt", ends.n === 2 && ends.first === X.banner && ends.second === X.closing && ends.beforeTitle && ends.afterPrompts, JSON.stringify(ends));
+    r.check("web page: every inject carries its own 'Exercise only' line (" + nInjects + " injects)", nInjects >= 1 && count(webText, X.perInject) === nInjects, count(webText, X.perInject) + " lines");
+    r.check("web page: the page header and footer line is there for printing", (html.match(/class=pagehead>ELECTION EXERCISE\. NOT A REAL EVENT\./g) || []).length === 1 && (html.match(/class=pagefoot>ELECTION EXERCISE\. NOT A REAL EVENT\./g) || []).length === 1 && /@media print\{\.pagehead,\.pagefoot\{display:block;position:fixed/.test(html));
+    r.check("web page: the relay traffic heading says exercise messages, not real communications", /Relay traffic \(exercise messages, not real communications\)/.test(webText));
+    r.check("Print carries the same label: banner, an 'Exercise only' line per inject, the closing line, and the header and footer", !!printed && printed.text.includes(X.banner) && count(printed.text, X.perInject) === nInjects && printed.text.includes(X.closing) && count(printed.text, X.page) === 2, printed && count(printed.text, X.page) + " page lines");
+
     // The .docx package.
     const zip = await JSZip.loadAsync(fs.readFileSync(word.file));
     const names = Object.keys(zip.files);
@@ -92,6 +112,9 @@ const unxml = t => t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;
     const bad = [];
     for (const [n, x] of Object.entries(xmls)) if (await helper.evaluate(x => !!new DOMParser().parseFromString(x, "application/xml").querySelector("parsererror"), x)) bad.push(n);
     r.check("every XML part is well formed", bad.length === 0, bad.join(", "));
+    const docXml = xmls["word/document.xml"], txt = x => unxml([...x.matchAll(/<w:t(?: [^>]*)?>([\s\S]*?)<\/w:t>/g)].map(m => m[1]).join(""));
+    r.check("Word: a header and a footer on every page, each saying ELECTION EXERCISE. NOT A REAL EVENT.", names.includes("word/header1.xml") && names.includes("word/footer1.xml") && txt(xmls["word/header1.xml"]) === X.page && txt(xmls["word/footer1.xml"]) === X.page && /<w:headerReference w:type="default" r:id="rIdHdr"\/><w:footerReference w:type="default" r:id="rIdFtr"\/>/.test(docXml) && /header\+xml/.test(xmls["[Content_Types].xml"]) && /footer\+xml/.test(xmls["[Content_Types].xml"]));
+    r.check("Word: the banner, an 'Exercise only' line per inject, and the closing line are in the body", txt(docXml).includes(X.banner) && count(txt(docXml), X.perInject) === nInjects && txt(docXml).includes(X.closing));
     const media = names.filter(n => /^word\/media\//.test(n));
     const nImg = (html.match(/<img /g) || []).length;
     r.check("the picture is in the Word file (" + nImg + " in the log, " + media.length + " in the .docx)", nImg >= 1 && media.length === nImg);

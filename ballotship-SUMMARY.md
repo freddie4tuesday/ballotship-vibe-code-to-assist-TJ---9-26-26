@@ -160,7 +160,7 @@ and ROADMAP.md for where it should live.
 Three ways out of the final screen, all made by one function (`logHTML` in `index.html`), so
 they always match:
 
-- **Download the log (web page):** an `.html` file.
+- **Download the log (web page):** an `.html` file. All three carry an exercise label (build 17): a banner, "Exercise only. Not a real event." under every inject, a closing line, and the line in every printed or Word page's header and footer; downloaded files start with `EXERCISE`. The wording is `EXERCISE` in `logHTML`; the owner approved it, so change it only with their approval.
 - **Download as Word:** a real `.docx`, made in the browser with no library, so it works
   offline. It's written directly as the zip of XML files a Word file is (`docxFromHTML`).
 - **Print:** prints the same log from a hidden frame. It no longer prints the whole screen.

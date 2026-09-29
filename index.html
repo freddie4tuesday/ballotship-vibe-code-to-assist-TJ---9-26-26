@@ -272,7 +272,7 @@
         claiming one side; wrong code and unreachable relay; a used room is skipped; a saved host game keeps
         its code), by the relay test (moderator may post settings only), and by breaking the page on purpose:
         without the first-claim rule both screens get in, and without the name update the tests fail.
-  build 17 Six things from the queue. First three: (1) The join box forgives the code's
+  build 17 Seven things from the queue. First three: (1) The join box forgives the code's
         shape: falcon482, "Falcon 482" and falcon-482 all find the same room (cleanJoinCode); before, the
         dash was required and anything else said "no exercise with that code". (2) The AI assignment is a
         setup choice, OFF by default ("we don't need the AI in every game"). Before, the checkbox was on and
@@ -289,16 +289,21 @@
         automatically through a relay" checkbox is gone (one laptop never uses it), the moderator is offered only where it
         works, and if the relay can't be reached when Start is pressed the screen says so and offers "Set up by hand", which is
         the old setup (every screen typed, codes read out loud; no join code). Because what teams write now always passes
-        through Cloudflare (stored up to a week, then deleted), the owner's condition is that the log says clearly and
-        several times that this is an election exercise; THAT LABEL IS NOT BUILT YET (its exact words await approval), so
-        this build must not go live without it. (5) The three mode cards now describe how the game works (join code, a
+        through Cloudflare (stored up to a week, then deleted), the owner's condition was that the log says clearly and
+        several times that this is an election exercise, and it now does, in wording the owner approved as a table
+        (see EXERCISE in logHTML): a banner above the title, "Exercise only. Not a real event." under every inject, a
+        closing line, "ELECTION EXERCISE. NOT A REAL EVENT." in the header and footer of every printed page and every
+        Word page (real header and footer parts; checked by converting the Word file with LibreOffice, where all 4 pages
+        carried both), the relay-traffic section labelled as exercise messages, the page title, and EXERCISE at the start
+        of the downloaded file's name. All three exports come from the one function, so they carry it alike. The setup
+        lede's "the one set in the scenario workbook" now says the order is set in the inject library. (5) The three mode cards now describe how the game works (join code, a
         moderator optional, any screen can pause, needs internet at the start). (6) The few Rules sentences that mention
         AI inside other text are hidden with the rest when the AI assignment is off (the setup lede's AI sentence, the
         round steps' "builds one piece of it with an AI tool" clause), and the chat box's hint drops its AI clause. Verified by tests/ai-flag.test.js (both settings on one
         laptop: the box, panel, Rules, brief, log and debrief; required when on and the message says what to
         do; a reload keeps it), tests/join-code.test.js and the relay test (a message resets the clock,
         the room is gone about 3 s after the last message on a 3-second setting and the name works again),
-        and the injects API test (an inject with no AI text is accepted, over-long AI text is refused); and, for the relay change, tests/join-code.test.js (no checkbox, the new mode cards word for word, an unreachable relay says what to do and 'Set up by hand' starts an old-style game with no join code).
+        and the injects API test (an inject with no AI text is accepted, over-long AI text is refused); and, for the relay change, tests/join-code.test.js (no checkbox, the new mode cards word for word, an unreachable relay says what to do and 'Set up by hand' starts an old-style game with no join code), and tests/log-export.test.js (the exercise label in the web page, in print and in the Word file: banner, per-inject line, closing line, header and footer parts, file names).
 -->
 <html lang="en">
 <head>
@@ -894,7 +899,7 @@ body{padding-bottom:28px}
     </div>
     <p class="lede">Two jurisdictions, seven sites each. Every round one team plays the adversary, draws an inject and picks a target. The other team writes how it responds. Then the inject lands, and any site under it goes offline. Whoever has knocked out more of the other jurisdiction when the rounds run out wins.</p>
     <p class="lede">There are no dice. A hit is a hit. The quality of a response is judged in the debrief, not by the game.</p>
-    <p class="lede">The injects run in a fixed order, the one set in the scenario workbook. <span class="ai-only">Every inject carries an AI assignment: a team has to build part of its attack with an AI tool before it can commit.</span></p>
+    <p class="lede">The injects run in the order set in the inject library. <span class="ai-only">Every inject carries an AI assignment: a team has to build part of its attack with an AI tool before it can commit.</span></p>
     <p class="lede">In simultaneous play there is one inject a round and both teams work it at once, first as the adversary and then as the office. Both boards face the same footprint, so neither side gets an easier deck than the other.</p>
     <hr class="rule">
     <div class="modes">
@@ -5052,11 +5057,25 @@ $("btnAgain").addEventListener("click", function () {
    log (web page)" saves it, "Download as Word" converts it to a .docx (docxFromHTML,
    below), and "Print" prints it from a hidden frame. Print used to print the whole
    final screen (both boards included), which is not the record. */
+/* build 17 - the after-action log says, several times, that it is an ELECTION EXERCISE and not real events. Everything
+   teams write in a two-screen game passes through the relay (stored up to a week, then deleted), and a log or a copied
+   paragraph must never be mistakable for a record of something that happened. The wording was approved by the owner as a
+   table. One function makes the web page, the Word file and the print, so they all carry it: a banner at the top, a line under
+   every inject, a closing line, a line in the header and footer of every printed or Word page, and EXERCISE in the file name. */
+var EXERCISE = {
+  banner: "THIS IS AN ELECTION EXERCISE. Everything in this log is fictional. The events, jurisdictions, people and attacks were made up for training and did not happen.",
+  perInject: "Exercise only. Not a real event.",
+  closing: "End of an election exercise log. Nothing in it describes a real event, a real jurisdiction or a real person.",
+  page: "ELECTION EXERCISE. NOT A REAL EVENT.",
+  thread: "Relay traffic (exercise messages, not real communications)",
+  title: "EXERCISE - Ballotship after-action log"
+};
 function logHTML() {
   var stamp = new Date().toLocaleString();
   var rows = G.log.map(function (e) {
     return "<article><h3>Round " + e.round + (e.sd ? " (sudden death)" : "") + " &middot; " + esc(e.atk) + " attacking " + esc(e.def) +
       (e.code ? " &middot; " + esc(e.code) : "") + "</h3>" +
+      "<p class=xnote>" + esc(EXERCISE.perInject) + "</p>" +
       "<p class=cat>" + CATS[e.card.cat].label + (e.crisis ? " &middot; crisis inject" : "") + " &middot; " + e.card.type + "</p>" +
       "<h4>" + esc(e.card.title) + "</h4>" +
       "<p><b>Operational concern.</b> " + esc(e.card.op) + "</p>" +
@@ -5093,13 +5112,19 @@ function logHTML() {
     return "<li><b>" + esc(t.name) + "</b> finished with " + offlineCount(t) + " of 7 sites offline and " +
       t.cellsDown + " of " + TOTAL_CELLS + " cells down" + (off.length ? ". Offline: " + esc(off.join(", ")) : "") + ".</li>";
   }).join("");
-  var html = "<!DOCTYPE html><html lang=en><meta charset=utf-8><title>After-action log</title>" +
+  var html = "<!DOCTYPE html><html lang=en><meta charset=utf-8><title>" + esc(EXERCISE.title) + "</title>" +
     "<style>body{font-family:Georgia,serif;max-width:44em;margin:2.5em auto;padding:0 1.4em;color:#151f1b;line-height:1.55}" +
     "h1{font-size:1.9em;margin-bottom:.1em}h2{border-bottom:2px solid #151f1b;padding-bottom:.2em;margin-top:2em}" +
     "h3{font-size:1.05em;margin:1.8em 0 .1em}h4{font-size:1.25em;margin:.2em 0 .5em}p{margin:.45em 0}" +
     ".cat{font-size:.82em;letter-spacing:.05em;text-transform:uppercase;color:#5c6b62;margin:0}" +
     ".prec{background:#f2f7f5;border-left:4px solid #0E7C7B;padding:.7em .9em;font-size:.94em}" +
-    "article{page-break-inside:avoid}.meta{color:#5c6b62;font-size:.9em}</style>" +
+    "article{page-break-inside:avoid}.meta{color:#5c6b62;font-size:.9em}" +
+    ".banner{border:3px solid #C6006F;color:#C6006F;font-weight:bold;padding:.6em .9em;margin:.4em 0 1em}" +
+    ".xnote{color:#C6006F;font-weight:bold;font-size:.85em;letter-spacing:.04em;text-transform:uppercase;margin:.1em 0 .3em}" +
+    ".pagehead,.pagefoot{display:none}" +
+    "@media print{.pagehead,.pagefoot{display:block;position:fixed;left:0;right:0;text-align:center;color:#C6006F;font-weight:bold;font-size:.8em;letter-spacing:.05em}.pagehead{top:0}.pagefoot{bottom:0}}</style>" +
+    "<div class=pagehead>" + esc(EXERCISE.page) + "</div><div class=pagefoot>" + esc(EXERCISE.page) + "</div>" +
+    "<p class=banner>" + esc(EXERCISE.banner) + "</p>" +
     "<h1>Ballotship after-action log</h1><p class=meta>" + esc(G.teams.t1.name) + " against " + esc(G.teams.t2.name) +
     " &middot; " + G.log.length + " injects &middot; " +
     (G.me && G.me !== "mod" ? (G.mode === "sim" ? "simultaneous" : "two screens") + ", logged from " + esc(G.teams[G.me].name) : "one screen") +
@@ -5111,7 +5136,7 @@ function logHTML() {
           : "<p class=meta>Codes were passed by hand, so this file holds only this team's own writing. Combine both exports for the full record.</p>")
       : "") +
     "<h2>Injects in order</h2>" + rows +
-    (threadRows ? "<h2>Relay traffic</h2>" + threadRows : "") +
+    (threadRows ? "<h2>" + esc(EXERCISE.thread) + "</h2>" + threadRows : "") +
     "<h2>Debrief prompts</h2><ol>" +
     "<li>Read each response out. Which ones would survive contact with your actual staffing on a Tuesday?</li>" +
     "<li>Which responses solved the operational concern and left the communications concern alone?</li>" +
@@ -5121,13 +5146,13 @@ function logHTML() {
     "<li>The game let every inject land. Which of these would your office actually have stopped, and what would that have taken?</li>" +
     (G.requireAI ? "<li>Look again at the AI artifacts. Which took the longest to make, which was most convincing, and how long would each take to debunk?</li>" : "") +
     "<li>Everything in this log was produced in an hour by people who are not trying to hurt you. What follows from that?</li>" +
-    "</ol></html>";
+    "</ol><p class=banner>" + esc(EXERCISE.closing) + "</p></html>";
   return html;
 }
 function saveBlob(blob, ext) {
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "ballotship-after-action-" + new Date().toISOString().slice(0, 10) + "." + ext;
+  a.download = "EXERCISE-ballotship-after-action-" + new Date().toISOString().slice(0, 10) + "." + ext;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
 }
@@ -5261,7 +5286,9 @@ function docxFromHTML(html) {
       else if (tag === "h3") para(c, "RoundLine");
       else if (tag === "h4") para(c, "Heading2");
       else if (tag === "p") {
-        if (/\bcat\b/.test(cls)) para(c, "", '<w:spacing w:after="40"/>', {caps:true, color:"5C6B62", sz:18});
+        if (/\bbanner\b/.test(cls)) para(c, "", '<w:pBdr><w:top w:val="single" w:sz="18" w:space="4" w:color="C6006F"/><w:left w:val="single" w:sz="18" w:space="4" w:color="C6006F"/><w:bottom w:val="single" w:sz="18" w:space="4" w:color="C6006F"/><w:right w:val="single" w:sz="18" w:space="4" w:color="C6006F"/></w:pBdr><w:spacing w:before="120" w:after="200"/>', {b:true, color:"C6006F"});
+        else if (/\bxnote\b/.test(cls)) para(c, "", '<w:spacing w:after="40"/>', {b:true, caps:true, color:"C6006F", sz:18});
+        else if (/\bcat\b/.test(cls)) para(c, "", '<w:spacing w:after="40"/>', {caps:true, color:"5C6B62", sz:18});
         else if (/\bmeta\b/.test(cls)) para(c, "", "", {color:"5C6B62", sz:20});
         else if (/\bprec\b/.test(cls)) para(c, "", '<w:pBdr><w:left w:val="single" w:sz="24" w:space="8" w:color="0E7C7B"/></w:pBdr><w:shd w:val="clear" w:color="auto" w:fill="F2F7F5"/><w:ind w:left="200"/>', {sz:21});
         else para(c, "", "", {});
@@ -5280,7 +5307,10 @@ function docxFromHTML(html) {
     block(doc.body);                                                                   // now that picture sizes are known
     var NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
     var documentXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ' + NS + "><w:body>" + body +
-      '<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
+      '<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr"/><w:footerReference w:type="default" r:id="rIdFtr"/><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/></w:sectPr></w:body></w:document>';
+    var pageLine = '<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:color w:val="C6006F"/><w:sz w:val="18"/></w:rPr><w:t>' + xmlEsc(EXERCISE.page) + "</w:t></w:r></w:p>";
+    var headerXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ' + NS + ">" + pageLine + "</w:hdr>";
+    var footerXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ' + NS + ">" + pageLine + "</w:ftr>";
     var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
       '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Georgia" w:hAnsi="Georgia" w:eastAsia="Georgia" w:cs="Georgia"/><w:color w:val="151F1B"/><w:sz w:val="22"/></w:rPr></w:rPrDefault>' +
       '<w:pPrDefault><w:pPr><w:spacing w:before="0" w:after="100" w:line="300" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
@@ -5300,17 +5330,21 @@ function docxFromHTML(html) {
       Object.keys(exts).map(function (e) { return '<Default Extension="' + e + '" ContentType="image/' + (e === "jpg" ? "jpeg" : e) + '"/>'; }).join("") +
       '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
       '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+      '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>' +
+      '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>' +
       '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>';
     var rootRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
       '<Relationship Id="rId1" Type="' + RT + 'officeDocument" Target="word/document.xml"/>' +
       '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>';
     var docRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
       '<Relationship Id="rId1" Type="' + RT + 'styles" Target="styles.xml"/>' +
+      '<Relationship Id="rIdHdr" Type="' + RT + 'header" Target="header1.xml"/><Relationship Id="rIdFtr" Type="' + RT + 'footer" Target="footer1.xml"/>' +
       rels.map(function (r) { return '<Relationship Id="' + r.id + '" Type="' + r.type + '" Target="' + xmlEsc(r.target) + '"' + (r.external ? ' TargetMode="External"' : "") + "/>"; }).join("") + "</Relationships>";
     var files = [
       {name:"[Content_Types].xml", data:enc.encode(types)}, {name:"_rels/.rels", data:enc.encode(rootRels)},
       {name:"docProps/core.xml", data:enc.encode(core)}, {name:"word/document.xml", data:enc.encode(documentXml)},
-      {name:"word/styles.xml", data:enc.encode(styles)}, {name:"word/_rels/document.xml.rels", data:enc.encode(docRels)}
+      {name:"word/styles.xml", data:enc.encode(styles)}, {name:"word/_rels/document.xml.rels", data:enc.encode(docRels)},
+      {name:"word/header1.xml", data:enc.encode(headerXml)}, {name:"word/footer1.xml", data:enc.encode(footerXml)}
     ].concat(media.map(function (m) { return {name:m.name, data:m.data}; }));
     return zipStore(files, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
   });
