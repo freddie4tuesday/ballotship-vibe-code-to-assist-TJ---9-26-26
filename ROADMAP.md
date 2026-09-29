@@ -13,6 +13,20 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Backlog
 
+- **Secure the inject editor with an emailed sign-in link ("magic link"): decided, not built.** Replaces the open
+  editor of build 13. Anyone with an email at **readyfortuesday.com or decaro.net** can get in; nobody else. **Plan:**
+  the editor asks for an email address; if its domain is exactly one of those two (subdomains and look-alikes such as
+  `readyfortuesday.com.evil.com` don't count), the library emails a one-time link that expires in about 15 minutes
+  and can be used once; opening it signs that browser in for a set time (say 30 days) with a signed cookie; saving
+  and restoring need the cookie; the page gives the same answer whether or not the address is allowed, and limits
+  requests per address and per visitor. The deck stays readable by the game with no sign-in. Bonus: History can say
+  WHO made each change (the address is recorded). Reasons against or costs: it needs a way to send email (see the
+  question below), a list of allowed domains to keep current, and a person who leaves the organisation keeps access
+  until their session ends unless we can revoke it. **Open before building:** which email service sends the
+  links (Cloudflare's own email sending, if it can reach any address, needs the sending domain set up; otherwise a
+  service such as Resend or Postmark, which needs an account and an API key), how long a sign-in lasts, and whether
+  the game's own new-game setup ever needs the same protection (today it doesn't).
+
 - **The AI assignment becomes a feature flag: decided, not built.** "We don't need the AI in every game." Today the
   setup option "Require an AI-made artifact with every attack" is on by default, and turning it off only makes the AI
   task optional (it still shows). **Decided:** the flag is **off by default**, and when off the game **hides the AI
@@ -57,8 +71,8 @@ Each item: a short title, then one or two lines on what and why.
   - **Anyone with the address can edit, to start with (changed in build 13: no key at all).** Build 12 had a
     long secret in the address; the owner asked for a plain address instead. Reasons for: nothing to look up or
     share, and History restores any slip. Reasons against: anyone who finds `/edit` can change the injects real
-    games use, and there is no record of who. **Ask TJ what he prefers** for who may edit (a login by email code, or
-    the secret link again, are the ways back).
+    games use, and there is no record of who. **Superseded: the owner wants an emailed sign-in link limited to
+    readyfortuesday.com and decaro.net addresses (see the item above).** Still worth asking TJ.
   - **Extras wanted:** history with restore; a picture of the squares an inject covers; reordering (build 14: the first inject in the list starts the game; the separate "choose the
     starting inject" button from build 12 was dropped at the owner's request). Not wanted: importing from the workbook.
   **Design:** its own Worker and store (`injects/`), with a staging copy like everything else (code

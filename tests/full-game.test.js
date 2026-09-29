@@ -55,14 +55,16 @@ async function step(p) {
   if (s === "screen-sim-defense") {
     await p.evaluate(() => { const s = document.querySelector(".sheet:not([hidden]):not(#aimSheet)"); if (s) s.hidden = true; });
     await fillForm(p, "#sdForm");
-    const need = await p.evaluate(() => (G.R && G.R.card && G.R.card.crisis) ? G.R.resp.need - G.R.resp.pick.length : 0);
-    if (need > 0) {
-      const cells = await p.$$("#sdGrid button:not([disabled])");
-      for (let i = 0, got = 0; i < cells.length && got < need; i++) {
-        await cells[i].click();
-        got = await p.evaluate(() => G.R.resp.pick.length) - (await p.evaluate(() => G.R.resp.need)) + need;
-      }
-    }
+    /* A crisis inject: the defender picks which cells go offline. The grid redraws after every click, so cells are
+       looked up by their label each time (a list fetched once goes stale). This path first ran in a test at build 14,
+       when the game began at inject 1 and reached the crisis injects (3 and 16) in a 4-round game. */
+    const labels = await p.evaluate(() => {
+      if (!(G.R && G.R.card && G.R.card.crisis)) return [];
+      const me = G.teams[G.me], out = [];
+      for (let i = 0; i < 36 && out.length < G.R.resp.need - G.R.resp.pick.length; i++) if (me.board[i] && !me.hits[i]) out.push(cellLabel(i));
+      return out;
+    });
+    for (const l of labels) await p.click('#sdGrid [aria-label="' + l + '"]');
     await p.click("#btnSdCommit");
     return "response";
   }
