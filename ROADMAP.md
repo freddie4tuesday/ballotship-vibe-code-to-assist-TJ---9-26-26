@@ -9,7 +9,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-**Build 19 (the live footer shows a version number, 1.0) is on the branch; build 18 is live:** draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; the "Watch a demo" button (it links to the existing video, which predates builds 5 to 17 and needs re-recording, and the demo recorder needs rewriting for join codes first).
+**Version 1.0 (build 19) is live:** draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; the "Watch a demo" button (it links to the existing video, which predates builds 5 to 17 and needs re-recording, and the demo recorder needs rewriting for join codes first).
 
 ## Backlog
 
@@ -52,6 +52,8 @@ Each item: a short title, then one or two lines on what and why.
 ---
 
 ## Done
+
+- **The live game's footer shows a version number (1.0) instead of the build number** - build 19, live.
 
 - **Draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; a "Watch a demo" button** - build 18, live.
 
