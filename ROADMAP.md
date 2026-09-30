@@ -53,6 +53,8 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Done
 
+- **Version 1.1 (build 20): the demo video re-recorded and moved to its own address, the game's demo buttons pointing at it, the rounds hint no longer saying "workbook order"** - live.
+
 - **The live game's footer shows a version number (1.0) instead of the build number** - build 19, live.
 
 - **Draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; a "Watch a demo" button** - build 18, live.
