@@ -336,7 +336,7 @@
         tests/release-process.test.js (staging still says STAGING and build 19; live and a saved copy say only "version 1.0"; the
         two pages are byte-for-byte the same file) and tests/build-number.test.js.
   build 20 "Watch a demo" points at the demo video's own address, https://ballotship-demo.electionadminsuite.com, and the video behind
-        it is new. Asked for: a new address for the demo, with the script rewritten and the video re-recorded. The video (about 5
+        it is new. Released as version 1.1 (APP_VERSION), the second version-numbered release. Asked for: a new address for the demo, with the script rewritten and the video re-recorded. The video (about 5
         minutes, 31 captions, approved as a table) now shows the game as it is: one screen sets up with a jurisdiction, the other
         joins with a code, the game starts at inject 1, the weather crisis comes up in round 3 by itself, draws and the exercise-labelled
         log are described. Only the two links changed in the game (the title screen and the "New to Ballotship?" box), plus one stale phrase the owner approved: the rounds hint on
@@ -5514,7 +5514,7 @@ var IS_STAGING = /staging/i.test(window.location.hostname);
    page is one file for both addresses (a release must be exactly the page that was on staging), so the footer decides at
    load: staging keeps "build N" (plus the STAGING tag), everywhere else, including a saved copy of the file, says
    "version X". The build number stays in the footer's HTML, which is what the release script reads. */
-var APP_VERSION = "1.0";
+var APP_VERSION = "1.1";
 if (!IS_STAGING) document.addEventListener("DOMContentLoaded", function () {
   var tag = document.querySelector(".build-footer .tag");
   if (!tag) return;
