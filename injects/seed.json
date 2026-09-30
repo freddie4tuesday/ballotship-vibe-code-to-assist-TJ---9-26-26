@@ -8,10 +8,10 @@
    "shape": "pairH",
    "scene": "It is 7:20 a.m. The building you were going to open at has been shut to the public, and the site has to move. Voters are already in the parking lot.",
    "atk": {
-    "where": "Which site, what kind of building it is, how many voters normally go there",
-    "what": "What forces the move, and what the county is left holding",
-    "when": "Before doors open, or mid-day with a line already out front?",
-    "goal": "Turnout at that site? Trust in the county's own notice? The call center?"
+    "where": "For example: the main downtown polling place, a community center where about 900 people vote.",
+    "what": "For example: the building is locked without warning, and staff and voters are left in the parking lot.",
+    "when": "For example: 6:45 a.m., before opening, so there is no time to reroute.",
+    "goal": "For example: long lines at the backup site, and a story that the county can't run a clean election."
    },
    "op": "Secure a new site, move equipment and supplies, staff it, sign the old door, maintain chain of custody in transit.",
    "comms": "Voters, poll workers and the call center all need the new address within minutes. Mapping tools and AI assistants will keep serving the old address for hours no matter what you post.",
@@ -30,10 +30,10 @@
    "shape": "elbow",
    "scene": "Police have cleared the building. Poll workers are on the sidewalk, voters are being turned away at the door, and nobody can say yet how long it will be.",
    "atk": {
-    "where": "Which site, and what is around it",
-    "what": "What is found or reported, and who makes the call to clear the building",
-    "when": "How far into the day, and how long the building stays closed",
-    "goal": "Votes not cast? Or the belief that the whole election was stopped?"
+    "where": "For example: a busy polling place in a shopping center next to a bus stop.",
+    "what": "For example: a suspicious package is reported, the building is cleared, and nobody is sure who can declare it safe.",
+    "when": "For example: mid-morning, when the line is longest, with the building closed for two hours.",
+    "goal": "For example: votes never cast, and a belief that the election was shut down."
    },
    "op": "Keep voting going somewhere. Chain of custody for equipment left behind. Possible court-ordered hours extension.",
    "comms": "Two facts on separate tracks: safety status and voting continuity. Voters need to know their ballot still counts.",
@@ -58,10 +58,10 @@
    },
    "scene": "The storm came through overnight. Some of your sites have water in them, some have no road access, and your staff are calling in about their own homes.",
    "atk": {
-    "where": "Which part of the jurisdiction takes the worst of it",
-    "what": "Flood, wind, fire or ice. What it does to buildings, roads and power",
-    "when": "Days out, the night before, or Election Day morning?",
-    "goal": "Access for displaced voters? Staff who cannot get to work?"
+    "where": "For example: the low-lying east side of the jurisdiction, where three sites sit near the river.",
+    "what": "For example: flooding closes two sites and cuts the road to a third, and power is out at a backup location.",
+    "when": "For example: the night before Election Day, too late to move anything by the usual process.",
+    "goal": "For example: voters cut off from any open site, and poll workers who can't reach their sites."
    },
    "op": "Damage assessment, relocation or consolidation, generators, road access for staff and equipment, resupply.",
    "comms": "Voters need the new site and the reason in one message. Displaced voters may no longer be at the address on file, so the channels you normally rely on will not reach them.",
@@ -80,10 +80,10 @@
    "shape": "single",
    "scene": "The lights go out at a busy site mid-morning. Tabulators are on battery, the line is not moving, and phones are already coming out.",
    "atk": {
-    "where": "Which site, and what else on that block goes dark",
-    "what": "What causes it and how long it lasts",
-    "when": "Opening, the midday rush, or the last hour?",
-    "goal": "The line? The count? Or the story about what happened to the machines?"
+    "where": "For example: a school gym polling place, with the whole block around it going dark.",
+    "what": "For example: a transformer fails, the lights and check-in laptops go down, and power isn't back for two hours.",
+    "when": "For example: the midday rush, when the most voters are waiting.",
+    "goal": "For example: slow down the line, and a story that the voting machines were tampered with."
    },
    "op": "Battery backup on tabulators, generator, emergency ballot procedures, decision on whether to relocate.",
    "comms": "Say the site is open and ballots are being counted. An outage reads as a closure unless you say otherwise.",
@@ -102,10 +102,10 @@
    "shape": "single",
    "scene": "A voter says the ballot they were handed has races they should not be voting on. The poll worker who handed it out is not sure how many went out before anyone noticed.",
    "atk": {
-    "where": "Which precinct or split, and how the styles got crossed",
-    "what": "How many wrong ballots go out before anybody notices",
-    "when": "Early voting, or Election Day with no time left to fix it?",
-    "goal": "A contested margin? Or a story that the county cannot run an election?"
+    "where": "For example: one precinct that is split between two districts, at a library site.",
+    "what": "For example: two ballot styles are swapped in the boxes, and about 200 voters get the wrong ballot before anyone notices.",
+    "when": "For example: Election Day afternoon, when there is no time to fix it quietly.",
+    "goal": "For example: a close race's margin, and a claim that the county can't run an election."
    },
    "op": "Identify scope quickly, correct at the counter, determine whether any wrong ballot was cast.",
    "comms": "Acknowledge with scale and remedy attached in the same breath. An error confirmed without a remedy becomes an integrity story.",
@@ -124,10 +124,10 @@
    "shape": "pairH",
    "scene": "Voters are being told they are not on the list. The pollbook at the site does not match what the office has, and provisional ballots are stacking up.",
    "atk": {
-    "where": "Which sites got the wrong books",
-    "what": "Who is missing from them, and whether the missing names have a pattern",
-    "when": "Found at 6 a.m. by staff, or at 11 by a voter?",
-    "goal": "Provisional rejections? Or a claim that a group was deliberately purged?"
+    "where": "For example: three suburban sites that received the wrong pollbooks.",
+    "what": "For example: several hundred voters are missing from the books, mostly from one neighborhood.",
+    "when": "For example: found by a voter at 11 a.m. rather than by staff at 6 a.m., so the story spreads first.",
+    "goal": "For example: provisional ballots that get rejected, and a claim that a group was purged on purpose."
    },
    "op": "Print and deliver supplemental pollbooks, provisional procedures, reconcile at close.",
    "comms": "Explain why a voter is being offered a provisional ballot before the voter concludes they were purged.",
@@ -146,10 +146,10 @@
    "shape": "single",
    "scene": "Your voter lookup page is down. Nobody knows yet whether it is the page, the data behind it, or something worse, and the calls have started.",
    "atk": {
-    "where": "The county page, the state page, or both",
-    "what": "Down, wrong, or quietly serving stale addresses?",
-    "when": "The week before, or the morning of?",
-    "goal": "Voters at the wrong site? Or the vacuum that something else fills?"
+    "where": "For example: the county's polling place lookup page and the state's page both.",
+    "what": "For example: the page shows last cycle's addresses, so voters are sent to sites that have moved.",
+    "when": "For example: the morning of Election Day, when everyone looks up their site.",
+    "goal": "For example: voters at the wrong site, and calls flooding the call center."
    },
    "op": "Restore, verify data integrity, stand up an alternate.",
    "comms": "Where voters get accurate information while the tool is down.",
@@ -168,10 +168,10 @@
    "shape": "lineV3",
    "scene": "The county reports an intrusion on its network. Nobody can tell you yet whether it reached anything election-related, and the question is already public.",
    "atk": {
-    "where": "Which county system, and what it touches on the way",
-    "what": "What is taken or locked, and what nobody can rule out yet",
-    "when": "When it happens, and how much later the county finds out",
-    "goal": "Confidence in the voter file? Or time and attention the office does not have?"
+    "where": "For example: the county's shared email and file server that the election office relies on.",
+    "what": "For example: files are locked and a ransom is demanded, and nobody can say yet whether the voter file was touched.",
+    "when": "For example: the week before the election, discovered only three days later.",
+    "goal": "For example: confidence in the voter file, and staff time the office can't spare."
    },
    "op": "Determine whether election systems are segmented, sever connections, restore from backup, run on paper, preserve forensics.",
    "comms": "Say what was affected and what was not, in that order, and keep repeating it.",
@@ -190,10 +190,10 @@
    "shape": "lineH3",
    "scene": "The building holding ballots and equipment has been cordoned off and your staff cannot get in. Counting was supposed to start this morning.",
    "atk": {
-    "where": "Which building, and what is inside it right now",
-    "what": "What closes it, and who controls the perimeter",
-    "when": "Before the count starts, or in the middle of it?",
-    "goal": "The count clock? Chain of custody? Or the story that ballots are gone?"
+    "where": "For example: the central counting room in the county administration building, with ballots inside.",
+    "what": "For example: a gas leak next door closes the building, and the fire department controls the perimeter.",
+    "when": "For example: midway through the count, after a first batch is already tallied.",
+    "goal": "For example: the count clock, the chain of custody, and a story that ballots are missing."
    },
    "op": "Chain of custody, count timing, cost, physical safety of workers, potential destruction of ballots or equipment.",
    "comms": "Counting will be delayed. Plainly state the procedures for securing ballots and maintaining chain of custody, and work through emergency management and law enforcement.",
@@ -212,10 +212,10 @@
    "shape": "pairV",
    "scene": "A seal does not match the log. Someone was in the room with the equipment when they should not have been, and one of the names on the access list is your own staff.",
    "atk": {
-    "where": "Which room, which equipment, whose access badge",
-    "what": "What was done, and what cannot be proven either way afterward",
-    "when": "Before logic and accuracy testing, or after ballots were loaded?",
-    "goal": "Decertified equipment? An insider story? Or the office's trust in its own staff?"
+    "where": "For example: the equipment storage room, opened with a badge belonging to a contractor.",
+    "what": "For example: a stranger uses the badge, handles the tabulators for ten minutes, and the log can't show what was done.",
+    "when": "For example: after ballots are loaded, so nothing can simply be re-tested.",
+    "goal": "For example: decertified equipment, and trust in the staff who hold the keys."
    },
    "op": "Preserve logs and seals, decommission or decertify affected equipment, notify the state, refer for investigation.",
    "comms": "Facts and equipment status only. This is a chain of custody matter and a law enforcement matter, not a debate to win.",
@@ -234,10 +234,10 @@
    "shape": "single",
    "scene": "Someone is at the door with a badge and a letter, saying they are here on federal authority and want access to the tabulation room. Your staff are waiting on an answer.",
    "atk": {
-    "where": "Which door, and who is standing at it",
-    "what": "What they claim, what they are carrying, what they want to get near",
-    "when": "The day before, or during counting?",
-    "goal": "Access to equipment? A staff member who freezes? Or just the photo?"
+    "where": "For example: the back door of the election office, where a man stands in a vest with a badge on a lanyard.",
+    "what": "For example: he says he is with a federal agency, demands to see the tabulators, and films the staff member who hesitates.",
+    "when": "For example: the day before the election, when the office is short-staffed.",
+    "goal": "For example: access to the equipment, a frozen staff member, and a video that goes out as proof."
    },
    "op": "Verify credentials, control the guard rail, do not let anyone past on assumption.",
    "comms": "Say nothing publicly until verified. The referral is a law enforcement statement.",
@@ -256,10 +256,10 @@
    "shape": "pairH",
    "scene": "Federal monitors are in the building, lawfully and with notice. Within the hour, the room is being described online as having been taken over.",
    "atk": {
-    "where": "Which building they are in, and what they can see from there",
-    "what": "What is lawful and announced here, and what gets said about it anyway",
-    "when": "Announced a week out, or first thing on Election Day?",
-    "goal": "The narrative outside the building. The monitors themselves are not the problem."
+    "where": "For example: the central counting building, where monitors can see the whole room from the observation area.",
+    "what": "For example: monitors arrive lawfully and announced, then social media describes them as a sign that something is wrong.",
+    "when": "For example: announced a week out, so the rumor has time to grow.",
+    "goal": "For example: the story outside the building. The monitors themselves are not the problem."
    },
    "op": "Confirm authority, define access, assign an escort.",
    "comms": "An explainer published before election day, not improvised at the door.",
@@ -278,10 +278,10 @@
    "shape": "lineV3",
    "scene": "A legal demand has just been served on the office. It names records, it names equipment, and the deadline in it is short.",
    "atk": {
-    "where": "Which records and which equipment are named in it",
-    "what": "Who serves it, how broad it is, and how short the deadline is",
-    "when": "Mid-count, or during the canvass?",
-    "goal": "Equipment you cannot run without? Staff hours? Or a deadline you cannot meet?"
+    "where": "For example: the ballot images and the voting system vendor's records.",
+    "what": "For example: an agent serves a broad demand with a 24-hour deadline, for the same equipment the office needs for the count.",
+    "when": "For example: in the middle of the count, so the office can't stop to comply.",
+    "goal": "For example: equipment the office can't run without, and staff hours it doesn't have."
    },
    "op": "Verify identity and scope, preserve records, suspend auto-delete, do not obstruct, document everything.",
    "comms": "Minimal and legal-cleared only. Silence is a defensible position here.",
@@ -300,10 +300,10 @@
    "shape": "pairH",
    "scene": "Someone is livestreaming outside a polling site. What they are narrating is not what is happening, and the clip is moving faster than anything you can put out.",
    "atk": {
-    "where": "Which site, and how close they manage to get",
-    "what": "What they say on camera, next to what is actually happening",
-    "when": "The opening rush, or the last hour before close?",
-    "goal": "A confrontation on camera? Or a clip that outruns every correction?"
+    "where": "For example: a busy polling place, where the creator stands at the edge of the 100-foot line.",
+    "what": "For example: they stream live, claiming the machines are broken while a short delay is being fixed behind them.",
+    "when": "For example: the opening rush, when the clip will be seen the most.",
+    "goal": "For example: a confrontation with poll workers on camera, and a clip that spreads faster than any correction."
    },
    "op": "Keep voting going, work with law enforcement, de-escalate any tensions.",
    "comms": "Counter the claim plainly and quickly, and refer anything criminal to law enforcement.",
@@ -322,10 +322,10 @@
    "shape": "pairV",
    "scene": "Your director is gone, effective immediately. The election is not moving, and half of what that person knew was never written down.",
    "atk": {
-    "where": "Which role, and what only that person knew",
-    "what": "Resignation, illness or removal, and how it becomes public",
-    "when": "How many days out?",
-    "goal": "Decisions nobody is authorized to make? Or a vacuum the rumor fills first?"
+    "where": "For example: the election director, the only person who knows the vendor contract and the certification schedule.",
+    "what": "For example: the director resigns suddenly, the news leaks the same day, and no deputy has the authority to sign.",
+    "when": "For example: two weeks out, when decisions are being made daily.",
+    "goal": "For example: decisions nobody is authorized to make, and a vacuum that rumors fill first."
    },
    "op": "Continuity, succession, institutional knowledge.",
    "comms": "Continuity message first, personnel message second.",
@@ -344,10 +344,10 @@
    "crisis": true,
    "scene": "Mail ballot delivery has broken down and the rules just changed under you. Ballots already in the mail may not arrive in time, and voters are asking what to do.",
    "atk": {
-    "where": "Which facility or route, and which voters depend on it",
-    "what": "A delay, a rule change, or both at once",
-    "when": "Before ballots go out, or after they are already in the mail?",
-    "goal": "Ballots that arrive too late? Or voters who give up and do nothing?"
+    "where": "For example: the regional mail processing facility that serves most of the county's rural voters.",
+    "what": "For example: a delivery rule change slows mail by several days just as ballots are in the mail.",
+    "when": "For example: after ballots are already mailed out, so voters assume they have plenty of time.",
+    "goal": "For example: ballots that arrive too late, and voters who give up and do nothing."
    },
    "op": "Alternate return options, drop box capacity, cure processing.",
    "comms": "Tell voters what to do differently now. The policy fight is somebody else's.",
