@@ -41,8 +41,8 @@ const { reporter, withRelay, launch, setupScreens, screenOn, threadHas } = requi
         await p.click("#aimGrid button.cell.pick >> nth=7");
         await p.click("#btnAimOk");
       }
-      for (const f of ["sa_where", "sa_what", "sa_goal"]) await p.fill("#" + f, side + " " + f + " text");
-      await p.fill("#sa_when", side + " timing");
+      for (const f of ["sa_where", "sa_what", "sa_goal"]) await p.fill("#" + f, side + " " + f + " text entered by the test");
+      await p.fill("#sa_when", side + " timing entered by the test");
       await p.click("#btnSaCommit");
       await p.waitForTimeout(300);
       const err = await p.$eval("#saErr", e => (e.hidden ? "" : e.textContent));
@@ -52,7 +52,7 @@ const { reporter, withRelay, launch, setupScreens, screenOn, threadHas } = requi
     for (const [me, them] of [["t1", "t2"], ["t2", "t1"]]) {
       check(me + " moves to the defense screen", (await screenOn(pages[me])) === "screen-sim-defense");
       const txt = await pages[me].$eval("#sdAttack", e => e.textContent).catch(() => "");
-      check(me + " received " + them + "'s attack through the relay", txt.includes(them + " sa_where text"));
+      check(me + " received " + them + "'s attack through the relay", txt.includes(them + " sa_where text entered"));
     }
 
     const sendChat = async (p, text) => {

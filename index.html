@@ -342,6 +342,10 @@
         log are described. Only the two links changed in the game (the title screen and the "New to Ballotship?" box), plus one stale phrase the owner approved: the rounds hint on
         the setup screen said the injects run "in workbook order" and now says "in the order set in the inject library". The recorder (demo/record-demo.js) was rewritten for join codes and now stops if the scripted game doesn't end the way
         the captions say. Verified by tests/draw-jurisdiction.test.js (both buttons open the demo address in a new tab).
+  build 21 The attack form now enforces its own hint ("at least a full sentence"): every one of the four boxes needs at least four words, where before only
+        the first two had to be filled and the last three together 30 characters. Error messages name the box that is too short. Asked for: "make the check
+        stricter". Other wording proposals (headings, hints, examples) are waiting on approval in the wording doc and are not in this build. Verified by
+        tests/attack-check.test.js; tests that typed shorter entries now type full ones.
 -->
 <html lang="en">
 <head>
@@ -3572,10 +3576,18 @@ function atkHTML(o) {
     return '<div class="lq"><b>' + AF_LABEL[k] + "</b>" + esc(o[k]) + "</div>";
   }).join("");
 }
+// Build 21: "at least a full sentence" was only a hint. The old check needed the first two boxes
+// non-empty and the last three to total 30 characters, so "x", "y", and one long line passed.
+// Now every box needs at least ATK_MIN_WORDS words (four is the shortest thing that reads as a
+// sentence: "Hits the downtown site."). On failure the player sees the message for the first
+// box that is too short and nothing is sent.
+var ATK_MIN_WORDS = 4;
+function atkShort(t) { return (t || "").trim().split(/\s+/).filter(Boolean).length < ATK_MIN_WORDS; }
 function atkErr(o) {
-  if (!o.where) return "Say where this lands. Be specific about the site.";
-  if (!o.what) return "Say what actually happens.";
-  if ((o.what + o.when + o.goal).length < 30) return "Fill in the timing and what you are trying to break. A line each.";
+  if (atkShort(o.where)) return "Say where this lands. Be specific about the site, in a full sentence.";
+  if (atkShort(o.what)) return "Say what actually happens, in a full sentence.";
+  if (atkShort(o.when)) return "Say when it happens and why then, in a full sentence.";
+  if (atkShort(o.goal)) return "Say what you are trying to break, in a full sentence.";
   if (G.requireAI && o.ai.length < 20) return "Run the AI task and say what you made. Paste the text, or attach the file in the relay panel.";
   return null;
 }
@@ -5538,7 +5550,7 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 <div class="join-banner no-print" id="joinBanner" hidden></div>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 20</span>
+  <span class="tag">build 21</span>
   <span>the demo button points at the new demo address</span>
 </div>
 
