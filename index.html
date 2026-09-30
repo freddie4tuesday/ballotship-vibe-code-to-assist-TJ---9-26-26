@@ -339,8 +339,8 @@
         it is new. Asked for: a new address for the demo, with the script rewritten and the video re-recorded. The video (about 5
         minutes, 31 captions, approved as a table) now shows the game as it is: one screen sets up with a jurisdiction, the other
         joins with a code, the game starts at inject 1, the weather crisis comes up in round 3 by itself, draws and the exercise-labelled
-        log are described. Only the two links changed in the game (the title screen and the "New to Ballotship?" box); no wording
-        changed. The recorder (demo/record-demo.js) was rewritten for join codes and now stops if the scripted game doesn't end the way
+        log are described. Only the two links changed in the game (the title screen and the "New to Ballotship?" box), plus one stale phrase the owner approved: the rounds hint on
+        the setup screen said the injects run "in workbook order" and now says "in the order set in the inject library". The recorder (demo/record-demo.js) was rewritten for join codes and now stops if the scripted game doesn't end the way
         the captions say. Verified by tests/draw-jurisdiction.test.js (both buttons open the demo address in a new tab).
 -->
 <html lang="en">
@@ -5454,11 +5454,11 @@ function paintRoundHint() {
   var r = parseInt($("rounds").value, 10);
   var h = $("roundHint");
   if (setupMode !== "sim") {
-    h.textContent = "Two injects a round, in workbook order. Eight rounds plays all 16.";
+    h.textContent = "Two injects a round, in the order set in the inject library. Eight rounds plays all 16.";
     return;
   }
   var per = parseDur($("durA").value, 600) + parseDur($("durD").value, 600) + 180;
-  h.textContent = "One inject a round, in workbook order, starting at inject " + DECK_START + ", so this plays injects " + DECK_START + " to " + Math.min(DECK_START + r - 1, DECK.length) +
+  h.textContent = "One inject a round, in the order set in the inject library, starting at inject " + DECK_START + ", so this plays injects " + DECK_START + " to " + Math.min(DECK_START + r - 1, DECK.length) +
     ". Allowing three minutes a round for resolving and reading, about " + Math.round(r * per / 60) + " minutes of play.";
 }
 ["rounds","durA","durD"].forEach(function (id) {

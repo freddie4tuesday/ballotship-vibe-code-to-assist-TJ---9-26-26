@@ -1,6 +1,6 @@
 /*
   The build number lives in three places that must agree: the newest entry in
-  the build log at the top of index.html, the footer, and "Current version" in
+  the build log at the top of index.html, the footer, and "Current build" in
   ballotship-SUMMARY.md. This catches a build that forgot one of them.
   Also checks the page loads with no errors and shows that number on screen.
 */
@@ -18,7 +18,7 @@ const { ROOT, PAGE, reporter, launch } = require("./helpers");
     const logged = [...header.matchAll(/^\s+build (\d+)\s/gm)].map(m => +m[1]);
     const newest = Math.max(...logged);
     const footer = +((html.match(/<span class="tag">build (\d+)<\/span>/) || [])[1]);
-    const current = +((summary.match(/\*\*Current version:\*\* build (\d+)/) || [])[1]);
+    const current = +((summary.match(/\*\*Current build:\*\* (\d+)/) || [])[1]);
     r.check("build log entries run 1, 2, 3... with no gaps", logged.every((n, i) => n === i + 1), logged.join(","));
     r.check("footer matches the newest build log entry", footer === newest, "footer " + footer + ", log " + newest);
     r.check("summary's current version matches", current === newest, "summary " + current + ", log " + newest);
