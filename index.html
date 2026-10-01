@@ -351,6 +351,12 @@
         approved the drafted examples, with two edits of their own (inject 4's goal and inject 6's timing). This changes the built-in copy, which is the
         offline fallback and the seed a new library store starts from. The live inject library keeps its own copy, edited on the editor page, so it
         shows the new examples only after they are pasted there. Verified by node injects/tools/extract.js --check and the full test suite.
+  build 23 The clearer wording for the attack and defense forms, as the owner approved it in the wording doc (with their edits to the two headings): the attack form says
+        "You are the attacker. How do you carry this out?" with a line on playing the adversary, the four boxes are asked as "Where does it hit? / What do you do? /
+        When, and why then? / What are you trying to damage?" each with a one-line hint, and the hint under the boxes is two short lines; the defense form says "You are
+        the election office. How do you respond?" with a line that it answers the attack on the election, not the squares, and its help, first-hour and who-to-tell
+        boxes are asked as questions with their hints inside the box. The three error messages are the approved ones (when and goal share the third). The words
+        in the log and the Word/print export (the field names such as "Where it lands") were not in the doc and are unchanged. Verified by the full test suite.
 -->
 <html lang="en">
 <head>
@@ -1191,15 +1197,20 @@ body{padding-bottom:28px}
       <div id="offCardHolder"></div>
       <div>
         <div class="field">
-          <label class="fl">How does your team run this attack</label>
+          <label class="fl">You are the attacker. How do you carry this out?</label>
+          <div class="sub">The card tells you the situation. You decide how it plays out against the other defending office. Write it the way an adversary would plan it.</div>
           <div class="rform" id="offForm">
-            <div class="rf key"><label for="off_where"><b>Where it lands</b></label>
+            <div class="rf key"><label for="off_where"><b>Where does it hit?</b></label>
+              <div class="sub">Describe the place: which site, what kind of building, who uses it. Don't name a square on the grid.</div>
               <textarea id="off_where"></textarea></div>
-            <div class="rf key"><label for="off_what"><b>What happens</b></label>
+            <div class="rf key"><label for="off_what"><b>What do you do?</b></label>
+              <div class="sub">What exactly happens, step by step, and what problem it leaves the county with.</div>
               <textarea id="off_what"></textarea></div>
-            <div class="rf key"><label for="off_when"><b>Timing, and why that timing</b></label>
+            <div class="rf key"><label for="off_when"><b>When, and why then?</b></label>
+              <div class="sub">Pick the moment that hurts most and say why: before doors open, mid-morning with a line out front, the night before.</div>
               <input type="text" id="off_when" autocomplete="off"></div>
-            <div class="rf key"><label for="off_goal"><b>What you are trying to break</b></label>
+            <div class="rf key"><label for="off_goal"><b>What are you trying to damage?</b></label>
+              <div class="sub">Turnout, trust in the county's information, the call center, staff, or something else.</div>
               <textarea id="off_goal"></textarea></div>
             <div class="rf ai ai-only"><label for="off_ai"><b>The piece you made with AI</b></label>
               <div class="aitask" id="off_aiTask"></div>
@@ -1212,7 +1223,7 @@ body{padding-bottom:28px}
               <textarea id="off_ai" placeholder="Which tool, what you made, and how it reads. Paste the text, or attach the image or audio in the relay panel."></textarea>
               <div class="airules2">Fictional county, fictional names. Label it exercise material. Nothing gets posted, and it all goes after the debrief.</div></div>
           </div>
-          <div class="hint">Required. At least a full sentence. The inject gives you the scenario, not the method. <b>The other team reads this before it responds</b>, so do not name a cell or they will know where to look.</div>
+          <div class="hint">Write at least one full sentence in each box. The card gives you the situation, not the method.<br><b>The other team reads this before it responds.</b> Don't name a grid square, or they'll know where to look.</div>
         </div>
         <div id="crisisBlock" hidden>
           <div class="crisis-flag" style="margin-bottom:12px"><span>Jurisdiction-wide</span><span>No target</span></div>
@@ -1238,21 +1249,21 @@ body{padding-bottom:28px}
       </div>
       <div>
         <div class="field">
-          <div class="rform" id="defForm">
+          <label class="fl">You are the election office. How do you respond?</label>
+        <div class="sub">You are responding to the attack on your election, not to the Ballotship squares targeted.</div>
+        <div class="rform" id="defForm">
           <div class="rf key"><label for="def_lead"><b>Who on your team owns this</b></label>
             <input type="text" id="def_lead" autocomplete="off" placeholder="Name or role, and who backs them up if they are unavailable">
             <div class="sub">One person. Not a committee.</div></div>
-          <div class="rf key"><label for="def_notify"><b>Who else has to know, and who has to act</b></label>
-            <textarea id="def_notify" placeholder="Other departments, the state, law enforcement, emergency management, the clerk, vendors. Say what you need from each."></textarea>
-            <div class="sub">If you would pick up the phone, it goes here.</div></div>
-          <div class="rf key"><label for="def_ops"><b>What you do operationally</b></label>
-            <textarea id="def_ops" placeholder="The first hour. In order."></textarea></div>
+          <div class="rf key"><label for="def_notify"><b>Who do you need help from?</b></label>
+            <textarea id="def_notify" placeholder="Other departments, the state, law enforcement, vendors. Say what you need from each."></textarea></div>
+          <div class="rf key"><label for="def_ops"><b>What do you do in the first hour?</b></label>
+            <textarea id="def_ops" placeholder="In order, the way you would actually do it."></textarea></div>
           <div class="rf key"><label for="def_policy"><b>Is this response based on an existing policy?</b></label>
             <textarea id="def_policy" placeholder="Yes, no or partly. Name the election office or your jurisdiction's policy, procedure or plan that guides it. If there is none, say what you are relying on instead."></textarea>
             <div class="sub">"None" is an honest answer. It usually belongs in the gap box too.</div></div>
-          <div class="rf key"><label for="def_comms"><b>Who you tell, and in what order</b></label>
-            <textarea id="def_comms" placeholder="Voters at that site, poll workers, the call center, the press, the state. Who hears it first and who signs off."></textarea>
-            <div class="sub">The sequence matters as much as the list.</div></div>
+          <div class="rf key"><label for="def_comms"><b>Who do you tell, and in what order?</b></label>
+            <textarea id="def_comms" placeholder="Voters, poll workers, the call center, the press. Who hears it first, and who signs off."></textarea></div>
           <div class="rf comms"><label for="def_statement" id="def_stmtLab"><b>Write what goes out</b></label>
             <textarea id="def_statement" placeholder="The actual words, not a description of them. Two or three sentences a voter would read, ready to publish or read to a caller."></textarea>
             <div class="sub">This is the communications assignment. Hand it to whoever does comms in real life and have them write it while the rest of the table works the operational boxes.</div></div>
@@ -1344,15 +1355,20 @@ body{padding-bottom:28px}
       <div id="saCard"></div>
       <div>
         <div class="field">
-          <label class="fl">How does your team run this attack</label>
+          <label class="fl">You are the attacker. How do you carry this out?</label>
+          <div class="sub">The card tells you the situation. You decide how it plays out against the other defending office. Write it the way an adversary would plan it.</div>
           <div class="rform" id="saForm">
-            <div class="rf key"><label for="sa_where"><b>Where it lands</b></label>
+            <div class="rf key"><label for="sa_where"><b>Where does it hit?</b></label>
+              <div class="sub">Describe the place: which site, what kind of building, who uses it. Don't name a square on the grid.</div>
               <textarea id="sa_where"></textarea></div>
-            <div class="rf key"><label for="sa_what"><b>What happens</b></label>
+            <div class="rf key"><label for="sa_what"><b>What do you do?</b></label>
+              <div class="sub">What exactly happens, step by step, and what problem it leaves the county with.</div>
               <textarea id="sa_what"></textarea></div>
-            <div class="rf key"><label for="sa_when"><b>Timing, and why that timing</b></label>
+            <div class="rf key"><label for="sa_when"><b>When, and why then?</b></label>
+              <div class="sub">Pick the moment that hurts most and say why: before doors open, mid-morning with a line out front, the night before.</div>
               <input type="text" id="sa_when" autocomplete="off"></div>
-            <div class="rf key"><label for="sa_goal"><b>What you are trying to break</b></label>
+            <div class="rf key"><label for="sa_goal"><b>What are you trying to damage?</b></label>
+              <div class="sub">Turnout, trust in the county's information, the call center, staff, or something else.</div>
               <textarea id="sa_goal"></textarea></div>
             <div class="rf ai ai-only"><label for="sa_ai"><b>The piece you made with AI</b></label>
               <div class="aitask" id="sa_aiTask"></div>
@@ -1365,7 +1381,7 @@ body{padding-bottom:28px}
               <textarea id="sa_ai" placeholder="Which tool, what you made, and how it reads. Paste the text, or attach the image or audio in the relay panel."></textarea>
               <div class="airules2">Fictional county, fictional names. Label it exercise material. Nothing gets posted, and it all goes after the debrief.</div></div>
           </div>
-          <div class="hint">The other team reads this before it responds, so do not name a cell or they will know where to look.</div>
+          <div class="hint">Write at least one full sentence in each box. The card gives you the situation, not the method.<br><b>The other team reads this before it responds.</b> Don't name a grid square, or they'll know where to look.</div>
         </div>
         <div id="saCrisis" hidden>
           <div class="crisis-flag" style="margin-bottom:12px"><span>Jurisdiction-wide</span><span>No target</span></div>
@@ -1407,7 +1423,7 @@ body{padding-bottom:28px}
 <section class="screen" id="screen-sim-defense">
   <div class="panel">
     <div class="phasebar" id="sdPhase"></div>
-    <div class="panel-h"><h2>Their attack, your response</h2><span class="n" id="sdN"></span></div>
+    <div class="panel-h"><h2>You are the election office. How do you respond?</h2><span class="n" id="sdN"></span></div>
     <div class="two boardside">
       <div>
         <div id="sdCard"></div>
@@ -1416,21 +1432,21 @@ body{padding-bottom:28px}
         <div id="sdArtifact"></div>
       </div>
       <div>
-<div class="rform" id="sdForm">
+<label class="fl">You are the election office. How do you respond?</label>
+        <div class="sub">You are responding to the attack on your election, not to the Ballotship squares targeted.</div>
+        <div class="rform" id="sdForm">
           <div class="rf key"><label for="sd_lead"><b>Who on your team owns this</b></label>
             <input type="text" id="sd_lead" autocomplete="off" placeholder="Name or role, and who backs them up if they are unavailable">
             <div class="sub">One person. Not a committee.</div></div>
-          <div class="rf key"><label for="sd_notify"><b>Who else has to know, and who has to act</b></label>
-            <textarea id="sd_notify" placeholder="Other departments, the state, law enforcement, emergency management, the clerk, vendors. Say what you need from each."></textarea>
-            <div class="sub">If you would pick up the phone, it goes here.</div></div>
-          <div class="rf key"><label for="sd_ops"><b>What you do operationally</b></label>
-            <textarea id="sd_ops" placeholder="The first hour. In order."></textarea></div>
+          <div class="rf key"><label for="sd_notify"><b>Who do you need help from?</b></label>
+            <textarea id="sd_notify" placeholder="Other departments, the state, law enforcement, vendors. Say what you need from each."></textarea></div>
+          <div class="rf key"><label for="sd_ops"><b>What do you do in the first hour?</b></label>
+            <textarea id="sd_ops" placeholder="In order, the way you would actually do it."></textarea></div>
           <div class="rf key"><label for="sd_policy"><b>Is this response based on an existing policy?</b></label>
             <textarea id="sd_policy" placeholder="Yes, no or partly. Name the election office or your jurisdiction's policy, procedure or plan that guides it. If there is none, say what you are relying on instead."></textarea>
             <div class="sub">"None" is an honest answer. It usually belongs in the gap box too.</div></div>
-          <div class="rf key"><label for="sd_comms"><b>Who you tell, and in what order</b></label>
-            <textarea id="sd_comms" placeholder="Voters at that site, poll workers, the call center, the press, the state. Who hears it first and who signs off."></textarea>
-            <div class="sub">The sequence matters as much as the list.</div></div>
+          <div class="rf key"><label for="sd_comms"><b>Who do you tell, and in what order?</b></label>
+            <textarea id="sd_comms" placeholder="Voters, poll workers, the call center, the press. Who hears it first, and who signs off."></textarea></div>
           <div class="rf comms"><label for="sd_statement" id="sd_stmtLab"><b>Write what goes out</b></label>
             <textarea id="sd_statement" placeholder="The actual words, not a description of them. Two or three sentences a voter would read, ready to publish or read to a caller."></textarea>
             <div class="sub">This is the communications assignment. Hand it to whoever does comms in real life and have them write it while the rest of the table works the operational boxes.</div></div>
@@ -3589,10 +3605,10 @@ function atkHTML(o) {
 var ATK_MIN_WORDS = 4;
 function atkShort(t) { return (t || "").trim().split(/\s+/).filter(Boolean).length < ATK_MIN_WORDS; }
 function atkErr(o) {
-  if (atkShort(o.where)) return "Say where this lands. Be specific about the site, in a full sentence.";
-  if (atkShort(o.what)) return "Say what actually happens, in a full sentence.";
-  if (atkShort(o.when)) return "Say when it happens and why then, in a full sentence.";
-  if (atkShort(o.goal)) return "Say what you are trying to break, in a full sentence.";
+  if (atkShort(o.where)) return "Say where it hits: which site, and what kind of building.";
+  if (atkShort(o.what)) return "Say what you do, and what problem it causes the county.";
+  if (atkShort(o.when)) return "Say when it happens and what you are trying to damage. A line each.";
+  if (atkShort(o.goal)) return "Say when it happens and what you are trying to damage. A line each.";
   if (G.requireAI && o.ai.length < 20) return "Run the AI task and say what you made. Paste the text, or attach the file in the relay panel.";
   return null;
 }
@@ -5555,7 +5571,7 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 <div class="join-banner no-print" id="joinBanner" hidden></div>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 22</span>
+  <span class="tag">build 23</span>
   <span>the demo button points at the new demo address</span>
 </div>
 

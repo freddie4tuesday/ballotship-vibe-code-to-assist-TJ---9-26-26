@@ -16,7 +16,7 @@ const { reporter, launch, PAGE } = require("./helpers");
     const t = (o) => p.evaluate(o => { G = { requireAI: false }; return atkErr(Object.assign({ ai: "" }, o)); }, o);
     const full = { where: ok, what: ok, when: ok, goal: ok };
     r.check("four full sentences pass", (await t(full)) === null);
-    for (const [k, msg] of [["where", /where this lands/], ["what", /what actually happens/], ["when", /when it happens/], ["goal", /trying to break/]]) {
+    for (const [k, msg] of [["where", /where it hits/], ["what", /what you do/], ["when", /when it happens/], ["goal", /trying to damage/]]) {
       r.check("a box with one word fails: " + k, msg.test((await t({ ...full, [k]: "Downtown" })) || ""));
       r.check("an empty box fails: " + k, msg.test((await t({ ...full, [k]: "" })) || ""));
       r.check("three words fail, four pass: " + k, !!(await t({ ...full, [k]: "Hits one site" })) && (await t({ ...full, [k]: "Hits one site hard" })) === null);

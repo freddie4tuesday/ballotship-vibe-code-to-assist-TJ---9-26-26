@@ -9,7 +9,7 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
-**Builds 21 and 22 (committed, not yet deployed; live is build 20):** build 21 makes the attack form's check enforce "at least a full sentence" (four words in every box); build 22 puts the approved "For example: ..." answers into the built-in deck. **Still to do:** the same examples pasted into the live inject library on its editor page (needs a signed-in editor); the clearer form headings, hints and error messages wait on approval in the wording doc.
+**Builds 21, 22 and 23 (committed, not yet deployed; live is build 20):** 21 makes the attack form's check enforce "at least a full sentence" (four words in every box); 22 puts the approved "For example: ..." answers into the built-in deck; 23 puts the approved clearer headings, hints and error messages on both forms. **Still to do:** the same examples pasted into the live inject library on its editor page (needs a signed-in editor); deploying to staging needs `CLOUDFLARE_API_TOKEN` in the environment.
 
 **Version 1.0 (build 19) is live:** draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; the "Watch a demo" button (it links to the existing video, which predates builds 5 to 17 and needs re-recording, and the demo recorder needs rewriting for join codes first).
 
