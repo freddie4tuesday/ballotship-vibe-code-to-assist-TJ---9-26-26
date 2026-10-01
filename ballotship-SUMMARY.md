@@ -1,7 +1,7 @@
 # Ballotship — Summary & Handoff
 
-**Current version:** 1.1 (live)
-**Current build:** 23 (not yet deployed; live is build 20, version 1.1)
+**Current version:** 1.2 (live)
+**Current build:** 23 (live)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address and needs an emailed sign-in link; see The inject library)
@@ -59,6 +59,7 @@ The live game's footer shows a **version number** (`APP_VERSION` in `index.html`
 |---|---|---|
 | 1.0 | 19 | first version-numbered release (builds 1 to 18 went live before versions existed) |
 | 1.1 | 20 | the demo video re-recorded and moved to https://ballotship-demo.electionadminsuite.com, with the game's demo buttons pointing at it; the rounds hint no longer says "workbook order" |
+| 1.2 | 21-23 | the attack form needs a full sentence in every box (build 21); "For example: ..." answers in the attack boxes for all 16 injects, also saved into the live inject library as its version 2 (build 22); clearer headings, hints and error messages on the attack and defense forms (build 23) |
 
 To release a new version: bump `APP_VERSION`, add its row here, and go live as usual.
 

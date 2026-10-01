@@ -5547,7 +5547,7 @@ var IS_STAGING = /staging/i.test(window.location.hostname);
    page is one file for both addresses (a release must be exactly the page that was on staging), so the footer decides at
    load: staging keeps "build N" (plus the STAGING tag), everywhere else, including a saved copy of the file, says
    "version X". The build number stays in the footer's HTML, which is what the release script reads. */
-var APP_VERSION = "1.1";
+var APP_VERSION = "1.2";
 if (!IS_STAGING) document.addEventListener("DOMContentLoaded", function () {
   var tag = document.querySelector(".build-footer .tag");
   if (!tag) return;
