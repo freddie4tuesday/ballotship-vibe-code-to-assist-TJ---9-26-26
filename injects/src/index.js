@@ -12,6 +12,11 @@
     GET  /api/edit/version/<n>     one old deck, for the "what changed" view              (signed in)
     POST /api/edit/save            {base, injects, summary}  -> {version} or 409 if base is stale   (signed in)
     POST /api/edit/restore         {version}  -> {version} (a restore is itself a new version)      (signed in)
+    POST /api/edit/backup          {takenAt}  -> {backup, last}: the whole library as one file, and the shared
+                                   "Last backup" stamp, recorded as this request is answered          (signed in, build 24)
+    GET  /api/edit/backup-status   {at, by}: the shared "Last backup" stamp (at is ISO UTC, or null)   (signed in, build 24)
+    POST /api/edit/restore-file    {backup, check:true} -> what the file holds, or what is wrong with it (changes nothing);
+                                   {backup, base} -> {version}, or 409 if base is stale, as for a save  (signed in, build 24)
 
   Edits go live at once (decided with the owner); every save is numbered, records who made it, and can be restored.
   Who may edit: build 12 had a secret in the address, build 13 had nothing (open to anyone who found /edit), build 15
@@ -22,12 +27,16 @@
   First read seeds the store from seed.json, a copy of the deck that was built into index.html at build 12.
 */
 import { DurableObject } from "cloudflare:workers";
-import { validateDeck } from "./validate.js";
+import { validateDeck, readBackup, BACKUP_APP, BACKUP_SCHEMA, APP_BUILD } from "./validate.js";
 import SEED from "../seed.json";
 import { TOKEN_TTL_S, SESSION_TTL_S, MAX_PER_EMAIL_PER_HOUR, MAX_PER_HOUR, randomToken, sha256, allowedEmail, cookieOf, SESSION_COOKIE, sessionCookie, sendMail } from "./auth.js";
 
 const MAX_VERSIONS = 500;         // ~60 KB each, so 30 MB at most; older ones are dropped past this
 const MAX_SUMMARY = 200;
+// How far back a backup's "taken at" (the moment the editor's Backup button was pressed) may be from the server's clock.
+// Outside this, the server's own time is used: a stamp can never be in the future, and can't be backdated by more than
+// this to look older than it is.
+const STAMP_SKEW_MS = 5 * 60 * 1000;
 const CORS = { "access-control-allow-origin": "*", "access-control-allow-methods": "GET, POST, OPTIONS", "access-control-allow-headers": "content-type" };
 
 const json = (body, status = 200, extra = {}) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store", ...CORS, ...extra } });
@@ -98,16 +107,19 @@ export default {
       return json({ error: "not found" }, 404);
     }
 
-    const m = p.match(/^\/api\/edit\/(history|version\/(\d+)|save|restore)$/);
+    const m = p.match(/^\/api\/edit\/(history|version\/(\d+)|save|restore|backup|backup-status|restore-file)$/);
     if (m) {
       const who = await stub.whoIs(await sha256(cookieOf(request, SESSION_COOKIE)));
       if (!who) return json({ error: "Your sign-in has ended or you haven't signed in. Sign in again; your changes on the page are kept." }, 401);
       if (m[1] === "history") return json(await stub.history());
       if (m[2]) { const v = await stub.version(Number(m[2])); return v ? json(v) : json({ error: "no such version" }, 404); }
+      if (m[1] === "backup-status") return json(await stub.backupStamp());
       if (request.method !== "POST") return json({ error: "use POST" }, 405);
       if (!posting()) return json({ error: "Editing is only possible from the editor page." }, 403);
       const r = await readBody(); if (r.err) return r.err;
       if (m[1] === "save") return stub.save(r.body, who).then((x) => json(x.body, x.status));
+      if (m[1] === "backup") return json(await stub.backup(r.body && r.body.takenAt, who));
+      if (m[1] === "restore-file") return stub.restoreFile(r.body, who).then((x) => json(x.body, x.status));
       return stub.restore(r.body, who).then((x) => json(x.body, x.status));
     }
     if (p === "/" || p === "") return json({ ok: true, service: "ballotship-injects" });
@@ -124,6 +136,9 @@ export class Deck extends DurableObject {
     if (![...this.sql.exec("PRAGMA table_info(versions)")].some((c) => c.name === "edited_by")) this.sql.exec("ALTER TABLE versions ADD COLUMN edited_by TEXT");
     this.sql.exec("CREATE TABLE IF NOT EXISTS tokens (hash TEXT PRIMARY KEY, email TEXT NOT NULL, made INTEGER NOT NULL, expires INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0)");
     this.sql.exec("CREATE TABLE IF NOT EXISTS sessions (hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires INTEGER NOT NULL)");
+    // Build 24: the shared "Last backup" stamp, one row. Shared by everyone who edits (not per browser), so the banner
+    // tells the whole team, not just whoever pressed the button.
+    this.sql.exec("CREATE TABLE IF NOT EXISTS backup_stamp (id INTEGER PRIMARY KEY CHECK (id = 1), at INTEGER NOT NULL, by_email TEXT)");
     if (this.sql.exec("SELECT COUNT(*) AS n FROM versions").one().n === 0) {
       const seed = { injects: SEED.injects };
       this.sql.exec("INSERT INTO versions (version, at, summary, deck) VALUES (1, ?, ?, ?)", Date.now(), "Starting deck (the 16 injects that were built into the game)", JSON.stringify(seed));
@@ -169,6 +184,43 @@ export class Deck extends DurableObject {
     if (errors.length) return { status: 422, body: { error: "Not saved. " + errors[0], errors } };
     const summary = String(b.summary || "Edited").replace(/[\u0000-\u001f]/g, " ").slice(0, MAX_SUMMARY) || "Edited";
     return { status: 200, body: { version: this._write(b, summary, by) } };
+  }
+  backupStamp() {
+    const r = [...this.sql.exec("SELECT at, by_email FROM backup_stamp WHERE id = 1")][0];
+    return r ? { at: new Date(r.at).toISOString(), by: r.by_email || null } : { at: null, by: null };
+  }
+  /* Build 24. The whole library as one file. Only the deck goes in: never the sign-in tables (link tokens, sessions;
+     they are stored only as hashes anyway) and nothing from the Worker's settings (the Resend key), so a file that is
+     lost or mailed around can't be used to sign in. History is not in the file either: 500 versions would be up to
+     30 MB, and a restore adds a version rather than replacing History, so History is never what a file brings back.
+     The stamp follows the poll worker app's rule: a newer stamp always wins, so a slow request from a backup taken
+     earlier (two editors pressing Backup a moment apart) can't make the stamp go backwards. */
+  backup(takenAt, by) {
+    const now = Date.now(), t = Number(takenAt);
+    const at = Number.isFinite(t) && t <= now && t >= now - STAMP_SKEW_MS ? Math.floor(t) : now;
+    this.sql.exec("INSERT INTO backup_stamp (id, at, by_email) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET at = excluded.at, by_email = excluded.by_email WHERE excluded.at > backup_stamp.at", at, by || null);
+    const cur = this._latest();
+    return {
+      backup: { app: BACKUP_APP, schemaVersion: BACKUP_SCHEMA, appVersion: "build " + APP_BUILD, savedAt: new Date(at).toISOString(), savedBy: by || null,
+        deckVersion: cur.version, deckSavedAt: new Date(cur.at).toISOString(), deckSummary: cur.summary, injects: cur.injects },
+      last: this.backupStamp(),
+    };
+  }
+  /* Build 24. Put a backup file back. The file is read and checked in full first (readBackup: right tool, a format this
+     build reads, every inject passing the same checks as a save); with check:true that is all that happens, so the
+     editor can show what the file holds before anyone confirms. The restore itself is a save like any other: it needs
+     the version the editor last loaded (a 409 if someone saved since), and it becomes a new version, so the deck it
+     replaces stays in History and can be restored from there. */
+  restoreFile(b, by) {
+    if (!b || typeof b !== "object") return { status: 400, body: { error: "No backup file was sent. Choose one and try again." } };
+    const f = readBackup(b.backup);
+    if (f.errors.length) return { status: 422, body: { error: f.errors[0], errors: f.errors } };
+    if (b.check) return { status: 200, body: { ok: true, info: f.info } };
+    const cur = this._latest();
+    if (b.base !== cur.version) return { status: 409, body: { error: "Someone else saved while you were working (now version " + cur.version + "). Nothing was restored. Reload the page, then restore the file again.", version: cur.version } };
+    const taken = f.info.savedAt ? " taken " + f.info.savedAt.slice(0, 16).replace("T", " ") + " UTC" : "";
+    const summary = ("Restored from a backup file" + taken + (f.info.savedBy ? " by " + f.info.savedBy : "")).slice(0, MAX_SUMMARY);
+    return { status: 200, body: { version: this._write(f.deck, summary, by), info: f.info } };
   }
   restore(b, by) {
     const old = b && this.version(Number(b.version));

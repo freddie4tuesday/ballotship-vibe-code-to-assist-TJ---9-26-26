@@ -1,7 +1,7 @@
 # Ballotship — Summary & Handoff
 
 **Current version:** 1.2 (live)
-**Current build:** 23 (live)
+**Current build:** 24 (Backup & Restore in the inject editor; a draft pull request, not yet on staging. Live is build 23.)
 **Live at:** https://ballotship.electionadminsuite.com
 **Relay:** https://ballotship-relay.electionadminsuite.com (source in `worker/`)
 **Inject library:** https://ballotship-injects.electionadminsuite.com (source in `injects/`; the editor is at `/edit` on that address and needs an emailed sign-in link; see The inject library)
@@ -145,6 +145,18 @@ list is the play order and a game starts with the first inject (build 14; it use
 - **Checks on a save** (`injects/src/validate.js`, repeated in the game as `sanitizeDeck`): 4 to 99 injects;
   known category, type and footprint shape (a crisis inject has none); text length limits; a sponsor's link and
   logo must be https. Text is stored as typed and always escaped when shown.
+- **Backup & Restore (build 24):** the editor's Backup & Restore section, from the suite's backup standard. **Backup** downloads
+  `ballotship-injects-backup-ready-for-tuesday-YYYY-MM-DD-HH-MM-SS-UTC.json` (`-staging` in the name on staging): `app`, `schemaVersion` (1),
+  `appVersion`, `savedAt`, `savedBy`, the deck's version, and every inject in play order. Never the sign-in tables or the Resend key, and not
+  History (up to 30 MB; a restore adds a version rather than replacing History). **Restore** checks the whole file first (`readBackup` in
+  `injects/src/validate.js`, then the same checks as a save), shows a confirm with the counts and when the file was taken, and saves it as a
+  new version, so the deck it replaced can be got back from History; a restore from an out-of-date page is refused like a save. An older
+  file restores: the plain deck from `/api/deck` (no `app`, no format number) is read as format 0, and a missing precedent source becomes
+  empty. A newer-format file is refused. **The shared stamp** ("Last backup: 8 minutes ago by someone@readyfortuesday.com") is one row
+  in the store, set when a backup is downloaded; a newer stamp always wins, and the time the button was pressed is believed only within 5
+  minutes of the server's clock. **The banner** under the header is green within 1 day, yellow 1 to 3 days, red after 3 days or never, with
+  "Back up now". Everyone who can sign in can back up and restore (there are no roles here). Keeping backups is the editors' own job: take
+  one before and after every election and after any big change.
 - **Deploying:** `deploy.sh` deploys the library's code with each build; it never touches the deck in the store.
   Cloudflare keeps the store in a Durable Object, so a deploy can't lose an edit.
 - **Rollback of the code:** as for the page (Deployments in the dashboard). A bad *edit* is undone from the

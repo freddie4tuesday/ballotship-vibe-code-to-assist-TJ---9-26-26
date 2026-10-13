@@ -1,7 +1,7 @@
 /*
   The build number lives in three places that must agree: the newest entry in
   the build log at the top of index.html, the footer, and "Current build" in
-  ballotship-SUMMARY.md. This catches a build that forgot one of them.
+  ballotship-SUMMARY.md (and, from build 24, APP_BUILD in the inject library). This catches a build that forgot one of them.
   Also checks the page loads with no errors and shows that number on screen.
 */
 const fs = require("fs");
@@ -22,6 +22,9 @@ const { ROOT, PAGE, reporter, launch } = require("./helpers");
     r.check("build log entries run 1, 2, 3... with no gaps", logged.every((n, i) => n === i + 1), logged.join(","));
     r.check("footer matches the newest build log entry", footer === newest, "footer " + footer + ", log " + newest);
     r.check("summary's current version matches", current === newest, "summary " + current + ", log " + newest);
+    // Build 24: the inject library writes its build into every backup file (APP_BUILD in injects/src/validate.js).
+    const libBuild = +((fs.readFileSync(path.join(ROOT, "injects", "src", "validate.js"), "utf8").match(/export const APP_BUILD = (\d+);/) || [])[1]);
+    r.check("the inject library's build (written into its backup files) matches", libBuild === newest, "library " + libBuild + ", log " + newest);
 
     browser = await launch();
     const p = await browser.newPage();

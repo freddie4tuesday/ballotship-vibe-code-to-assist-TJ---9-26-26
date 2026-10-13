@@ -9,6 +9,10 @@ Each item: a short title, then one or two lines on what and why.
 
 ## Up next
 
+**Build 24 (Backup & Restore in the inject editor) is a draft pull request.** Next: Ready for Tuesday approves its new on-screen wording
+(the help text, responsibility line and warning come word for word from the suite's backup standard; the restore warning's second sentence
+says the replaced deck stays in History instead of "This cannot be undone", because that is what happens), then staging, then live.
+
 **Version 1.2 (builds 21-23) is live.** Open: rotate the Cloudflare token and the Resend key that were pasted into chat.
 
 **Version 1.0 (build 19) is live:** draws replace the tie-break round; a required jurisdiction at setup (log, response hints); the deck version in the log; 10 wrong join codes per visitor per hour; the "Watch a demo" button (it links to the existing video, which predates builds 5 to 17 and needs re-recording, and the demo recorder needs rewriting for join codes first).
@@ -32,6 +36,11 @@ Each item: a short title, then one or two lines on what and why.
 - **Hand back to Ready for Tuesday.** Plan the transfer of the Cloudflare and GitHub accounts and secrets. Rotate the Cloudflare
   token and the Resend key that were pasted into a chat. GitHub refuses `build-N` tag pushes from the working environment, so
   tags have to be created on GitHub (harmless).
+
+- **Inject library backups, follow-ups (after build 24).** Not done: a scheduled automatic backup emailed or stored somewhere off
+  Cloudflare (today it is up to the editors, as the standard says); putting History in the file (decided against for now: up to 30 MB,
+  and a restore never replaces History anyway); the "Last backup" line refreshing on its own while the page sits open (today: when the deck
+  loads, after a save or restore, and when the tab comes back into view, so an open editor adds no requests).
 
 ## Ideas / maybe
 

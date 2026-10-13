@@ -357,6 +357,19 @@
         the election office. How do you respond?" with a line that it answers the attack on the election, not the squares, and its help, first-hour and who-to-tell
         boxes are asked as questions with their hints inside the box. The three error messages are the approved ones (when and goal share the third). The words
         in the log and the Word/print export (the field names such as "Where it lands") were not in the doc and are unchanged. Verified by the full test suite.
+  build 24 Backup & Restore in the inject library's editor. Asked for by the owner: every suite tool that keeps people's data gets a self-service
+        backup, with the poll worker app's warnings, because "they should be responsible for their own data as well" (the suite's backup standard).
+        Before this, the library could only be rolled back from the server's own History, which goes with the store; nobody could keep a copy.
+        The editor now has a Backup & Restore section: Backup downloads the whole library (every inject, in play order, with app, format, build,
+        when and by whom) as ballotship-injects-backup-ready-for-tuesday-YYYY-MM-DD-HH-MM-SS-UTC.json, never any sign-in token, session or key;
+        Restore checks the whole file with the same checks as a save before anything changes (another tool's file, a damaged or newer-format file
+        and a deck that fails the checks are refused with what to do; an older file, such as the plain deck, restores), shows a confirm with the
+        counts and when the file was taken, and saves it as a new version, refused like a save if someone saved in between. Because the deck it
+        replaces stays in History, the restore warning says so instead of the standard's "This cannot be undone." A shared "Last backup: X ago
+        by <address>" stamp is kept with the deck (a newer stamp always wins) and a banner under the header is green within a day, yellow at 1-3
+        days and red after 3 or never, with "Back up now". One bug found while trying to break it and fixed before it shipped: an inject whose
+        fields hid behind a "__proto__" key would have passed the checks and been stored without them. The game itself is unchanged.
+        Verified by tests/injects-backup.test.js (new, 50 checks) and the full test suite. New on-screen wording awaits Ready for Tuesday's approval.
 -->
 <html lang="en">
 <head>
@@ -5571,8 +5584,8 @@ prefetchDeck();   /* build 12: as early as the page can, so the setup screen alr
 <div class="join-banner no-print" id="joinBanner" hidden></div>
 <div class="deck-warn no-print" id="deckWarn" role="alert" hidden></div>
 <div class="build-footer no-print">
-  <span class="tag">build 23</span>
-  <span>the demo button points at the new demo address</span>
+  <span class="tag">build 24</span>
+  <span>backup and restore in the inject library's editor</span>
 </div>
 
 </body>

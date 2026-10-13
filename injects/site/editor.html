@@ -61,6 +61,21 @@ legend{font:700 14px var(--disp);letter-spacing:.06em;text-transform:uppercase;c
 .gate .row1{display:flex;gap:8px;margin-top:12px}
 .gate .row1 input{flex:1}
 #who{font-size:13px;color:#cfe0d6}
+/* Build 24: Backup & Restore, and the traffic-light banner (green within a day of the last backup, yellow 1-3 days,
+   red over 3 days or never), as in the suite's backup standard. */
+#bkBanner{padding:8px 16px;font-size:14px;font-weight:600;text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+#bkBanner.ok{background:#E3F1E8;color:#1B4D3E}
+#bkBanner.warn{background:#FFF1C2;color:#5E4600}
+#bkBanner.danger{background:#FBE3E1;color:#8A1C14}
+#bkBanner a{color:inherit;text-decoration:underline}
+#backup{grid-column:1/-1;padding:12px 16px}
+#backup h2{font:700 20px var(--disp);text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
+#backup .cols{display:flex;flex-wrap:wrap;gap:24px}
+#backup .cols>div{flex:1;min-width:240px}
+#backup h3{font:700 15px var(--disp);letter-spacing:.06em;text-transform:uppercase;color:var(--evergreen);margin:8px 0 4px}
+#backup p{margin:6px 0;font-size:14px}
+#backup input[type=file]{margin:6px 0 10px;padding:5px}
+button.danger{background:#B3261E;border-color:#B3261E;color:#fff}
 body:not(.in) .authed{display:none}
 [hidden]{display:none!important}
 </style>
@@ -75,6 +90,7 @@ body:not(.in) .authed{display:none}
   <label class="authed" style="color:#fff;min-width:220px"><span class="hint" style="color:#cfe0d6">What did you change? (optional)</span><input id="summary" maxlength="200" placeholder="e.g. Reworded inject 4"></label>
   <button id="btnSave" type="button" class="pri authed" disabled>Save to live deck</button>
 </header>
+<div id="bkBanner" class="authed" role="status"></div>
 <section class="panel gate" id="gate" hidden>
   <h2 id="gateH">Sign in to edit the injects</h2>
   <p id="gateP">Enter your Ready for Tuesday or decaro.net email address. We'll email you a link that signs you in for one day. Anyone can play the game; only people with one of those addresses can change the injects.</p>
@@ -99,6 +115,26 @@ body:not(.in) .authed{display:none}
     <div id="hist" hidden></div>
     <form id="f" autocomplete="off" hidden></form>
     <div id="empty" style="padding:16px" hidden>Choose an inject on the left, or add one.</div>
+  </section>
+  <section class="panel" id="backup" aria-labelledby="bkH" tabindex="-1">
+    <h2 id="bkH">Backup &amp; Restore</h2>
+    <p>Download the whole inject library (every inject, in play order) as one file, or put a downloaded file back.</p>
+    <div class="cols">
+      <div>
+        <h3>Backup</h3>
+        <p>Keep this somewhere safe — anyone with the file can restore it into this system.</p>
+        <p>You are responsible for keeping your own backups. Take one before and after every election and after any big change.</p>
+        <button id="btnBackup" type="button" class="pri">Download backup (.json)</button>
+        <p id="bkLast">Last backup: <b>…</b></p>
+      </div>
+      <div>
+        <h3>Restore</h3>
+        <p><b>Warning:</b> restoring replaces all current data in this system with the contents of the backup file. The deck it replaces stays in History, so you can restore it from there.</p>
+        <input id="bkFile" type="file" accept=".json,application/json" aria-label="Backup file to restore">
+        <div><button id="btnRestoreFile" type="button" class="danger">Restore from backup</button></div>
+        <div id="bkMsg" role="status" style="margin-top:8px"></div>
+      </div>
+    </div>
   </section>
 </main>
 <script>
@@ -130,6 +166,7 @@ window.addEventListener("beforeunload",function(e){if(dirty()){e.preventDefault(
 function load(){
   return fetch("/api/deck",{cache:"no-store"}).then(function(r){return r.json();}).then(function(d){
     deck={injects:d.injects};base=d.version;saved=snap();sel=Math.min(sel,deck.injects.length-1);draw();refreshSave();
+    loadStamp();
   }).catch(function(){status("Couldn't load the deck. Reload the page.",true);});
 }
 function draw(){drawList();drawForm();}
@@ -280,6 +317,95 @@ $("hist").addEventListener("click",function(e){
     api("restore",{version:v}).then(function(r){if(r.ok){$("hist").hidden=true;load().then(function(){status("Restored. The live deck is now version "+r.j.version+".");});}else status(r.j.error||"Couldn't restore.",true);});
   }
 });
+/* ---- backup & restore (build 24) ----
+   Before this build the library could only be rolled back from the server's own History; there was no copy anyone could
+   keep. The suite's backup standard (modelled on the poll worker app's Import & Backup tab) asks for a file people keep
+   themselves, a shared "Last backup" line and a banner that turns yellow after a day and red after three.
+   The stamp is fetched when the deck loads (sign-in, every save and restore, a reload) and when the tab comes back into
+   view; the "8 minutes ago" wording is re-worked out every minute on the page without asking the server, so an open
+   editor adds no requests of its own. */
+var stamp={at:null,by:null};
+function stampMs(v){var t=v&&v.at?Date.parse(v.at):NaN;return isNaN(t)?-Infinity:t;}
+/* A newer stamp always wins (the poll worker app's rule): an answer that set off before someone else's backup and
+   arrives after it can't make the line go backwards. */
+function newerStamp(a,b){return stampMs(b)>stampMs(a)?{at:b.at,by:b.by||null}:a;}
+function ago(iso){
+  if(!iso)return "never";
+  var ms=Date.now()-Date.parse(iso);if(ms<60000)return "just now";   // also covers a few seconds of clock difference
+  var m=Math.floor(ms/60000);if(m<60)return m+" minute"+(m===1?"":"s")+" ago";
+  var h=Math.floor(m/60);if(h<24)return h+" hour"+(h===1?"":"s")+" ago";
+  var d=Math.floor(h/24);return d+" day"+(d===1?"":"s")+" ago";
+}
+function bannerLevel(at,now){
+  var days=at?((now||Date.now())-Date.parse(at))/86400000:Infinity;
+  return {level:days<=1?"ok":days<=3?"warn":"danger",stale:days>1};
+}
+function drawStamp(){
+  var line=stamp.at?"Last backup: "+ago(stamp.at)+(stamp.by?" by "+stamp.by:""):"No backup has ever been taken";
+  $("bkLast").innerHTML=(stamp.at?"Last backup: <b>"+esc(ago(stamp.at))+(stamp.by?" by "+esc(stamp.by):"")+"</b>":"Last backup: <b>never</b>")
+    +" — shared across everyone who edits this library, not just this sign-in.";
+  var b=bannerLevel(stamp.at),el=$("bkBanner");
+  el.className="authed "+b.level;
+  el.innerHTML="<span>"+(b.level==="ok"?"✓ ":"⚠ ")+esc(line)+"</span>"+(b.stale?'<a href="#backup" id="bkNow">Back up now</a>':"");
+}
+function loadStamp(){api("backup-status").then(function(r){if(r.ok){stamp=newerStamp(stamp,r.j);drawStamp();}});}
+setInterval(function(){if(document.body.classList.contains("in"))drawStamp();},60000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&document.body.classList.contains("in"))loadStamp();});
+$("bkBanner").addEventListener("click",function(e){
+  if(e.target.id!=="bkNow")return;e.preventDefault();
+  $("hist").hidden=true;drawForm();$("backup").scrollIntoView({behavior:"smooth",block:"start"});$("btnBackup").focus({preventScroll:true});
+});
+function bkMsg(t,bad){var m=$("bkMsg");m.textContent=t||"";m.className=bad?"errs":"";}
+/* <tool>-backup-<org>-YYYY-MM-DD-HH-MM-SS-UTC.json: the time is in the name, in UTC and saying so, so two backups on one
+   day never get the same name and editors in different time zones read it the same way. */
+function backupName(savedAt){
+  var org="ready-for-tuesday"+(/-staging\./.test(location.hostname)?"-staging":"");
+  return "ballotship-injects-backup-"+org+"-"+savedAt.slice(0,19).replace("T","-").replace(/:/g,"-")+"-UTC.json";
+}
+$("btnBackup").onclick=function(){
+  var b=$("btnBackup");b.disabled=true;
+  // The moment the button was pressed is what the shared stamp records (the server keeps it within 5 minutes of its own clock).
+  api("backup",{takenAt:Date.now()}).then(function(r){
+    b.disabled=false;
+    if(!r.ok){bkMsg((r.j&&r.j.error)||"The backup couldn't be made. Try again.",true);return;}
+    var blob=new Blob([JSON.stringify(r.j.backup,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download=backupName(r.j.backup.savedAt);document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},1500);
+    stamp=newerStamp(stamp,r.j.last);drawStamp();
+    if(!dirty())bkMsg("Backup downloaded ("+r.j.backup.injects.length+" injects, live deck version "+r.j.backup.deckVersion+"). Keep it somewhere safe.");
+    else bkMsg("Backup downloaded. It holds the live deck (version "+r.j.backup.deckVersion+"), not your unsaved changes on this page.");
+  });
+};
+var restoring=false;   // one restore at a time: a second click while the first is still checking can't start another
+$("btnRestoreFile").onclick=function(){
+  if(restoring)return;
+  var file=$("bkFile").files[0];
+  if(!file){bkMsg("Choose a backup file first (its name starts with ballotship-injects-backup).",true);return;}
+  // The file is pretty-printed, so it can be a good deal larger than the 400,000-character limit on a deck; the server
+  // checks the real limit. This only stops someone choosing, say, a video by mistake.
+  if(file.size>2000000){bkMsg("That file is too large to be a backup of the inject library. Nothing was changed. Choose a ballotship-injects-backup file.",true);return;}
+  if(dirty()&&!confirm("You have unsaved changes on this page. Restoring replaces the live deck, and these changes are dropped. Continue?"))return;
+  restoring=true;$("btnRestoreFile").disabled=true;bkMsg("Checking the file...");
+  var done=function(){restoring=false;$("btnRestoreFile").disabled=false;};
+  file.text().then(function(text){
+    var f;try{f=JSON.parse(text);}catch(e){bkMsg("This file can't be read as a backup (it may be damaged, or a different kind of file). Nothing was changed. Choose a ballotship-injects-backup file.",true);done();return;}
+    var b0=base;   // the version on screen when the check was made; the restore is refused if someone saves after it
+    api("restore-file",{check:true,backup:f}).then(function(r){
+      if(!r.ok){bkMsg((r.j&&r.j.error)||"The file couldn't be checked. Nothing was changed. Try again.",true);done();return;}
+      var i=r.j.info,taken=i.savedAt?new Date(i.savedAt).toLocaleString():"an unknown date (an older file without one)";
+      var what=i.count+" injects"+(i.crisis?", "+i.crisis+" of them crisis":"")+(i.sponsored?", "+i.sponsored+" with a sponsor":"");
+      if(!confirm("Restore this backup?\n\nTaken: "+taken+(i.savedBy?" by "+i.savedBy:"")+"\nIt holds: "+what+(i.deckVersion?" (it was live deck version "+i.deckVersion+")":"")
+        +"\n\nIt replaces the live deck (now version "+b0+", "+deck.injects.length+" injects) right away, as a new version. The deck it replaces stays in History.")){bkMsg("Nothing was changed.");done();return;}
+      bkMsg("Restoring...");
+      api("restore-file",{backup:f,base:b0}).then(function(r2){
+        done();
+        if(!r2.ok){bkMsg((r2.j&&r2.j.error)||"Not restored. Try again.",true);return;}
+        $("bkFile").value="";$("hist").hidden=true;
+        load().then(function(){bkMsg("Restored. The live deck is now version "+r2.j.version+".");status("Restored from the backup file. The live deck is now version "+r2.j.version+".");});
+      });
+    });
+  },function(){bkMsg("That file couldn't be opened. Nothing was changed. Try choosing it again.",true);done();});
+};
 function showGate(mode,msg){
   $("gate").hidden=false;document.querySelector("main").hidden=true;
   $("gateAsk").hidden=mode==="confirm";$("gateConfirm").hidden=mode!=="confirm";

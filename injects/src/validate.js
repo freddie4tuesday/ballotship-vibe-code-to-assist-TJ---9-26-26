@@ -82,3 +82,63 @@ export function validateDeck(d) {
   if (JSON.stringify(d).length > 400000) errs.push("The deck is too large.");
   return errs;
 }
+
+/*
+  Build 24: reading a backup file before a restore. The suite's backup standard asks every tool to let its editors keep
+  their own copy of their data and put it back, and to check the whole file before anything changes, so a wrong, damaged
+  or newer-format file changes nothing and says what to do. Before this build the only way back was the server's own
+  History (500 versions), which is lost with the store; a file on someone's own disk is not.
+
+  A backup is { app, schemaVersion, appVersion, savedAt, savedBy, deckVersion, deckSavedAt, injects }. Only the injects
+  are ever restored: every other field is a label for the confirm dialog, so a file carrying anything else (a sessions
+  or tokens list, a "version" of its own) can't put it into the store.
+
+  Older files restore: a file with no "app" and no "schemaVersion" but an injects list is read as format 0, which is
+  what the public deck address (/api/deck) returns and what anyone could have saved before backups existed. Fields an
+  older inject lacks get the same defaults the editor gives a new inject (no precedent source: empty; no AI
+  assignment: none), and the pre-build-14 starting position is ignored, as it is everywhere else.
+*/
+export const BACKUP_APP = "ballotship-injects";
+// Written into every backup file as appVersion, so a file says which build made it. Kept here, not in index.js, because a
+// Worker's main module may export only handlers and Durable Object classes. Must match the newest build in the log at the
+// top of index.html (tests/build-number.test.js checks).
+export const APP_BUILD = 24;
+export const BACKUP_SCHEMA = 1;
+
+export function readBackup(f) {
+  const fail = (m) => ({ errors: [m] });
+  const OTHER = "Choose a file whose name starts with ballotship-injects-backup.";
+  if (!f || typeof f !== "object" || Array.isArray(f)) return fail("This isn't a backup of the inject library. Nothing was changed. " + OTHER);
+  if (f.app !== undefined && f.app !== BACKUP_APP) {
+    const what = isStr(f.app) ? " (it says " + f.app.replace(/[\u0000-\u001f]/g, " ").slice(0, 60) + ")" : "";
+    return fail("This is a backup from a different tool" + what + ", not the Ballotship inject library. Nothing was changed. " + OTHER);
+  }
+  let schema = 0;
+  if (f.schemaVersion !== undefined) {
+    if (!Number.isInteger(f.schemaVersion) || f.schemaVersion < 0) return fail("This backup file is damaged (its format number is unreadable). Nothing was changed. Use another backup.");
+    schema = f.schemaVersion;
+  } else if (f.app === BACKUP_APP) return fail("This backup file is damaged (its format number is missing). Nothing was changed. Use another backup.");
+  if (schema > BACKUP_SCHEMA) return fail("This backup was made by a newer version of the inject library (file format " + schema + "; this one reads up to " + BACKUP_SCHEMA + "). Nothing was changed. Use a backup made by this version, or ask for the library to be updated first.");
+  if (!Array.isArray(f.injects)) return fail("This file has no injects in it, so it may be damaged or not a backup of the inject library. Nothing was changed. " + OTHER);
+  const injects = f.injects.map((c) => {
+    if (!c || typeof c !== "object" || Array.isArray(c)) return c;
+    const x = { ...c };   // not Object.assign: that would turn an own "__proto__" key into the object's prototype, hiding it from the checks
+    if (x.src === undefined) x.src = "";   // safe default for an older inject; anything else missing is reported by validateDeck
+    return x;
+  });
+  const deck = { injects };
+  const errors = validateDeck(deck);
+  if (errors.length) return { errors: errors.map((e, i) => i === 0 ? "This backup can't be restored, so nothing was changed. " + e : e) };
+  const iso = (v) => { if (!isStr(v)) return null; const t = Date.parse(v); return Number.isNaN(t) ? null : new Date(t).toISOString(); };
+  const text = (v, n) => isStr(v) ? v.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, n) || null : null;
+  return {
+    errors: [],
+    deck,
+    info: {
+      schemaVersion: schema,
+      savedAt: iso(f.savedAt), savedBy: text(f.savedBy, 254), appVersion: text(f.appVersion, 40),
+      deckVersion: Number.isInteger(f.deckVersion) ? f.deckVersion : Number.isInteger(f.version) ? f.version : null,
+      count: injects.length, crisis: injects.filter((c) => c.crisis).length, sponsored: injects.filter((c) => c.sponsor).length,
+    },
+  };
+}
